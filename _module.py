@@ -25,6 +25,8 @@ class _PhaseSpace(object):
     class _Raw(object):
       """
       Raw data
+      
+      Units ...
       """
       def update(self,w,x,y,z,px,py,pz):
         self.w  = np.array(w)
@@ -37,8 +39,8 @@ class _PhaseSpace(object):
         # 
         self.r      = np.sqrt(self.y**2+self.z**2)
         self.p      = np.sqrt(self.px**2+self.py**2+self.pz**2)
-        self.theta  = np.arctan(self.py/self.px)
-        self.phi    = np.arctan(self.pz/self.px) # Geometrical effect ? change -> 0 pi
+        self.theta  = np.degrees(np.arctan(self.py/self.px))
+        self.phi    = np.degrees(np.arctan(self.pz/self.px)) # Geometrical effect ? change -> 0 pi
         self.ekin   = (np.sqrt((self.p/0.511)**2 + 1) - 1) * 0.511
         print("Update done")
 
@@ -77,7 +79,7 @@ class _PhaseSpace(object):
         self._ps=PhaseSpace
         self._r=self._ps.raw
         
-      def h1(self,axis,X="all",bwidth=None,brange=[None,None]):
+      def h1(self,axis,X="all",erange=[None,None],bwidth=None,brange=[None,None]):
         """
         Create and return the histo of axis
         
@@ -101,10 +103,19 @@ class _PhaseSpace(object):
         
         if X=="all":
           w   = self._r.w
+          ekin= self._r.ekin
         else:
           axis= axis[self._r.x==X]
           w   = self._r.w[self._r.x==X]
+          ekin= self._r.ekin[self._r.x==X]
         
+        if erange[0] is None:erange[0]=min(ekin)
+        if erange[1] is None:erange[1]=max(ekin)
+        
+        eselect=np.array([ek>erange[0] and ek<erange[1] for ek in ekin])
+        axis=axis[eselect]
+        w = w[eselect]
+
         if bwidth is None:bwidth=axis.std()
         if brange[0] is None:brange[0]=min(axis)
         if brange[1] is None:brange[1]=max(axis)
@@ -114,9 +125,12 @@ class _PhaseSpace(object):
         h,b=np.histogram(axis,weights=w/bwidth,bins=bins)
         
         # Verifier b[:-1]
-        return b[:-1],h
+        h=list(h)
+        h.append(0.0)
+        h=np.array(h)
+        return b,h
         
-      def h2(self,axis1,axis2,X="all",bwidth1=None,bwidth2=None,brange1=[None,None],brange2=[None,None]):
+      def h2(self,axis1,axis2,X="all",erange=[None,None],bwidth1=None,bwidth2=None,brange1=[None,None],brange2=[None,None]):
         """
         Create and return the histo of axis
         
@@ -141,23 +155,97 @@ class _PhaseSpace(object):
         
         if X=="all":
           w   = self._r.w
+          ekin= self._r.ekin
         else:
-          axis= axis[self._r.x==X]
+          axis1= axis1[self._r.x==X]
+          axis2= axis2[self._r.x==X]
           w   = self._r.w[self._r.x==X]
+          ekin= self._r.ekin[self._r.x==X]
+          
+        if erange[0] is None:erange[0]=min(ekin)
+        if erange[1] is None:erange[1]=max(ekin)
+        
+        eselect=np.array([ek>erange[0] and ek<erange[1] for ek in ekin])
+        axis1=axis1[eselect]
+        axis2=axis2[eselect]
+        w = w[eselect]
         
         if bwidth1 is None:bwidth1=axis1.std()
         if brange1[0] is None:brange1[0]=min(axis1)
         if brange1[1] is None:brange1[1]=max(axis1)
         bins1=np.arange(brange1[0],brange1[1]+bwidth1,bwidth1)
-        if bwidth2 is None:bwidth1=axis2.std()
+        if bwidth2 is None:bwidth2=axis2.std()
         if brange2[0] is None:brange2[0]=min(axis2)
         if brange2[1] is None:brange2[1]=max(axis2)
         bins2=np.arange(brange2[0],brange2[1]+bwidth2,bwidth2)
         
-        h,b1,b2=np.histogram(axis1,axis2,weights=w/(bwidth1*bwidth2),bins=[bins1,bins2])
+        h,b1,b2=np.histogram2d(axis1,axis2,weights=w/(bwidth1*bwidth2),bins=[bins1,bins2])
         
         # Verifier b[:-1]
-        return b1[:-1],b2[:-1],h
+        #return b1[:-1],b2[:-1],h
+        return b1,b2,h
+        
+      def h3(self,axis1,axis2,axis3,X="all",erange=[None,None],bwidth1=None,bwidth2=None,bwidth3=None,brange1=[None,None],brange2=[None,None],brange3=[None,None]):
+        """
+        Create and return the histo of axis
+        
+        Parameters
+        ----------
+        axis1,axis2 : str or np.array
+          axis to hist
+        X : str or float, optional
+          X position on which do the hist. If "all", integrate on all the positions
+        bins : int or np.array, optional
+          number of bins (int) or bins on which do the hist. If None, bins=np.arange(min(axis),max(axis),axis.std())
+        
+        Returns
+        -------
+        b1,b2 : np.array
+          bins
+        h : np.array
+          histogram
+        """
+        if type(axis1) is str:axis1 = eval("self._r.%s"%axis1)
+        if type(axis2) is str:axis2 = eval("self._r.%s"%axis2)
+        if type(axis3) is str:axis3 = eval("self._r.%s"%axis3)
+        
+        if X=="all":
+          w   = self._r.w
+          ekin= self._r.ekin
+        else:
+          axis1= axis1[self._r.x==X]
+          axis2= axis2[self._r.x==X]
+          axis3= axis3[self._r.x==X]
+          w   = self._r.w[self._r.x==X]
+          ekin= self._r.ekin[self._r.x==X]
+          
+        if erange[0] is None:erange[0]=min(ekin)
+        if erange[1] is None:erange[1]=max(ekin)
+        
+        eselect=np.array([ek>erange[0] and ek<erange[1] for ek in ekin])
+        axis1=axis1[eselect]
+        axis2=axis2[eselect]
+        axis3=axis3[eselect]
+        w = w[eselect]
+        
+        if bwidth1 is None:bwidth1=axis1.std()
+        if brange1[0] is None:brange1[0]=min(axis1)
+        if brange1[1] is None:brange1[1]=max(axis1)
+        bins1=np.arange(brange1[0],brange1[1]+bwidth1,bwidth1)
+        if bwidth2 is None:bwidth2=axis2.std()
+        if brange2[0] is None:brange2[0]=min(axis2)
+        if brange2[1] is None:brange2[1]=max(axis2)
+        bins2=np.arange(brange2[0],brange2[1]+bwidth2,bwidth2)
+        if bwidth3 is None:bwidth3=axis3.std()
+        if brange3[0] is None:brange3[0]=min(axis3)
+        if brange3[1] is None:brange3[1]=max(axis3)
+        bins3=np.arange(brange3[0],brange3[1]+bwidth3,bwidth3)
+        
+        h,b=np.histogramdd([axis1,axis2,axis3],weights=w/(bwidth1*bwidth2*bwidth3),bins=[bins1,bins2,bins3])
+        
+        # Verifier b[:-1]
+        #return b[0][:-1],b[1][:-1],b[2][:-1],h
+        return b[0],b[1],b[2],h
 
     class _Plot(object):
       """
@@ -167,38 +255,40 @@ class _PhaseSpace(object):
         self._ps=PhaseSpace
         self._r=self._ps.raw
         self._h=self._ps.hist
-        self.autoclear = False
+        self.autoclear = True
         
-      def h1(self,axis,X="all",label=["","Weight"],bins=100,log=True):
+      def h1(self,axis,label=["",""],log=True,**kargs):
+        """
+        
+        """
         if self.autoclear : plt.clf()
-        if X=="all":
-          w   = self._r.w
-        else:
-          axis= axis[self._r.x==X]
-          w   = self._r.w[self._r.x==X]
-        h,b=np.histogram(axis,weights=w,bins=bins)
-        plt.step(b[:-1],h,label=label[1],where='post') # Verif
+        b,h=self._h.h1(axis,**kargs)
+        plt.step(b,h,'.',label=label[1],where='post') # Verif
+        plt.xlim(xmin=min(b),xmax=max(b))
         plt.xlabel(label[0])
         if log:plt.yscale('log')
         plt.legend()
 
-      def h2(self,axis1,axis2,X="all",label=["","","Weight"],bins=[100,100],log=False):
+      def h2(self,axis1,axis2,label=["","",""],log=False,**kargs):
+        """
+        
+        """
         if self.autoclear : plt.clf()
-        if X=="all":
-          w   = self._r.w
-        else:
-          axis1 = axis1[self._r.x==X]
-          axis2 = axis2[self._r.x==X]
-          w     = self._r.w[self._r.x==X]
         if log:
           from matplotlib.colors import LogNorm
           norm=LogNorm()
         else:
           norm=None
-        plt.hist2d(axis1,axis2,weights=w,bins=bins,label=label[2],norm=norm)
+        b1,b2,h=self._h.h2(axis1,axis2,**kargs)
+        g1,g2=np.meshgrid(b1,b2)
+        plt.pcolormesh(g1,g2,h.T,norm=norm) # Voire .T
+        #plt.hist2d(axis1,axis2,weights=w,bins=bins,label=label[2],norm=norm)
+        plt.xlim(xmin=min(b1),xmax=max(b1))
+        #plt.ylim(ymin=min(b2),ymax=max(b2))
         plt.xlabel(label[0])
         plt.ylabel(label[1])
-        #plt.colorbar()
+        plt.title(label[2])
+        plt.colorbar()
         plt.legend()
         
         
@@ -230,6 +320,21 @@ class _PhaseSpace(object):
         
         self.autoclear=tmp
         
+      def h3(self,axis1,axis2,axis3,snorm=1.0,hmin=0.0,**kargs):
+        from mpl_toolkits.mplot3d import Axes3D
+        ax = plt.subplot(projection='3d')
+        b1,b2,b3,h=self._h.h3(axis1,axis2,axis3,**kargs)
+        g1,g2,g3=np.meshgrid(b1,b2,b3)
+        
+        for i1,e1 in enumerate(h):
+          for i2,e2 in enumerate(e1):
+            for i3,e3 in enumerate(e2):
+              if e3<hmin:
+                h[i1][i2][i3]=0.0
+        
+        ax.scatter3D(g1,g2,g3,s=snorm*h.T,cmap='hot')
+
+      
       def ekin(self,X="all",bwidth=0.1): # Eventually bins=len(px)
         ekin=self._r.ekin
         bins=np.arange(min(ekin),max(ekin),bwidth)
@@ -393,6 +498,8 @@ class PhaseSpaceSmilei(_PhaseSpace):
 
 class PhaseSpaceGeant4(_PhaseSpace):
   def __init__(self):
+    self.raw = self._Raw()
+    self.hist = self._Hist(self)
     self.plot = self._Plot(self)
     
   def extract(self,file_name,nthreads=1):
@@ -428,5 +535,5 @@ class PhaseSpaceGeant4(_PhaseSpace):
     pz  = data[6::7]
     print("Data succesfully imported")
     
-    self.update(w,x,y,z,px,py,pz)
+    self.raw.update(w,x,y,z,px,py,pz)
       
