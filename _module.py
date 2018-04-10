@@ -1,14 +1,24 @@
 #coding:utf8
-import numpy as np
-import matplotlib.pyplot as plt
 """
-Structure :
+Package Structure
+=================
+
 _PhaseSpace : base object
+PhaseSpaceXXXX : child object
+
+Available :
 PhaseSpaceSmilei
 PhaseSpaceGeant4
+
+TODO : 
 PhaseSpaceTriLens
 PhaseSpaceCAIN
 """
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+
 class _PhaseSpace(object):
     """
     Base class for particle phase-space analysis.
@@ -29,6 +39,10 @@ class _PhaseSpace(object):
       Units ...
       """
       def update(self,w,x,y,z,px,py,pz):
+        """
+        Update class attributes
+        """
+        # Save values into np.array objects
         self.w  = np.array(w)
         self.x  = np.array(x)
         self.y  = np.array(y)
@@ -36,15 +50,20 @@ class _PhaseSpace(object):
         self.px = np.array(px)
         self.py = np.array(py)
         self.pz = np.array(pz)
-        # 
+        
+        # Calculate other things ...
         self.r      = np.sqrt(self.y**2+self.z**2)
         self.p      = np.sqrt(self.px**2+self.py**2+self.pz**2)
         self.theta  = np.degrees(np.arctan(self.py/self.px))
         self.phi    = np.degrees(np.arctan(self.pz/self.px)) # Geometrical effect ? change -> 0 pi
         self.ekin   = (np.sqrt((self.p/0.511)**2 + 1) - 1) * 0.511
+        
         print("Update done")
 
       def import_data(self,file_name,verbose=True):
+        """
+        Import phase space data
+        """
         if verbose: print("Importing data ...")
         w         = []
         x,y,z     = [],[],[]
@@ -60,16 +79,33 @@ class _PhaseSpace(object):
         if verbose: print('Data succesfully imported')
 
       
-      def export_data(self,file_name,title="",unit={'length':'um','momentum':'MeV/c'}):   
-        print("Exporting data ...") 
+      def export_data(self,file_name,title="",unit={'length':'um','momentum':'MeV/c'},verbose=True):
+        """
+        Export phase space data
+        """
+        if verbose: print("Exporting data ...")
+        
+        # Opening the output file
         with open(file_name,'w') as f:
+          
+          # Write title
           f.write("# Title : %s\n"%title)
-          f.write("# weight\t x ({0})\t\t y ({0})\t\t z ({0})\t\t px ({1})\t py ({1})\t pz ({1})\n".format(unit['length'],unit['momentum']))
+          
+          # Write legend
+          f.write("# ")
+          for legend in ('weight','x (%s)'%unit['length'],'y (%s)'%unit['length'],'z (%s)'%unit['length'],
+                         'px (%s)'%unit['momentum'],'py (%s)'%unit['momentum'],'pz (%s)'%unit['momentum']):
+            f.write("%-16s"%legend) # the chain is placed under 16 characters
+          f.write("\n")
+          
+          # Write data
           for i in range(len(self.w)):
             for e in [self.w[i],self.x[i],self.y[i],self.z[i],self.px[i],self.py[i],self.pz[i]]:
-                f.write("{: .6E}\t".format(e))
+                tmp="% .8E"%e # 8 digits precision with E notation
+                f.write("%-16s"%tmp) # the chain is placed under 16 characters
             f.write("\n")
-        print('Data succesfully exported')
+        
+        if verbose: print('Data succesfully exported')
 
     class _Hist(object):
       """
@@ -78,6 +114,47 @@ class _PhaseSpace(object):
       def __init__(self,PhaseSpace):
         self._ps=PhaseSpace
         self._r=self._ps.raw
+        
+      def hn(self,axis,X="all",erange=None,bwidth=None,brange=None):
+        """
+        n dimension histogram
+        """
+        for i,ax in enumerate(axis):
+          if type(ax) is str:axis[i] = eval("self._r.%s"%axis)
+        
+        
+        for i,ax in enumerate(axis):
+          if X=="all":
+            w   = self._r.w
+            ekin= self._r.ekin
+          else:
+            axis[i]= ax[self._r.x==X]
+            w   = self._r.w[self._r.x==X]
+            ekin= self._r.ekin[self._r.x==X]
+        
+        if not erange:erange=[min(ekin),max(ekin)]
+        eselect=np.array([ek>erange[0] and ek<erange[1] for ek in ekin])
+        w = w[eselect]
+        for i,ax in enumerate(axis):
+          axis=ax[eselect]
+        
+        if not brange:
+          brange=[]
+          for i,ax in enumerate(axis):
+            brange.append([min(ax),max(ax)]
+        
+        if not bwidth:
+          bwidth=[]
+          for i,ax in enumerate(axis):
+          bwidth.append((brange[i][1]-brange[i][0])/10.)
+        
+        bins=[]
+        for i,ax in enumerate(axis):
+          bins.append(np.arange(brange[0],brange[1]+bwidth,bwidth))
+        
+        h,b=np.histogramdd(axis,weights=w/np.product(bwidth),bins=bins)
+        
+        return *b,h
         
       def h1(self,axis,X="all",erange=[None,None],bwidth=None,brange=[None,None]):
         """
@@ -116,9 +193,9 @@ class _PhaseSpace(object):
         axis=axis[eselect]
         w = w[eselect]
 
-        if bwidth is None:bwidth=axis.std()
         if brange[0] is None:brange[0]=min(axis)
         if brange[1] is None:brange[1]=max(axis)
+        if bwidth is None:bwidth=(brange[1]-brange[0])/10.
         
         bins=np.arange(brange[0],brange[1]+bwidth,bwidth)
         
@@ -149,9 +226,15 @@ class _PhaseSpace(object):
           bins
         h : np.array
           histogram
+          
+          
+        TODO: NE PAS AFFECTER DE VALEURS AUX PARAMETRES -> Reaffecte la valeur par défaut si utilisé dans un module
         """
         if type(axis1) is str:axis1 = eval("self._r.%s"%axis1)
         if type(axis2) is str:axis2 = eval("self._r.%s"%axis2)
+        
+        print(min(axis1),max(axis1))
+        print(min(axis2),max(axis2))
         
         if X=="all":
           w   = self._r.w
@@ -170,14 +253,16 @@ class _PhaseSpace(object):
         axis2=axis2[eselect]
         w = w[eselect]
         
-        if bwidth1 is None:bwidth1=axis1.std()
         if brange1[0] is None:brange1[0]=min(axis1)
         if brange1[1] is None:brange1[1]=max(axis1)
+        if bwidth1 is None:bwidth1=(brange1[1]-brange1[0])/10.
         bins1=np.arange(brange1[0],brange1[1]+bwidth1,bwidth1)
-        if bwidth2 is None:bwidth2=axis2.std()
         if brange2[0] is None:brange2[0]=min(axis2)
         if brange2[1] is None:brange2[1]=max(axis2)
+        if bwidth2 is None:bwidth2=(brange2[1]-brange2[0])/10.
         bins2=np.arange(brange2[0],brange2[1]+bwidth2,bwidth2)
+        
+        print(bins1,bins2)
         
         h,b1,b2=np.histogram2d(axis1,axis2,weights=w/(bwidth1*bwidth2),bins=[bins1,bins2])
         
@@ -228,17 +313,17 @@ class _PhaseSpace(object):
         axis3=axis3[eselect]
         w = w[eselect]
         
-        if bwidth1 is None:bwidth1=axis1.std()
         if brange1[0] is None:brange1[0]=min(axis1)
         if brange1[1] is None:brange1[1]=max(axis1)
+        if bwidth1 is None:bwidth1=(brange1[1]-brange1[0])/10.
         bins1=np.arange(brange1[0],brange1[1]+bwidth1,bwidth1)
-        if bwidth2 is None:bwidth2=axis2.std()
         if brange2[0] is None:brange2[0]=min(axis2)
         if brange2[1] is None:brange2[1]=max(axis2)
+        if bwidth2 is None:bwidth2=(brange2[1]-brange2[0])/10.
         bins2=np.arange(brange2[0],brange2[1]+bwidth2,bwidth2)
-        if bwidth3 is None:bwidth3=axis3.std()
         if brange3[0] is None:brange3[0]=min(axis3)
         if brange3[1] is None:brange3[1]=max(axis3)
+        if bwidth3 is None:bwidth3=(brange3[1]-brange3[0])/10.
         bins3=np.arange(brange3[0],brange3[1]+bwidth3,bwidth3)
         
         h,b=np.histogramdd([axis1,axis2,axis3],weights=w/(bwidth1*bwidth2*bwidth3),bins=[bins1,bins2,bins3])
@@ -269,7 +354,7 @@ class _PhaseSpace(object):
         if log:plt.yscale('log')
         plt.legend()
 
-      def h2(self,axis1,axis2,label=["","",""],log=False,**kargs):
+      def h2(self,axis1,axis2,label=["","",""],log=False,contour=True,**kargs):
         """
         
         """
@@ -281,133 +366,161 @@ class _PhaseSpace(object):
           norm=None
         b1,b2,h=self._h.h2(axis1,axis2,**kargs)
         g1,g2=np.meshgrid(b1,b2)
-        plt.pcolormesh(g1,g2,h.T,norm=norm) # Voire .T
-        #plt.hist2d(axis1,axis2,weights=w,bins=bins,label=label[2],norm=norm)
+        a1=plt.pcolormesh(g1,g2,h.T,norm=norm) # Voire .T
+        
         plt.xlim(xmin=min(b1),xmax=max(b1))
-        #plt.ylim(ymin=min(b2),ymax=max(b2))
+        plt.ylim(ymin=min(b2),ymax=max(b2))
+        
         plt.xlabel(label[0])
         plt.ylabel(label[1])
         plt.title(label[2])
-        plt.colorbar()
+        ca1=plt.colorbar(a1,orientation='horizontal')
+        
         plt.legend()
         
+      def contour(self,axis1,axis2,label=["","",""],log=False,gfilter=0.0,**kargs):
+        """
         
-      def h1h2(self,axis1,axis2,X="all",label=["","","Weight"],bins=[100,100],log=False):
+        """
+        if self.autoclear : plt.clf()
+        if log:
+          from matplotlib.colors import LogNorm
+          norm=LogNorm()
+        else:
+          norm=None
+        b1,b2,h=self._h.h2(axis1,axis2,**kargs)
+        g1,g2=np.meshgrid(b1,b2)
+        #if gfilter>0.0:
+        from scipy.ndimage.filters import gaussian_filter
+        a2=plt.contour(g1[:-1,:-1],g2[:-1,:-1],gaussian_filter(h.T,gfilter),
+                       norm=norm,colors='k')
+        plt.clabel(a2, inline=1, fontsize=10 ,fmt='%1.1e')
+        
+        plt.xlim(xmin=min(b1),xmax=max(b1))
+        plt.ylim(ymin=min(b2),ymax=max(b2))
+        plt.xlabel(label[0])
+        plt.ylabel(label[1])
+        plt.title(label[2])
+        plt.legend()
+        
+      
+      def h1h2(self,axis1,axis2,label=["","",""],log=False,**kargs):
         # https://matplotlib.org/examples/pylab_examples/scatter_hist.html
         # https://matplotlib.org/examples/axes_grid/demo_edge_colorbar.html
+        kargs1={'X':kargs.get('X',None),
+                'erange':kargs.get('erange',[None,None]),
+                'bwidth':kargs.get('bwidth1',None),
+                'brange':kargs.get('brange1',[None,None])
+                }
+        
+        kargs2={'X':kargs.get('X',None),
+                'erange':kargs.get('erange',[None,None]),
+                'bwidth':kargs.get('bwidth2',None),
+                'brange':kargs.get('brange2',[None,None])
+                }
+        
         tmp = bool(self.autoclear)
         if self.autoclear : plt.clf()
         self.autoclear=False
+        
         plt.subplots_adjust(hspace=0.15,wspace=0.15)
+        
         ax1=plt.subplot(221)
-        if X=="all":
-            w   = self._r.w
-            axis=axis1
-        else:
-            axis= axis1[self._r.x==X]
-            w   = self._r.w[self._r.x==X]
-        h,b=np.histogram(axis,weights=w,bins=bins[0])
-        plt.step(h,b[:-1],label=label[2],where='post') # Verif
+        b,h=self._h.h1(axis1)
+        plt.step(h,b,label=label[2],where='post') # Verif
         plt.ylabel(label[0])
         if log:plt.xscale('log')
         plt.legend()
+        
         ax2=plt.subplot(224)
-        self.h1(axis2,X=X,label=[label[1],label[2]],bins=bins[1],log=log)
+        self.h1(axis2,label=[label[1],label[2]],log=log)
+        
         ax3=plt.subplot(222,sharex=ax2,sharey=ax1)
-        self.h2(axis1,axis2,X=X,label=['','',''],bins=bins,log=log)
+        self.h2(axis1,axis2,label=label,log=log,**kargs)
         plt.setp(ax3.get_yticklabels(), visible=False)
         plt.setp(ax3.get_xticklabels(), visible=False)
         
         self.autoclear=tmp
+      
+      def scatter(self,axis1,axis2,label=["","",""],log=False,**kargs):
+        from matplotlib.ticker import NullFormatter
+        nullfmt = NullFormatter()         # no labels
         
+        kargs1={'X':kargs.get('X',None),
+                'erange':kargs.get('erange',[None,None]),
+                'bwidth':kargs.get('bwidth1',None),
+                'brange':kargs.get('brange1',[None,None])
+                }
+        
+        kargs2={'X':kargs.get('X',None),
+                'erange':kargs.get('erange',[None,None]),
+                'bwidth':kargs.get('bwidth2',None),
+                'brange':kargs.get('brange2',[None,None])
+                }
+        
+        
+        # definitions for the axes
+        left, width = 0.1, 0.65
+        bottom, height = 0.1, 0.65
+        bottom_h = left_h = left + width + 0.02
+
+        rect_h2 = [left, bottom, width, height]
+        rect_h1x = [left, bottom_h, width, 0.2]
+        rect_h1y = [left_h, bottom, 0.2, height]
+
+        axh2 = plt.axes(rect_h2)
+        axh1x = plt.axes(rect_h1x)
+        axh1y = plt.axes(rect_h1y)
+
+        # no labels
+        axh1x.xaxis.set_major_formatter(nullfmt)
+        axh1y.yaxis.set_major_formatter(nullfmt)
+
+        # the h2 plot:
+        b1,b2,h=self._h.h2(axis1,axis2,**kargs)
+        g1,g2=np.meshgrid(b1,b2)
+        axh2.pcolormesh(g1,g2,h.T) # Voire .T
+        ####
+        
+        """
+        # now determine nice limits by hand:
+        binwidth = 0.25
+        xymax = np.max([np.max(np.fabs(x)), np.max(np.fabs(y))])
+        lim = (int(xymax/binwidth) + 1) * binwidth
+        
+        axScatter.set_xlim((-lim, lim))
+        axScatter.set_ylim((-lim, lim))
+        bins = np.arange(-lim, lim + binwidth, binwidth)
+        """
+        
+        ###
+        b,h=self._h.h1(axis1,**kargs1)
+        axh1x.step(b,h,'.',label=label[1],where='post') # Verif
+        b,h=self._h.h1(axis2,**kargs2)
+        axh1y.step(h,b,'.',label=label[1],where='post') # Verif
+        ####
+        """
+        axHistx.set_xlim(axScatter.get_xlim())
+        axHisty.set_ylim(axScatter.get_ylim())
+        """
+
       def h3(self,axis1,axis2,axis3,snorm=1.0,hmin=0.0,**kargs):
         from mpl_toolkits.mplot3d import Axes3D
         ax = plt.subplot(projection='3d')
         b1,b2,b3,h=self._h.h3(axis1,axis2,axis3,**kargs)
         g1,g2,g3=np.meshgrid(b1,b2,b3)
         
+        tmp=np.array(h)
+        
         for i1,e1 in enumerate(h):
           for i2,e2 in enumerate(e1):
             for i3,e3 in enumerate(e2):
               if e3<hmin:
-                h[i1][i2][i3]=0.0
+                tmp[i1][i2][i3]=0.0
+              else:
+                tmp[i1][i2][i3]=e3
         
-        ax.scatter3D(g1,g2,g3,s=snorm*h.T,cmap='hot')
-
-      
-      def ekin(self,X="all",bwidth=0.1): # Eventually bins=len(px)
-        ekin=self._r.ekin
-        bins=np.arange(min(ekin),max(ekin),bwidth)
-        #self.h1(ekin,X=X,label=['ekin (MeV)','X = %s um'%X],bins=bins,log=True)
-        if X=="all":
-            w   = self._r.w
-        else:
-            ekin= ekin[self._r.x==X]
-            w   = self._r.w[self._r.x==X]
-        h,b=np.histogram(ekin,weights=w*1/bwidth,bins=bins)
-        #h,b=np.histogram(ekin,weights=w,bins=bins)
-        plt.step(b[:-1],h,label='X = %s um'%X,where='post') # Verif
-        plt.xlabel('ekin (MeV)')
-        plt.yscale('log')
-        plt.legend()
-        plt.ylabel('Number per MeV')
-        
-      def theta(self,X="all",bwidth=1.0):
-        theta=np.degrees(self._r.theta)
-        bins=np.arange(min(theta),max(theta),bwidth)
-        self.h1(theta,X=X,label=['theta (deg)','X = %s um'%X],bins=bins,log=True)
-        plt.ylabel('Number per bin')
-      
-      def phi(self,X="all",bwidth=1.0):
-        phi=np.degrees(self._r.phi)
-        bins=np.arange(min(phi),max(phi),bwidth)
-        self.h1(phi,X=X,label=['phi (deg)','X = %s um'%X],bins=bins,log=True)
-        plt.ylabel('Number per bin')
-
-      def angle(self,X="all",bwidth=1.0):
-        pass
-        
-      def yz(self,X="all",bwidth=10.0):
-        plt.title("Number per bin")
-        y = self._r.y
-        z = self._r.z
-        by=np.arange(-y.std(),y.std(),bwidth)
-        bz=np.arange(-z.std(),z.std(),bwidth)
-        #self.h1h2(y,z,X=X,label=['y (um)','z (um)','X = %s um'%X],bins=[by,bz],log=True)
-        self.h1h2(y,z,X=X,label=['y (um)','z (um)',''],bins=[by,bz],log=True)
-        
-      def xekin(self,bwidth=0.1):
-        plt.title("Number per bin")
-        x = self._r.x
-        ekin = self._r.ekin
-        bx = [0.0]
-        for e in x:
-          if e not in bx:
-            bx.append(e)
-        bx.sort()
-        bx=np.array(bx)+1e-3
-
-        bekin=np.arange(ekin.min(),ekin.max(),bwidth)
-        self.h2(x,ekin,X='all',label=['x (um)','ekin (MeV)','bin width = %s MeV'%bwidth],bins=[bx,bekin],log=True)
-        
-      def rekin(self,X="all",bwidth=[10.0,0.1]):
-        plt.title("Number per bin")
-        r = self._r.r
-        ekin = self._r.ekin
-        br=np.arange(0,1000,bwidth[0])
-        bekin=np.arange(ekin.min(),ekin.max(),bwidth[1])
-        self.h2(r,ekin,X=X,label=['r (um)','ekin (MeV)',''],bins=[br,bekin],log=True)
-        
-      def xn0(self):
-        x = self._r.x
-        bx = []
-        for e in x:
-          if e not in bx:
-            bx.append(e)
-        bx.sort()
-        bx=np.array(bx)
-        
-        self.h1(x,label=['x (um)','Total number'],bins=bx)
+        ax.scatter3D(g1,g2,g3,s=snorm*tmp.T,cmap='hot')
 
 #########################################################################################
     
@@ -492,8 +605,6 @@ class PhaseSpaceSmilei(_PhaseSpace):
     z = [0.0] * len(w)
     print("Data succesfully imported")
     self.update(w,x,y,z,px,py,pz)
-
-
 
 
 class PhaseSpaceGeant4(_PhaseSpace):
