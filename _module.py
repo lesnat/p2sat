@@ -28,16 +28,68 @@ class _PhaseSpace(object):
     load/import with options for different context of _PS mother class ?
     """
     def __init__(self):
-        self.raw=_Raw()
-        self.hist=_Hist(self)
-        self.plot=_Plot(self)
+        self.raw=self._Raw()
+        self.hist=self._Hist(self)
+        self.plot=self._Plot(self)
       
     class _Raw(object):
       """
       Raw data
       
       Units ...
+      
+      Calculate ekin, theta, ... from px,py,pz
       """
+      def select(self,axis,faxis,frange,fpp=1e-7):
+        """
+        Filter an axis with a value/range on another axis
+        
+        Parameters
+        ----------
+        axis : str or numpy.ndarray
+          axis to filter
+        faxis : str or numpy.ndarray
+          filtering axis
+        frange : int, float, list/tuple of 2 float
+          filtering value/range (value if int, range if float or list/tuple)
+        fpp : float, optional
+          relative floating point precision
+          
+        Returns
+        -------
+        axis : numpy.ndarray
+          filtered axis
+          
+        Examples
+        --------
+        
+        It is possible to filter by an int value
+        
+        >>> w = np.random.uniform(0.,10.,1000)
+        >>> x = np.array([0,1,2,3]*1000)
+        >>> w = select(w,x,3) # Select all the w with x==3
+        
+        Or filter by a range
+        
+        >>> w = np.random.uniform(0.,10.,1000)
+        >>> x = np.linspace(0.,1000.,1000)
+        >>> w = select(w,x,[150,275]) # Select all the w with :math:`x \in [150,275]`
+        """
+        if type(axis) is str: axis=eval("self.%s"%axis)
+        if type(faxis) is str: faxis=eval("self.%s"%faxis)
+        
+        if type(frange) is list or type(frange) is tuple:
+          select=np.array([x>frange[0]-fpp and x<frange[1]+fpp for x in faxis])
+          axis=axis[select]
+        elif type(frange) is int:
+          axis=axis[faxis==frange]
+        elif type(frange) is float:
+          axis=self._filter(axis,faxis,frange=(frange-fpp*frange,frange+fpp*frange))
+        else:
+          raise TypeError('frange type must be int/float or list/tuple of 2 float.')
+        
+        return axis
+        
       def update(self,w,x,y,z,px,py,pz,verbose=True):
         """
         Update class attributes
@@ -115,46 +167,54 @@ class _PhaseSpace(object):
         self._ps=PhaseSpace
         self._r=self._ps.raw
         
-      def hn(self,axis,X=None,erange=None,bwidth=None,brange=None):
+      def hn(self,axis,bwidth=None,brange=None,wnorm=None,select=None):
         """
-        Create and return the histo of axis
+        Create and return the n-dimensional histo of axis list.
         
         Parameters
         ----------
-        axis : str or np.array
-          axis to hist
-        X : float, optional
-          X position on which do the hist. If "all", integrate on all the positions
-        bins : int or np.array, optional
-          number of bins (int) or bins on which do the hist. If None, bins=np.arange(min(axis),max(axis),axis.std())
+        axis : list of str/np.array
+          list of axis to hist
+        bwidth : list of float, optional
+          list of bin width. If a bwidth element is None, a calculation is done to have 10 bins in the correspondant axis
+        brange : list of list of 2 float, optional
+          list of bin minimum and maximum. If a brange element is None, the minimum/maximum of the axis is taken
+        wnorm : list of float, optional
+          weight normalization. If a wnorm element is None, the bin width is taken
+        select : dict, optional
+          filtering dictionary
         
         Returns
         -------
         b : np.array
           bins
         h : np.array
-          histogram
+          number of particles per bin unit
+          
+        Example
+        -------
+        
+        >>> hn(['x'],bwidth=[50],brange=[[0,1000]],wnorm=[1.0],select={'ekin':(0.511,None)})
+        
+        returns the number of particles with :math:`ekin \in [0.511, +\infty] MeV` in function of x
+        wnorm=[1.0] to not divide nb of particles by bin width (otherwise number per um)
+        
+        >>> hn(['r','ekin'],bwidth=[10.0,0.1],brange=[[0,1000],[0.1,50.0]],select={'x':150})
+        
+        returns a number of e- per um per MeV at x=150 um
         """
         # Get the axis from a str if needed
         for i,ax in enumerate(axis):
           if type(ax) is str:axis[i] = eval("self._r.%s"%ax)
         
-        # Get only a selected X
-        for i,ax in enumerate(axis):
-          if not X:
-            w   = self._r.w
-            ekin= self._r.ekin
-          else:
-            axis[i]= ax[self._r.x==X]
-            w   = self._r.w[self._r.x==X]
-            ekin= self._r.ekin[self._r.x==X]
+        # Get a shortcut to particle statistical weight
+        w   = self._r.w
         
-        # Select an energy range
-        if not erange: erange=[min(ekin),max(ekin)]
-        eselect=np.array([ek>erange[0] and ek<erange[1] for ek in ekin])
-        w = w[eselect]
-        for i,ax in enumerate(axis):
-          axis[i]=ax[eselect]
+        # Filter the data if needed
+        if select is not None:
+          for key,val in select.items():
+            w = self._r.select(w,key,val)
+            axis=self._r.select(axis,key,val)
         
         # Define default bin range
         if not brange: brange=[[None,None]]*len(axis) 
@@ -175,8 +235,13 @@ class _PhaseSpace(object):
           bins.append(np.linspace(brange[i][0],brange[i][1],nbins[i]))
           #bins.append(np.arange(brange[i][0],brange[i][1],bwidth[i]))
         
-        # Calculate the multi dimensional histo, which return a number of particles per bin unit
-        h,b=np.histogramdd(axis,weights=w/np.product(bwidth),bins=bins)
+        # Define weight normalization
+        if not wnorm: wnorm=[None]*len(axis)
+        for i,wn in enumerate(wnorm):
+          if wn is None: wnorm[i]=bwidth[i]
+        
+        # Calculate the multi dimensional histo, normalized by wnorm
+        h,b=np.histogramdd(axis,weights=w/np.product(wnorm),bins=bins)
         
         # Return the bins and histo
         return b,h
@@ -339,7 +404,9 @@ class _PhaseSpace(object):
         self._h=self._ps.hist
         self.autoclear = True
         
-      def h1(self,axis,label=["",""],log=True,**kargs):
+      def h1(self,axis, # axis
+            label=["",""],log=True, # plot options
+            **kargs): # hist options
         """
         
         """
@@ -351,7 +418,9 @@ class _PhaseSpace(object):
         if log:plt.yscale('log')
         plt.legend()
 
-      def h2(self,axis1,axis2,label=["","",""],log=False,contour=True,**kargs):
+      def h2(self,axis1,axis2,
+            label=["","",""],log=False,contour=True,
+            **kargs):
         """
         
         """
@@ -375,7 +444,9 @@ class _PhaseSpace(object):
         
         plt.legend()
         
-      def contour(self,axis1,axis2,label=["","",""],log=False,gfilter=0.0,**kargs):
+      def contour(self,axis1,axis2,
+                  label=["","",""],log=False,gfilter=0.0,
+                  **kargs):
         """
         
         """
@@ -401,7 +472,9 @@ class _PhaseSpace(object):
         plt.legend()
         
       
-      def h1h2(self,axis1,axis2,label=["","",""],log=False,**kargs):
+      def h1h2(self,axis1,axis2,
+              label=["","",""],log=False,
+              **kargs):
         # https://matplotlib.org/examples/pylab_examples/scatter_hist.html
         # https://matplotlib.org/examples/axes_grid/demo_edge_colorbar.html
         kargs1={'X':kargs.get('X',None),
@@ -439,7 +512,9 @@ class _PhaseSpace(object):
         
         self.autoclear=tmp
       
-      def scatter(self,axis1,axis2,label=["","",""],log=False,**kargs):
+      def scatter(self,axis1,axis2,
+                  label=["","",""],log=False,
+                  **kargs):
         from matplotlib.ticker import NullFormatter
         nullfmt = NullFormatter()         # no labels
         
@@ -501,7 +576,9 @@ class _PhaseSpace(object):
         axHisty.set_ylim(axScatter.get_ylim())
         """
 
-      def h3(self,axis1,axis2,axis3,snorm=1.0,hmin=0.0,**kargs):
+      def h3(self,axis1,axis2,axis3,
+            snorm=1.0,hmin=0.0,
+            **kargs):
         from mpl_toolkits.mplot3d import Axes3D
         ax = plt.subplot(projection='3d')
         b1,b2,b3,h=self._h.h3(axis1,axis2,axis3,**kargs)
@@ -561,7 +638,7 @@ class PhaseSpaceSmilei(_PhaseSpace):
     x = [X] * len(w)
     z = [0.0] * len(w)
     print("Data succesfully imported")
-    self.update(w,x,y,z,px,py,pz)
+    self.raw.update(w,x,y,z,px,py,pz)
     
   def extract_2d(self,Screen,timestep,xnorm,wnorm=1.0,X=0):
     w         = []
@@ -601,7 +678,7 @@ class PhaseSpaceSmilei(_PhaseSpace):
     x = [X] * len(w)
     z = [0.0] * len(w)
     print("Data succesfully imported")
-    self.update(w,x,y,z,px,py,pz)
+    self.raw.update(w,x,y,z,px,py,pz)
 
 
 class PhaseSpaceGeant4(_PhaseSpace):

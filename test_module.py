@@ -18,7 +18,7 @@ def param():
   return w,x,y,z,px,py,pz
   
 def set_ps(w,x,y,z,px,py,pz):
-  ps=_module.PhaseSpaceSmilei()
+  ps=_module._PhaseSpace()
   ps.raw.update(w,x,y,z,px,py,pz,verbose=False)
   return ps
   
