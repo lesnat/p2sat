@@ -23,26 +23,74 @@ class _PhaseSpace(object):
     """
     Base class for particle phase-space analysis.
     
-    w,x,y,z,px,py,pz,ekin,theta,phi are instance attributes.
+    Attributes
+    ----------
+    extract : "polymorphic" method
+      load phase space from a simulation file
+    raw : sub-object
+      contains raw data and methods to manipulate it, such as import/export into a file or value filtering method. Appropriate place to IO ?
+    hist : sub-object
+      contains methods to make histograms from raw data
+    plot : sub-object
+      contains methods to plot histos
     
-    load/import with options for different context of _PS mother class ?
+    Notes
+    -----
+    See sub-objects documentation for more informations
     """
     def __init__(self):
         self.raw=self._Raw()
         self.hist=self._Hist(self)
         self.plot=self._Plot(self)
       
+    def extract(self):
+      """
+      Extract raw data from a simulation file.
+      
+      Notes
+      -----
+      This abstract method must be overwritten by the _PhaseSpace child classes
+      """
+      raise NotImplementedError
+      
     class _Raw(object):
       """
-      Raw data
+      Class containing raw data and methods to manipulate it.
       
-      Units ...
+      Attributes
+      ----------
+      w : numpy.ndarray
+        particle statistical weight
+      x,y,z : numpy.ndarray
+        particle x,y,z position in um
+      r : numpy.ndarray
+        absolute distance to the x axis in um
+      px,py,pz : numpy.ndarray
+        particle momentum in x,y,z direction in MeV/c
+      p : numpy.ndarray
+        absolute particle momentum in MeV/c
+      ekin : numpy.ndarray
+        particle energy in MeV
+      theta : numpy.ndarray
+        angle between px and py in degree
+      phi : numpy.ndarray
+        angle between ??? in degree
       
-      Calculate ekin, theta, ... from px,py,pz
+      Notes
+      -----
+      As all the calculations are done with the previously defined units,
+      the input data might be firstly converted to those units.
+      
+      Calculations :
+      - r is defined as :math:`\sqrt{y^2+z^2}`
+      - p is defined as :math:`\sqrt{p_x^2+p_y^2+p_z^2}`
+      - ekin is defined as :math:`(\sqrt{(p/m_e c)^2+1}-1) \\times m_e c^2`
+      - theta is defined as :math:`\\arctan{p_y/p_x}`
+      - phi is defined (yet) as :math:`\\arctan{p_z/p_x}`
       """
       def select(self,axis,faxis,frange,fpp=1e-7):
         """
-        Filter an axis with a value/range on another axis
+        Filter an axis with a value/range on another axis.
         
         Parameters
         ----------
@@ -53,7 +101,7 @@ class _PhaseSpace(object):
         frange : int, float, list/tuple of 2 float
           filtering value/range (value if int, range if float or list/tuple)
         fpp : float, optional
-          relative floating point precision
+          relative floating point precision. Default is 1e-7
           
         Returns
         -------
@@ -65,15 +113,17 @@ class _PhaseSpace(object):
         
         It is possible to filter by an int value
         
-        >>> w = np.random.uniform(0.,10.,1000)
-        >>> x = np.array([0,1,2,3]*1000)
-        >>> w = select(w,x,3) # Select all the w with x==3
+        >>> w = np.random.uniform(low=0.,high=10.,size=10)
+        >>> x = np.array([1,3,3,3,7,9,5,3,7,3])
+        >>> w = select(w,x,3) # Select all the w satisfying x==3
         
-        Or filter by a range
+        or filter by a range
         
-        >>> w = np.random.uniform(0.,10.,1000)
-        >>> x = np.linspace(0.,1000.,1000)
-        >>> w = select(w,x,[150,275]) # Select all the w with :math:`x \in [150,275]`
+        >>> w = np.random.uniform(low=0.,high=10.,size=1000)
+        >>> ekin = np.random.exponential(scale=3.0,size=1000)
+        >>> w = select(w,ekin,[0.511,None]) # Select all the w with :math:`ekin \in [0.511,+\infty]`
+        
+        If frange is a list/tuple or a float, the filtering is done with a fpp precision
         """
         if type(axis) is str: axis=eval("self.%s"%axis)
         if type(faxis) is str: faxis=eval("self.%s"%faxis)
@@ -92,7 +142,14 @@ class _PhaseSpace(object):
         
       def update(self,w,x,y,z,px,py,pz,verbose=True):
         """
-        Update class attributes
+        Update class attributes with new values.
+        
+        Parameters
+        ----------
+        w,x,y,z,px,py,pz : list or numpy.ndarray
+          particle phase space. More information can be found in raw object documentation
+        verbose : bool
+          verbosity of the function. If True, a message is displayed when the attributes are loaded in memory
         """
         # Save values into np.array objects
         self.w  = np.array(w)
@@ -103,7 +160,7 @@ class _PhaseSpace(object):
         self.py = np.array(py)
         self.pz = np.array(pz)
         
-        # Calculate other things ...
+        # Calculate other parameters from it
         self.r      = np.sqrt(self.y**2+self.z**2)
         self.p      = np.sqrt(self.px**2+self.py**2+self.pz**2)
         self.theta  = np.degrees(np.arctan(self.py/self.px))
@@ -114,7 +171,18 @@ class _PhaseSpace(object):
 
       def import_data(self,file_name,verbose=True):
         """
-        Import phase space data
+        Import particle phase space from a p2sat file.
+        
+        Parameters
+        ----------
+        file_name : str
+          name of the input file
+        verbose : bool, optional
+          verbosity
+        
+        See Also
+        --------
+        export_data
         """
         if verbose: print("Importing data ...")
         w         = []
@@ -131,9 +199,38 @@ class _PhaseSpace(object):
         if verbose: print('Data succesfully imported')
 
       
-      def export_data(self,file_name,title="",unit={'length':'um','momentum':'MeV/c'},verbose=True):
+      def export_data(self,file_name,title="",verbose=True):
         """
-        Export phase space data
+        Export particle phase space in a p2sat file.
+        
+        Parameters
+        ----------
+        file_name : str
+          name of the output file
+        title : str, optional
+          title of the file
+        verbose : bool, optional
+          verbosity
+        
+        Notes
+        -----
+        The format in the output file is
+        # title
+        # legend
+          w x y z px py pz
+          w x y z px py pz
+          . . . . .  .  .
+          . . . . .  .  .
+          . . . . .  .  .
+        with 7 digits precision in scientific notation
+        
+        Some text can be written if the first character of the line is a "#".
+        
+        See Also
+        --------
+        import_p2sat
+        
+        TODO: add parameter 'header=True' to use header or not ?
         """
         if verbose: print("Exporting data ...")
         
@@ -145,15 +242,14 @@ class _PhaseSpace(object):
           
           # Write legend
           f.write("# ")
-          for legend in ('weight','x (%s)'%unit['length'],'y (%s)'%unit['length'],'z (%s)'%unit['length'],
-                         'px (%s)'%unit['momentum'],'py (%s)'%unit['momentum'],'pz (%s)'%unit['momentum']):
+          for legend in ('weight','x (um)','y (um)','z (um)','px (MeV/c)','py (MeV/c)','pz (MeV/c)'):
             f.write("%-16s"%legend) # the chain is placed under 16 characters
           f.write("\n")
           
           # Write data
           for i in range(len(self.w)):
             for e in [self.w[i],self.x[i],self.y[i],self.z[i],self.px[i],self.py[i],self.pz[i]]:
-                tmp="% .8E"%e # 8 digits precision with E notation
+                tmp="% .7E"%e # 7 digits precision with E notation
                 f.write("%-16s"%tmp) # the chain is placed under 16 characters
             f.write("\n")
         
@@ -190,7 +286,11 @@ class _PhaseSpace(object):
           bins
         h : np.array
           number of particles per bin unit
-          
+        
+        Notes
+        -----
+        TODO: If the given maximum bin range does not match with an int number of bins, the last bin is oversized ??
+        
         Example
         -------
         
@@ -232,8 +332,8 @@ class _PhaseSpace(object):
         # Construct the bins list
         bins=[]
         for i,ax in enumerate(axis):
-          bins.append(np.linspace(brange[i][0],brange[i][1],nbins[i]))
-          #bins.append(np.arange(brange[i][0],brange[i][1],bwidth[i]))
+          #bins.append(np.linspace(brange[i][0],brange[i][1],nbins[i]))
+          bins.append(np.arange(brange[i][0],brange[i][1],bwidth[i]))
         
         # Define weight normalization
         if not wnorm: wnorm=[None]*len(axis)
@@ -248,16 +348,14 @@ class _PhaseSpace(object):
         
       def h1(self,axis,X=None,erange=None,bwidth=None,brange=None):
         """
-        Create and return the histo of axis
+        Create and return the 1 dimensional histogram of given axis.
         
         Parameters
         ----------
         axis : str or np.array
           axis to hist
-        X : str or float, optional
-          X position on which do the hist. If "all", integrate on all the positions
-        bins : int or np.array, optional
-          number of bins (int) or bins on which do the hist. If None, bins=np.arange(min(axis),max(axis),axis.std())
+        
+        ...
         
         Returns
         -------
@@ -265,6 +363,14 @@ class _PhaseSpace(object):
           bins
         h : np.array
           histogram
+          
+        Notes
+        -----
+        TODO: append 0 at the end ?
+        
+        See Also
+        --------
+        hn,h2,h3
         """
         b,h=self.hn([axis],X=X,erange=erange,bwidth=[bwidth],brange=[brange])
         
