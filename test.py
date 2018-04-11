@@ -28,12 +28,13 @@ class test_PhaseSpace(unittest.TestCase):
     self.py=np.random.exponential(scale=1.0,size=size)
     self.pz=np.random.exponential(scale=1.0,size=size)
     
-    self.ps.raw.update(self.w,self.x,self.y,self.z,self.px,self.py,self.pz)
+    self.ps.raw.update(self.w,self.x,self.y,self.z,self.px,self.py,self.pz,verbose=False)
   
   def tearDown(self):
     del self.ps
     
   def test_update(self):
+    print("\nLaunching test_update ...\n\n")
     np.testing.assert_almost_equal(self.w,self.ps.raw.w)
     
     np.testing.assert_almost_equal(self.x,self.ps.raw.x)
@@ -45,6 +46,7 @@ class test_PhaseSpace(unittest.TestCase):
     np.testing.assert_almost_equal(self.pz,self.ps.raw.pz)
     
   def test_data(self):
+    print("\nLaunching test_data ...\n\n")
     fname="test_export.dat"
     self.ps.raw.export_data(fname)
     #                   w   x   y   z  px  py  pz
@@ -54,6 +56,24 @@ class test_PhaseSpace(unittest.TestCase):
     self.test_update()
     
     
+  def test_hist_hn_default(self):
+    print("\nLaunching test_hist_hn_default ...\n")
+    b,h=self.ps.hist.hn(['px'])
+    
+    b = b[0]
+    
+    # Test default bin length
+    self.assertEqual(len(b),10)
+    
+    # Test default brange
+    self.assertAlmostEqual(b[-1],max(self.ps.raw.x))
+    self.assertAlmostEqual(b[0],min(self.ps.raw.x))
+    
+    # Test erange selection
+    
+  def test_hist_hn_erange(self):
+    pass
+  
   def test_hist_h1(self):
     # Find analytical relation for precision + test X=..., erange=...
     brange=[0.0,5.0]
@@ -108,4 +128,5 @@ class test_PhaseSpace(unittest.TestCase):
     
 if __name__== '__main__':
   unittest.main()
+  input("Waiting ...")
 

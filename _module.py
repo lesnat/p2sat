@@ -38,7 +38,7 @@ class _PhaseSpace(object):
       
       Units ...
       """
-      def update(self,w,x,y,z,px,py,pz):
+      def update(self,w,x,y,z,px,py,pz,verbose=True):
         """
         Update class attributes
         """
@@ -58,7 +58,7 @@ class _PhaseSpace(object):
         self.phi    = np.degrees(np.arctan(self.pz/self.px)) # Geometrical effect ? change -> 0 pi
         self.ekin   = (np.sqrt((self.p/0.511)**2 + 1) - 1) * 0.511
         
-        print("Update done")
+        if verbose: print("Update done")
 
       def import_data(self,file_name,verbose=True):
         """
@@ -75,7 +75,7 @@ class _PhaseSpace(object):
               w.append(float(W))
               x.append(float(X))     ; y.append(float(Y))   ; z.append(float(Z))
               px.append(float(Px))   ; py.append(float(Py)) ; pz.append(float(Pz))
-        self.update(w,x,y,z,px,py,pz)
+        self.update(w,x,y,z,px,py,pz,verbose=verbose)
         if verbose: print('Data succesfully imported')
 
       
@@ -115,16 +115,33 @@ class _PhaseSpace(object):
         self._ps=PhaseSpace
         self._r=self._ps.raw
         
-      def hn(self,axis,X="all",erange=None,bwidth=None,brange=None):
+      def hn(self,axis,X=None,erange=None,bwidth=None,brange=None):
         """
-        n dimension histogram
+        Create and return the histo of axis
+        
+        Parameters
+        ----------
+        axis : str or np.array
+          axis to hist
+        X : float, optional
+          X position on which do the hist. If "all", integrate on all the positions
+        bins : int or np.array, optional
+          number of bins (int) or bins on which do the hist. If None, bins=np.arange(min(axis),max(axis),axis.std())
+        
+        Returns
+        -------
+        b : np.array
+          bins
+        h : np.array
+          histogram
         """
+        # Get the axis from a str if needed
         for i,ax in enumerate(axis):
-          if type(ax) is str:axis[i] = eval("self._r.%s"%axis)
+          if type(ax) is str:axis[i] = eval("self._r.%s"%ax)
         
-        
+        # Get only a selected X
         for i,ax in enumerate(axis):
-          if X=="all":
+          if not X:
             w   = self._r.w
             ekin= self._r.ekin
           else:
@@ -132,31 +149,39 @@ class _PhaseSpace(object):
             w   = self._r.w[self._r.x==X]
             ekin= self._r.ekin[self._r.x==X]
         
-        if not erange:erange=[min(ekin),max(ekin)]
+        # Select an energy range
+        if not erange: erange=[min(ekin),max(ekin)]
         eselect=np.array([ek>erange[0] and ek<erange[1] for ek in ekin])
         w = w[eselect]
         for i,ax in enumerate(axis):
-          axis=ax[eselect]
+          axis[i]=ax[eselect]
         
-        if not brange:
-          brange=[]
-          for i,ax in enumerate(axis):
-            brange.append([min(ax),max(ax)]
+        # Define default bin range
+        if not brange: brange=[[None,None]]*len(axis) 
+        for i,br in enumerate(brange):
+          if br[0] is None:brange[i][0]=min(axis[i])
+          if br[1] is None:brange[i][1]=max(axis[i])
         
-        if not bwidth:
-          bwidth=[]
-          for i,ax in enumerate(axis):
-          bwidth.append((brange[i][1]-brange[i][0])/10.)
+        # Define default bin width
+        if not bwidth: bwidth=[None]*len(axis)
+        for i,bw in enumerate(bwidth):
+          if bw is None: bwidth[i]=(brange[i][1]-brange[i][0])/10.
         
+        # Calculate number of bins
+        
+        # Construct the bins list
         bins=[]
         for i,ax in enumerate(axis):
-          bins.append(np.arange(brange[0],brange[1]+bwidth,bwidth))
+          bins.append(np.linspace(brange[i][0],brange[i][1],nbins[i]))
+          #bins.append(np.arange(brange[i][0],brange[i][1],bwidth[i]))
         
+        # Calculate the multi dimensional histo, which return a number of particles per bin unit
         h,b=np.histogramdd(axis,weights=w/np.product(bwidth),bins=bins)
         
-        return *b,h
+        # Return the bins and histo
+        return b,h
         
-      def h1(self,axis,X="all",erange=[None,None],bwidth=None,brange=[None,None]):
+      def h1(self,axis,X=None,erange=None,bwidth=None,brange=None):
         """
         Create and return the histo of axis
         
@@ -176,36 +201,13 @@ class _PhaseSpace(object):
         h : np.array
           histogram
         """
-        if type(axis) is str:axis = eval("self._r.%s"%axis)
-        
-        if X=="all":
-          w   = self._r.w
-          ekin= self._r.ekin
-        else:
-          axis= axis[self._r.x==X]
-          w   = self._r.w[self._r.x==X]
-          ekin= self._r.ekin[self._r.x==X]
-        
-        if erange[0] is None:erange[0]=min(ekin)
-        if erange[1] is None:erange[1]=max(ekin)
-        
-        eselect=np.array([ek>erange[0] and ek<erange[1] for ek in ekin])
-        axis=axis[eselect]
-        w = w[eselect]
-
-        if brange[0] is None:brange[0]=min(axis)
-        if brange[1] is None:brange[1]=max(axis)
-        if bwidth is None:bwidth=(brange[1]-brange[0])/10.
-        
-        bins=np.arange(brange[0],brange[1]+bwidth,bwidth)
-        
-        h,b=np.histogram(axis,weights=w/bwidth,bins=bins)
+        b,h=self.hn([axis],X=X,erange=erange,bwidth=[bwidth],brange=[brange])
         
         # Verifier b[:-1]
         h=list(h)
         h.append(0.0)
         h=np.array(h)
-        return b,h
+        return b[0],h
         
       def h2(self,axis1,axis2,X="all",erange=[None,None],bwidth1=None,bwidth2=None,brange1=[None,None],brange2=[None,None]):
         """
@@ -233,9 +235,6 @@ class _PhaseSpace(object):
         if type(axis1) is str:axis1 = eval("self._r.%s"%axis1)
         if type(axis2) is str:axis2 = eval("self._r.%s"%axis2)
         
-        print(min(axis1),max(axis1))
-        print(min(axis2),max(axis2))
-        
         if X=="all":
           w   = self._r.w
           ekin= self._r.ekin
@@ -261,8 +260,6 @@ class _PhaseSpace(object):
         if brange2[1] is None:brange2[1]=max(axis2)
         if bwidth2 is None:bwidth2=(brange2[1]-brange2[0])/10.
         bins2=np.arange(brange2[0],brange2[1]+bwidth2,bwidth2)
-        
-        print(bins1,bins2)
         
         h,b1,b2=np.histogram2d(axis1,axis2,weights=w/(bwidth1*bwidth2),bins=[bins1,bins2])
         
