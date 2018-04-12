@@ -1,7 +1,7 @@
 #coding:utf8
 from __future__ import absolute_import
 import numpy as np
-from .._module import PhaseSpaceGeneric
+from ..PhaseSpace import PhaseSpaceGeneric
 
 __all__=['param','set_ps','get_ps']
 

@@ -1,5 +1,5 @@
 #coding:utf8
-from _module import PhaseSpaceSmilei,PhaseSpaceGeant4
+from PhaseSpace import PhaseSpaceGeneric,PhaseSpaceSmilei,PhaseSpaceGeant4
 
 
 def testing(name="all"):
