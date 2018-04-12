@@ -3,23 +3,86 @@
 Package Structure
 =================
 
-_PhaseSpace : base object
+PhaseSpaceGeneric : mother object
 PhaseSpaceXXXX : child object
 
 Available :
 PhaseSpaceSmilei
 PhaseSpaceGeant4
 
-TODO : 
-PhaseSpaceTriLens
-PhaseSpaceCAIN
+
+
+Examples
+========
+Creating a random set of data
+
+>>> import numpy as np
+>>> size=1000
+>>> w=np.random.uniform(low=0.0,high=100.0,size=size)
+>>> x=np.random.randint(low=1.0,high=11.0,size=size)
+>>> y=np.random.normal(loc=0.0,scale=1.0,size=size)
+>>> z=np.random.normal(loc=0.0,scale=2.0,size=size)
+>>> px=np.random.exponential(scale=1.0,size=size)
+>>> py=np.random.exponential(scale=1.0,size=size)
+>>> pz=np.random.exponential(scale=1.0,size=size)
+
+Instanciate a p2sat object, let say an electron phase space, with generated data
+
+>>> eps=PhaseSpaceGeneric()
+>>> eps.raw.update(w,x,y,z,px,py,pz)
+
+Get histograms
+
+>>> ekin,spectrum=eps.hist.h1('ekin',bwidth=0.1,select={'x':5}) # number of e- per MeV at x==5, with a 0.1 MeV bin width
+
+Plot some results
+
+>>> # save bins characteristics in a dictionnary
+>>> bdict = dict(bwidth1=0.5,bwidth2=1,brange1=[-5,5],brange2=[-10,10])
+>>> # plots number of e- per um^2 with energy superior to 0.511 MeV, at x==5
+>>> eps.plot.h2('y','z',select={'x':5,'ekin':[0.511,None]},**bdict)
+>>> # add the gaussian filtered contour plot of this diag
+>>> eps.plot.contour('y','z',select={'x':5,'ekin':[0.511,None]},gfilter=1.0,**bdict)
+
+
+
+
+
+
+TODO
+====
+PhaseSpaceSmilei :
+- change name & use a generic method
+
+PhaseSpaceGeant4 :
+- use a while True & try to loop over nthreads
+
+PhaseSpaceTriLens :
+- 
+
+Code structure & names OK ?
+
+raw :
+- theta,phi schema
+- theta,phi,ekin calculations
+
+hist :
+- doc hn
+- use nbins OK ?
+
+plot :
+- doc
+
+tools :?
+- fit MB, gaussian, MJ
+- IO(file_name,mode='r',title="")
 """
 
 import numpy as np
 import matplotlib.pyplot as plt
 
 
-class _PhaseSpace(object):
+class PhaseSpaceGeneric(object):
     """
     Base class for particle phase-space analysis.
     
@@ -84,9 +147,12 @@ class _PhaseSpace(object):
       Calculations :
       - r is defined as :math:`\sqrt{y^2+z^2}`
       - p is defined as :math:`\sqrt{p_x^2+p_y^2+p_z^2}`
-      - ekin is defined as :math:`(\sqrt{(p/m_e c)^2+1}-1) \\times m_e c^2`
+      - ekin is defined as :math:`(\sqrt{(p/m_e c)^2+1}-1) \\times m_e c^2` *
       - theta is defined as :math:`\\arctan{p_y/p_x}`
       - phi is defined (yet) as :math:`\\arctan{p_z/p_x}`
+      
+      
+      * detail of the calculus can be found at ... TODO
       """
       def select(self,axis,faxis,frange,fpp=1e-7):
         """
@@ -99,7 +165,7 @@ class _PhaseSpace(object):
         faxis : str or numpy.ndarray
           filtering axis
         frange : int, float, list/tuple of 2 float
-          filtering value/range (value if int, range if float or list/tuple)
+          filtering value/range (value if int, range if float or list/tuple). If a frange element is None, the minimum/maximum value is taken
         fpp : float, optional
           relative floating point precision. Default is 1e-7
           
@@ -121,7 +187,7 @@ class _PhaseSpace(object):
         
         >>> w = np.random.uniform(low=0.,high=10.,size=1000)
         >>> ekin = np.random.exponential(scale=3.0,size=1000)
-        >>> w = select(w,ekin,[0.511,None]) # Select all the w with :math:`ekin \in [0.511,+\infty]`
+        >>> w = select(w,ekin,[0.511,None]) # Select all the w with :math:`ekin \in [0.511,+\infty] MeV`
         
         If frange is a list/tuple or a float, the filtering is done with a fpp precision
         """
@@ -129,12 +195,14 @@ class _PhaseSpace(object):
         if type(faxis) is str: faxis=eval("self.%s"%faxis)
         
         if type(frange) is list or type(frange) is tuple:
-          select=np.array([x>frange[0]-fpp and x<frange[1]+fpp for x in faxis])
-          axis=axis[select]
+          if frange[0] is None: frange[0]=min(axis)
+          if frange[1] is None: frange[1]=max(axis)
+          filtr=np.array([x>frange[0]*(1-fpp) and x<frange[1]*(1+fpp) for x in faxis])
+          axis=axis[filtr]
         elif type(frange) is int:
           axis=axis[faxis==frange]
         elif type(frange) is float:
-          axis=self._filter(axis,faxis,frange=(frange-fpp*frange,frange+fpp*frange))
+          axis=self.select(axis,faxis,frange=[frange,frange])
         else:
           raise TypeError('frange type must be int/float or list/tuple of 2 float.')
         
@@ -178,7 +246,7 @@ class _PhaseSpace(object):
         file_name : str
           name of the input file
         verbose : bool, optional
-          verbosity
+          verbosity of the function. If True, a message is displayed when the data is imported
         
         See Also
         --------
@@ -210,7 +278,7 @@ class _PhaseSpace(object):
         title : str, optional
           title of the file
         verbose : bool, optional
-          verbosity
+          verbosity of the function. If True, a message is displayed when the data is exported
         
         Notes
         -----
@@ -228,7 +296,7 @@ class _PhaseSpace(object):
         
         See Also
         --------
-        import_p2sat
+        import_data
         
         TODO: add parameter 'header=True' to use header or not ?
         """
@@ -290,6 +358,7 @@ class _PhaseSpace(object):
         Notes
         -----
         TODO: If the given maximum bin range does not match with an int number of bins, the last bin is oversized ??
+        it reduce bwidth to fit brange[1]-brange[0] with a int nb of bins
         
         Example
         -------
@@ -314,7 +383,8 @@ class _PhaseSpace(object):
         if select is not None:
           for key,val in select.items():
             w = self._r.select(w,key,val)
-            axis=self._r.select(axis,key,val)
+            for i,ax in enumerate(axis):
+              axis[i]=self._r.select(ax,key,val)
         
         # Define default bin range
         if not brange: brange=[[None,None]]*len(axis) 
@@ -322,18 +392,19 @@ class _PhaseSpace(object):
           if br[0] is None:brange[i][0]=min(axis[i])
           if br[1] is None:brange[i][1]=max(axis[i])
         
-        # Define default bin width
+        # Define default bin width + number of bins
+        nbins=[]
         if not bwidth: bwidth=[None]*len(axis)
         for i,bw in enumerate(bwidth):
-          if bw is None: bwidth[i]=(brange[i][1]-brange[i][0])/10.
-        
-        # Calculate number of bins
+          blen=brange[i][1] - brange[i][0]
+          if bw is None: bwidth[i]=blen/10.
+          nbins.append(np.ceil(blen/bwidth[i] + 1))
         
         # Construct the bins list
         bins=[]
         for i,ax in enumerate(axis):
-          #bins.append(np.linspace(brange[i][0],brange[i][1],nbins[i]))
-          bins.append(np.arange(brange[i][0],brange[i][1],bwidth[i]))
+          bins.append(np.linspace(brange[i][0],brange[i][1],int(nbins[i])))
+          #bins.append(np.arange(brange[i][0],brange[i][1],bwidth[i]))
         
         # Define weight normalization
         if not wnorm: wnorm=[None]*len(axis)
@@ -346,7 +417,7 @@ class _PhaseSpace(object):
         # Return the bins and histo
         return b,h
         
-      def h1(self,axis,X=None,erange=None,bwidth=None,brange=None):
+      def h1(self,axis,bwidth=None,brange=None,select=None):
         """
         Create and return the 1 dimensional histogram of given axis.
         
@@ -354,8 +425,12 @@ class _PhaseSpace(object):
         ----------
         axis : str or np.array
           axis to hist
-        
-        ...
+        bwidth : float, optional
+          bin width. If None, a calculation is done to have 10 bins in the axis
+        brange : list of 2 float, optional
+          bin maximum and minimum. If a brange element is None, the axis minimum/maximum is taken
+        select : dict, optional
+          filtering dictionnary
         
         Returns
         -------
@@ -366,13 +441,15 @@ class _PhaseSpace(object):
           
         Notes
         -----
-        TODO: append 0 at the end ?
+        the h1 method is just a different way to call the generic method hn
         
         See Also
         --------
-        hn,h2,h3
+        hn, h2, h3
         """
-        b,h=self.hn([axis],X=X,erange=erange,bwidth=[bwidth],brange=[brange])
+        if not brange : brange = [None,None]
+        
+        b,h=self.hn([axis],bwidth=[bwidth],brange=[brange],select=select)
         
         # Verifier b[:-1]
         h=list(h)
@@ -380,124 +457,79 @@ class _PhaseSpace(object):
         h=np.array(h)
         return b[0],h
         
-      def h2(self,axis1,axis2,X="all",erange=[None,None],bwidth1=None,bwidth2=None,brange1=[None,None],brange2=[None,None]):
+      def h2(self,axis1,axis2,bwidth1=None,bwidth2=None,brange1=None,brange2=None,select=None):
         """
-        Create and return the histo of axis
+        Create and return the 2 dimensional histogram of given axis.
         
         Parameters
         ----------
-        axis1,axis2 : str or np.array
+        axis1, axis2 : str or np.array
           axis to hist
-        X : str or float, optional
-          X position on which do the hist. If "all", integrate on all the positions
-        bins : int or np.array, optional
-          number of bins (int) or bins on which do the hist. If None, bins=np.arange(min(axis),max(axis),axis.std())
+        bwidth1, bwidth2 : float, optional
+          bin width. If None, a calculation is done to have 10 bins in the axis
+        brange1, brange2 : list of 2 float, optional
+          bin maximum and minimum. If a brange element is None, the axis minimum/maximum is taken
+        select : dict, optional
+          filtering dictionnary
         
         Returns
         -------
-        b1,b2 : np.array
+        b1, b2 : np.array
           bins
         h : np.array
           histogram
           
-          
-        TODO: NE PAS AFFECTER DE VALEURS AUX PARAMETRES -> Reaffecte la valeur par défaut si utilisé dans un module
+        Notes
+        -----
+        the h2 method is just a different way to call the generic method hn
+        
+        See Also
+        --------
+        hn, h1, h3
         """
-        if type(axis1) is str:axis1 = eval("self._r.%s"%axis1)
-        if type(axis2) is str:axis2 = eval("self._r.%s"%axis2)
+        if not brange1 : brange1 = [None,None]
+        if not brange2 : brange2 = [None,None]
         
-        if X=="all":
-          w   = self._r.w
-          ekin= self._r.ekin
-        else:
-          axis1= axis1[self._r.x==X]
-          axis2= axis2[self._r.x==X]
-          w   = self._r.w[self._r.x==X]
-          ekin= self._r.ekin[self._r.x==X]
-          
-        if erange[0] is None:erange[0]=min(ekin)
-        if erange[1] is None:erange[1]=max(ekin)
+        b,h=self.hn([axis1,axis2],bwidth=[bwidth1,bwidth2],brange=[brange1,brange2],select=select)
         
-        eselect=np.array([ek>erange[0] and ek<erange[1] for ek in ekin])
-        axis1=axis1[eselect]
-        axis2=axis2[eselect]
-        w = w[eselect]
+        return b[0],b[1],h
         
-        if brange1[0] is None:brange1[0]=min(axis1)
-        if brange1[1] is None:brange1[1]=max(axis1)
-        if bwidth1 is None:bwidth1=(brange1[1]-brange1[0])/10.
-        bins1=np.arange(brange1[0],brange1[1]+bwidth1,bwidth1)
-        if brange2[0] is None:brange2[0]=min(axis2)
-        if brange2[1] is None:brange2[1]=max(axis2)
-        if bwidth2 is None:bwidth2=(brange2[1]-brange2[0])/10.
-        bins2=np.arange(brange2[0],brange2[1]+bwidth2,bwidth2)
-        
-        h,b1,b2=np.histogram2d(axis1,axis2,weights=w/(bwidth1*bwidth2),bins=[bins1,bins2])
-        
-        # Verifier b[:-1]
-        #return b1[:-1],b2[:-1],h
-        return b1,b2,h
-        
-      def h3(self,axis1,axis2,axis3,X="all",erange=[None,None],bwidth1=None,bwidth2=None,bwidth3=None,brange1=[None,None],brange2=[None,None],brange3=[None,None]):
+      def h3(self,axis1,axis2,axis3,bwidth1=None,bwidth2=None,bwidth3=None,brange1=None,brange2=None,brange3=None,select=None):
         """
-        Create and return the histo of axis
+        Create and return the 3 dimensional histogram of given axis.
         
         Parameters
         ----------
-        axis1,axis2 : str or np.array
+        axis1, axis2, axis3 : str or np.array
           axis to hist
-        X : str or float, optional
-          X position on which do the hist. If "all", integrate on all the positions
-        bins : int or np.array, optional
-          number of bins (int) or bins on which do the hist. If None, bins=np.arange(min(axis),max(axis),axis.std())
+        bwidth1, bwidth2, bwidth3 : float, optional
+          bin width. If None, a calculation is done to have 10 bins in the axis
+        brange1, brange2, brange3 : list of 2 float, optional
+          bin maximum and minimum. If a brange element is None, the axis minimum/maximum is taken
+        select : dict, optional
+          filtering dictionnary
         
         Returns
         -------
-        b1,b2 : np.array
+        b1, b2, b3 : np.array
           bins
         h : np.array
           histogram
-        """
-        if type(axis1) is str:axis1 = eval("self._r.%s"%axis1)
-        if type(axis2) is str:axis2 = eval("self._r.%s"%axis2)
-        if type(axis3) is str:axis3 = eval("self._r.%s"%axis3)
-        
-        if X=="all":
-          w   = self._r.w
-          ekin= self._r.ekin
-        else:
-          axis1= axis1[self._r.x==X]
-          axis2= axis2[self._r.x==X]
-          axis3= axis3[self._r.x==X]
-          w   = self._r.w[self._r.x==X]
-          ekin= self._r.ekin[self._r.x==X]
           
-        if erange[0] is None:erange[0]=min(ekin)
-        if erange[1] is None:erange[1]=max(ekin)
+        Notes
+        -----
+        the h3 method is just a different way to call the generic method hn
         
-        eselect=np.array([ek>erange[0] and ek<erange[1] for ek in ekin])
-        axis1=axis1[eselect]
-        axis2=axis2[eselect]
-        axis3=axis3[eselect]
-        w = w[eselect]
+        See Also
+        --------
+        hn, h1, h2
+        """
+        if not brange1 : brange1 = [None,None]
+        if not brange2 : brange2 = [None,None]
+        if not brange3 : brange3 = [None,None]
+
+        b,h=self.hn([axis1,axis2,axis3],bwidth=[bwidth1,bwidth2,bwidth3],brange=[brange1,brange2,brange3],select=select)
         
-        if brange1[0] is None:brange1[0]=min(axis1)
-        if brange1[1] is None:brange1[1]=max(axis1)
-        if bwidth1 is None:bwidth1=(brange1[1]-brange1[0])/10.
-        bins1=np.arange(brange1[0],brange1[1]+bwidth1,bwidth1)
-        if brange2[0] is None:brange2[0]=min(axis2)
-        if brange2[1] is None:brange2[1]=max(axis2)
-        if bwidth2 is None:bwidth2=(brange2[1]-brange2[0])/10.
-        bins2=np.arange(brange2[0],brange2[1]+bwidth2,bwidth2)
-        if brange3[0] is None:brange3[0]=min(axis3)
-        if brange3[1] is None:brange3[1]=max(axis3)
-        if bwidth3 is None:bwidth3=(brange3[1]-brange3[0])/10.
-        bins3=np.arange(brange3[0],brange3[1]+bwidth3,bwidth3)
-        
-        h,b=np.histogramdd([axis1,axis2,axis3],weights=w/(bwidth1*bwidth2*bwidth3),bins=[bins1,bins2,bins3])
-        
-        # Verifier b[:-1]
-        #return b[0][:-1],b[1][:-1],b[2][:-1],h
         return b[0],b[1],b[2],h
 
     class _Plot(object):
@@ -546,8 +578,8 @@ class _PhaseSpace(object):
         plt.xlabel(label[0])
         plt.ylabel(label[1])
         plt.title(label[2])
-        ca1=plt.colorbar(a1,orientation='horizontal')
-        
+        #ca1=plt.colorbar(a1,orientation='horizontal')
+        plt.colorbar(a1)
         plt.legend()
         
       def contour(self,axis1,axis2,
@@ -704,7 +736,7 @@ class _PhaseSpace(object):
 
 #########################################################################################
     
-class PhaseSpaceSmilei(_PhaseSpace):
+class PhaseSpaceSmilei(PhaseSpaceGeneric):
   def __init__(self):
     self.raw = self._Raw()
     self.hist = self._Hist(self)
@@ -787,7 +819,7 @@ class PhaseSpaceSmilei(_PhaseSpace):
     self.raw.update(w,x,y,z,px,py,pz)
 
 
-class PhaseSpaceGeant4(_PhaseSpace):
+class PhaseSpaceGeant4(PhaseSpaceGeneric):
   def __init__(self):
     self.raw = self._Raw()
     self.hist = self._Hist(self)
