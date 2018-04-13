@@ -6,7 +6,6 @@ from fixtures import *
 
 plt.figure(figsize=(9.5,11.0))
 
-
 def test_plot_h1():
   ps=get_ps()
   brange=[0.0,10.0]
@@ -22,7 +21,6 @@ def test_plot_h1():
   plt.plot(x,sum(ps.raw.w)*np.exp(-x/1.0),label='ntot * exp(-x/1.0)')
   plt.title('h1,h2,h3 plot test')
   plt.legend()
-  plt.show()
   
 def test_plot_h2():
   ps=get_ps()
@@ -36,12 +34,13 @@ def test_plot_h2():
               label=['y ($\sigma=1.0$, bwidth=%s)'%bwidth1,'z ($\sigma=2.0$, bwidth=%s)'%bwidth2,''],
               log=True,bwidth1=bwidth1,bwidth2=bwidth2,brange1=brange,brange2=brange)
   plt.legend()
-  plt.show()
   
 def test_plot_contour():
   assert False
   
 def test_plot_h3():
   plt.subplot(313)
+  plt.show()
   assert False
+
 

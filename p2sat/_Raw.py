@@ -126,4 +126,21 @@ class _Raw(object):
     self.phi    = np.degrees(np.arctan(self.pz/self.px)) # Geometrical effect ? change -> 0 pi
     self.ekin   = (np.sqrt((self.p/0.511)**2 + 1) - 1) * 0.511
     
+    self.w.flags.writeable  = False
+    
+    self.x.flags.writeable  = False
+    self.y.flags.writeable  = False
+    self.z.flags.writeable  = False
+    
+    self.px.flags.writeable = False
+    self.py.flags.writeable = False
+    self.pz.flags.writeable = False
+    
+    self.r.flags.writeable  = False
+    self.p.flags.writeable  = False
+    self.theta.flags.writeable = False
+    self.phi.flags.writeable = False
+    self.ekin.flags.writeable = False
+    
     if verbose: print("Update done")
+

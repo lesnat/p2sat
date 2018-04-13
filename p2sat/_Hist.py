@@ -98,7 +98,7 @@ class _Hist(object):
     # Return the bins and histo
     return b,h
     
-  def h1(self,axis,bwidth=None,brange=None,select=None):
+  def h1(self,axis,bwidth=None,brange=None,wnorm=None,select=None):
     """
     Create and return the 1 dimensional histogram of given axis.
     
@@ -130,7 +130,7 @@ class _Hist(object):
     """
     if not brange : brange = [None,None]
     
-    b,h=self.hn([axis],bwidth=[bwidth],brange=[brange],select=select)
+    b,h=self.hn([axis],bwidth=[bwidth],brange=[brange],wnorm=[wnorm],select=select)
     
     # Verifier b[:-1]
     h=list(h)
