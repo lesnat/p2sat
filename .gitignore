@@ -1,0 +1,3 @@
+*.pyc
+p2sat/_tests/.cache/*
+*.p2sat

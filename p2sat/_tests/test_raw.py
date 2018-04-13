@@ -17,26 +17,6 @@ def test_update():
   assert np.allclose(ps.raw.py,py)
   assert np.allclose(ps.raw.pz,pz)
   
-def test_data():
-  w,x,y,z,px,py,pz=param(size=100)
-  ps=set_ps(w,x,y,z,px,py,pz)
-  
-  fname="fexport.p2sat"
-  ps.raw.export_data(fname)
-  #              w   x   y   z  px  py  pz
-  ps.raw.update([0],[0],[0],[0],[0],[0],[0])
-  ps.raw.import_data(fname)
-  
-  assert np.allclose(ps.raw.w,w)
-  
-  assert np.allclose(ps.raw.x,x)
-  assert np.allclose(ps.raw.y,y)
-  assert np.allclose(ps.raw.z,z)
-  
-  assert np.allclose(ps.raw.px,px)
-  assert np.allclose(ps.raw.py,py)
-  assert np.allclose(ps.raw.pz,pz)
-  
 def test_select():
   fpp=1e-7
   w,x,y,z,px,py,pz=param(size=10)
