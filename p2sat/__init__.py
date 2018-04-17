@@ -77,7 +77,7 @@ tools :?
 - fit MB, gaussian, MJ
 - IO(file_name,mode='r',title="")
 """
-from PhaseSpace import PhaseSpaceGeneric,PhaseSpaceSmilei,PhaseSpaceGeant4
+from PhaseSpace import PhaseSpaceGeneric,PhaseSpaceSmilei,PhaseSpaceGeant4,PhaseSpaceTrILEns
 
 
 def testing(name="all"):

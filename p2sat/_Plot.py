@@ -39,8 +39,8 @@ class _Plot(object):
     else:
       norm=None
     b1,b2,h=self._h.h2(axis1,axis2,**kargs)
-    g1,g2=np.meshgrid(b1,b2)
-    a1=plt.pcolormesh(g1,g2,h.T,norm=norm) # Voire .T
+    g1,g2=np.meshgrid(b1,b2,indexing='ij')
+    a1=plt.pcolormesh(g1,g2,h,norm=norm) # Voire .T
     
     plt.xlim(xmin=min(b1),xmax=max(b1))
     plt.ylim(ymin=min(b2),ymax=max(b2))
@@ -65,10 +65,10 @@ class _Plot(object):
     else:
       norm=None
     b1,b2,h=self._h.h2(axis1,axis2,**kargs)
-    g1,g2=np.meshgrid(b1,b2)
+    g1,g2=np.meshgrid(b1,b2,indexing='ij')
     #if gfilter>0.0:
     from scipy.ndimage.filters import gaussian_filter
-    a2=plt.contour(g1[:-1,:-1],g2[:-1,:-1],gaussian_filter(h.T,gfilter),
+    a2=plt.contour(g1[:-1,:-1],g2[:-1,:-1],gaussian_filter(h,gfilter),
                    norm=norm,colors='k')
     plt.clabel(a2, inline=1, fontsize=10 ,fmt='%1.1e')
     
@@ -158,8 +158,8 @@ class _Plot(object):
 
     # the h2 plot:
     b1,b2,h=self._h.h2(axis1,axis2,**kargs)
-    g1,g2=np.meshgrid(b1,b2)
-    axh2.pcolormesh(g1,g2,h.T) # Voire .T
+    g1,g2=np.meshgrid(b1,b2,indexing='ij')
+    axh2.pcolormesh(g1,g2,h) # Voire .T
     ####
     
     """
@@ -190,7 +190,7 @@ class _Plot(object):
     from mpl_toolkits.mplot3d import Axes3D
     ax = plt.subplot(projection='3d')
     b1,b2,b3,h=self._h.h3(axis1,axis2,axis3,**kargs)
-    g1,g2,g3=np.meshgrid(b1,b2,b3)
+    g1,g2,g3=np.meshgrid(b1,b2,b3,indexing='ij')
     
     tmp=np.array(h)
     
@@ -202,5 +202,5 @@ class _Plot(object):
           else:
             tmp[i1][i2][i3]=e3
     
-    ax.scatter3D(g1,g2,g3,s=snorm*tmp.T,cmap='hot')
+    ax.scatter3D(g1,g2,g3,s=snorm*tmp,cmap='hot')
 
