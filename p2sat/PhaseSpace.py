@@ -73,7 +73,7 @@ class PhaseSpaceSmilei(PhaseSpaceGeneric):
     -----
     The Smilei Screen diagnostic should be declared in the namelist at the following format
       1D:
-      Screen( ...,
+      DiagScreen( ...,
             axis = [
                   ['py'   , -pmax/10, pmax/10 , 301],
                   ['px'   , pmin    , pmax    , 301]
@@ -81,7 +81,7 @@ class PhaseSpaceSmilei(PhaseSpaceGeneric):
       )
       
       2D:
-      Screen( ...,
+      DiagScreen( ...,
             axis = [
                   ['y'    , -rmax   , rmax    , 301],
                   ['pz'   , -pmax/10, pmax/10 , 301],
@@ -91,7 +91,7 @@ class PhaseSpaceSmilei(PhaseSpaceGeneric):
       )
       
       3D :
-      Screen( ...,
+      DiagScreen( ...,
             axis = [
                   ['z'    , -rmax   , rmax    , 301],
                   ['y'    , -rmax   , rmax    , 301],
@@ -126,7 +126,9 @@ class PhaseSpaceSmilei(PhaseSpaceGeneric):
     px,py,pz  = [],[],[]
     wNorm     = float(wnorm) # Get a copy of wnorm
     
-    data  = Screen(timesteps=timestep).getData()[0]
+    dpx,dpy,dpz=[],[],[]
+    
+    data  = Screen(timesteps=timestep).getData()[0] # TODO: check this
     
     try:
       Z     = Screen().get()['z']
@@ -172,12 +174,25 @@ class PhaseSpaceSmilei(PhaseSpaceGeneric):
                 py.append(Py[ipy])
                 pz.append(Pz[ipz])
                 w.append(epx*wNorm)
+                dpx.append(Px[ipx+1] - Px[ipx])
+                dpy.append(Py[ipy+1] - Py[ipy])
+                if len(Pz)==1:
+                  dpz.append(0.0)
+                else:
+                  dpz.append(Pz[ipz+1] - Pz[ipz])
               
     if verbose:print("Data succesfully imported")
 
     self.raw.update(w,x,y,z,px,py,pz,verbose)
     
-  
+    self.raw.dpx=np.array(dpx)
+    self.raw.dpy=np.array(dpy)
+    self.raw.dpz=np.array(dpz)
+    
+    #self.raw.dp = np.sqrt(self.raw.dpx**2 + self.raw.dpy**2 + self.raw.dpz**2)
+    #self.raw.dekin = (np.sqrt((self.raw.dp/0.511)**2+1.0)-1.0)*0.511
+    self.raw.dp     = self.raw.px/self.raw.p * self.raw.dpx + self.raw.py/self.raw.p * self.raw.dpy + self.raw.pz/self.raw.p * self.raw.dpz
+    self.raw.dekin  = self.raw.p/np.sqrt(self.raw.p**2 + 1.0) * self.raw.dp
   
   def extract_1d(self,Screen,timestep,xnorm,wnorm=1.0,X=0):
     w         = []
