@@ -130,7 +130,7 @@ class _Hist(object):
     """
     if not brange : brange = [None,None]
     
-    b,h=self.hn([axis],bwidth=[bwidth],brange=[brange],wnorm=[wnorm],select=select)
+    b,h=self.hn([axis],bwidth=[bwidth],brange=[brange],wnorm=wnorm,select=select)
     
     # Verifier b[:-1]
     h=list(h)
@@ -138,7 +138,7 @@ class _Hist(object):
     h=np.array(h)
     return b[0],h
     
-  def h2(self,axis1,axis2,bwidth1=None,bwidth2=None,brange1=None,brange2=None,select=None):
+  def h2(self,axis1,axis2,bwidth1=None,bwidth2=None,brange1=None,brange2=None,wnorm=None,select=None):
     """
     Create and return the 2 dimensional histogram of given axis.
     
@@ -171,7 +171,7 @@ class _Hist(object):
     if not brange1 : brange1 = [None,None]
     if not brange2 : brange2 = [None,None]
     
-    b,h=self.hn([axis1,axis2],bwidth=[bwidth1,bwidth2],brange=[brange1,brange2],select=select)
+    b,h=self.hn([axis1,axis2],bwidth=[bwidth1,bwidth2],brange=[brange1,brange2],wnorm=wnorm,select=select)
     
     return b[0],b[1],h
     
