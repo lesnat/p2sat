@@ -181,7 +181,7 @@ class PhaseSpaceSmilei(PhaseSpaceGeneric):
                 else:
                   dpz.append(Pz[ipz+1] - Pz[ipz])
               
-    if verbose:print("Data succesfully imported")
+    if verbose:print("Done !")
 
     self.raw.update(w,x,y,z,px,py,pz,verbose)
     
@@ -340,7 +340,7 @@ class PhaseSpaceGeant4(PhaseSpaceGeneric):
     px  = data[4::7]
     py  = data[5::7]
     pz  = data[6::7]
-    if verbose:print("Data succesfully imported")
+    if verbose:print("Done !")
     
     self.raw.update(w,x,y,z,px,py,pz,verbose)
 

@@ -97,4 +97,100 @@ class _Tools(object):
         f.write("\n")
     
     if verbose: print('Data succesfully exported')
-
+  
+  def discretize(self,update=False,verbose=True,**kargs):
+    """
+    Discretize the particles phase space into a given number of bins.
+    
+    Parameters
+    ----------
+    ...
+    
+    
+    Notes
+    -----
+    ...
+    
+    Examples
+    --------
+    ...
+    """
+    hn=self._ps.hist.hn
+    r=self._ps.raw
+    
+    """
+    if not nbins:nbins=[10]*6
+    brange=[[min(r.x),max(r.x)],
+            [min(r.y),max(r.y)],
+            [min(r.z),max(r.z)],
+            [min(r.px),max(r.px)],
+            [min(r.py),max(r.py)],
+            [min(r.pz),max(r.pz)]]
+    bwidth=[]
+    bins=[]
+    for i,n in enumerate(nbins):
+      bwidth.append((brange[i][1]-brange[i][0])/n)
+    print(bwidth)
+    """
+    if verbose : print('Data discretization ...')
+    #bi,hi=hn(['x','y','z','px','py','pz'],bwidth=bwidth,brange=brange,wnorm=[1.0]*6,select=select)
+    bi,hi=hn([r.x,r.y,r.z,r.px,r.py,r.pz],**kargs)
+    bx,by,bz,bpx,bpy,bpz=bi
+    """
+    hi,b=np.histogramdd([r.x,r.y,r.z,r.px,r.py,r.pz],weights=r.w,bins=nbins)
+    
+    bx=b[0]
+    by=b[1]
+    bz=b[2]
+    bpx=b[3]
+    bpy=b[4]
+    bpz=b[5]
+    """
+    if verbose : print('Done !')
+    w       = []
+    x,y,z   = [],[],[]
+    px,py,pz= [],[],[]
+    
+    if verbose : print('Looping over all the configurations ...')
+    for ix,ex in enumerate(hi):
+      if verbose: print('Step %s of %s ...'%(ix+1,len(hi)))
+      for iy,ey in enumerate(ex):
+        for iz,ez in enumerate(ey):
+          for ipx,epx in enumerate(ez):
+            for ipy,epy in enumerate(epx):
+              for ipz,epz in enumerate(epy):
+                if epz!=0:
+                  w.append(epz)
+                  x.append(bx[ix])
+                  y.append(by[iy])
+                  z.append(bz[iz])
+                  px.append(bpx[ipx])
+                  py.append(bpy[ipy])
+                  pz.append(bpz[ipz])
+    
+    if verbose : print('Done !')
+    
+    if update:
+      r.update(w,x,y,z,px,py,pz,verbose)
+    else:
+      return np.array(w),np.array(x),np.array(y),np.array(z),np.array(px),np.array(py),np.array(pz)
+    
+    
+  def rotate(self,angle):
+    """
+    Rotate the particles phase space of a given angle.
+    
+    Parameters
+    ----------
+    ...
+    
+    
+    Notes
+    -----
+    ...
+    
+    Examples
+    --------
+    ...
+    """
+    pass

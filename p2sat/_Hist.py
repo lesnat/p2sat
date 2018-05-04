@@ -9,7 +9,7 @@ class _Hist(object):
     self._ps=PhaseSpace
     r=self._ps.raw
     
-  def hn(self,axis,bwidth=None,brange=None,wnorm=None,select=None):
+  def hn(self,axis,blen=None,bwidth=None,brange=None,wnorm=None,select=None):
     """
     Create and return the n-dimensional histo of axis list.
     
@@ -17,6 +17,8 @@ class _Hist(object):
     ----------
     axis : list of str/np.array
       list of axis to hist
+    blen : list of int, optional
+      list of number of bins. If a blen element is None, the default value is 10
     bwidth : list of float, optional
       list of bin width. If a bwidth element is None, a calculation is done to have 10 bins in the correspondant axis
     brange : list of list of 2 float, optional
@@ -38,8 +40,10 @@ class _Hist(object):
     TODO: If the given maximum bin range does not match with an int number of bins, the last bin is oversized ??
     it reduce bwidth to fit brange[1]-brange[0] with a int nb of bins
     
-    Example
-    -------
+    If blen and bwidth are both defined, priority is given to blen.
+    
+    Examples
+    --------
     
     >>> hn(['x'],bwidth=[50],brange=[[0,1000]],wnorm=[1.0],select={'ekin':(0.511,None)})
     
@@ -62,16 +66,34 @@ class _Hist(object):
     
     # Filter the data if needed
     if select is not None:
-      for key,val in select.items():
-        w = r.select(w,key,val)
+      for faxis,frange in select.items():
+        w = r.select(w,faxis,frange) # FIXME: bug if more than 1 axis
         for i,ax in enumerate(axis):
-          axis[i]=r.select(ax,key,val)
+          axis[i]=r.select(ax,faxis,frange)
     
     # Define default bin range
     if not brange: brange=[[None,None]]*len(axis) 
     for i,br in enumerate(brange):
       if br[0] is None:brange[i][0]=min(axis[i])
       if br[1] is None:brange[i][1]=max(axis[i])
+    """
+    # Define default bin width
+    
+    # Calculate blen from bwidth
+    
+    # Define default number of bins
+    if not blen: blen=[None]*len(axis)
+    for i,bl in enumerate(blen):
+      if bl is None: blen[i]=int(np.ceil((brange[i][1] + bwidth[i] - brange[i][0])/bwidth[i]))
+      
+    
+    bins.append(np.linspace(brange[i][0],brange[i][1]+bwidth[i],blen[i]) # FIXME: nope because of bwidth possibly not def.
+    """
+    # Calculate number of bins from bwidth if needed
+    if not bwidth: bwidth=[None]*len(axis)
+    for i,bw in enumerate(bwidth):
+      blen=brange[i][1] - brange[i][0]
+      if bw is None: bwidth[i]=blen/10.
     
     # Define default bin width + number of bins
     nbins=[]
@@ -79,12 +101,16 @@ class _Hist(object):
     for i,bw in enumerate(bwidth):
       blen=brange[i][1] - brange[i][0]
       if bw is None: bwidth[i]=blen/10.
-      nbins.append(np.ceil(blen/bwidth[i] + 1))
+      nbins.append(int(np.ceil(np.nan_to_num(blen/bwidth[i])))) # TODO: delete nan_to_num?
     
     # Construct the bins list
     bins=[]
     for i,ax in enumerate(axis):
-      bins.append(np.linspace(brange[i][0],brange[i][1],int(nbins[i])))
+      if nbins[i]>0:
+        bins.append(np.linspace(brange[i][0],brange[i][1]+bwidth[i],nbins[i]+1))
+      else:
+        bins.append(1)
+      
       #bins.append(np.arange(brange[i][0],brange[i][1],bwidth[i]))
     
     # Define weight normalization
@@ -130,7 +156,7 @@ class _Hist(object):
     """
     if not brange : brange = [None,None]
     
-    b,h=self.hn([axis],bwidth=[bwidth],brange=[brange],wnorm=wnorm,select=select)
+    b,h=self.hn([axis],bwidth=[bwidth],brange=[brange],wnorm=[wnorm],select=select)
     
     # Verifier b[:-1]
     h=list(h)
