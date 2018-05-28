@@ -97,7 +97,7 @@ class _Raw(object):
     
     return axis
     
-  def update(self,w,x,y,z,px,py,pz,verbose=True):
+  def update(self,w,x,y,z,px,py,pz,t,verbose=True):
     """
     Update class attributes with new values.
     
@@ -119,6 +119,7 @@ class _Raw(object):
     self.px = np.array(px)
     self.py = np.array(py)
     self.pz = np.array(pz)
+    self.t  = np.array(t)
     
     # Calculate other parameters from it
     self.r      = np.sqrt(self.y**2+self.z**2)
