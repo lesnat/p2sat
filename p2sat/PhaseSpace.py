@@ -5,6 +5,40 @@ from ._Raw import _Raw
 from ._Hist import _Hist
 from ._Plot import _Plot
 from ._Tools import _Tools
+from ._Extract import _Extract
+
+
+class PhaseSpace(object):
+  """
+  Base class for particle phase-space analysis.
+  
+  Attributes
+  ----------
+  raw : sub-object
+    contains raw data and methods to manipulate it, such as import/export into a file or value filtering method. Appropriate place to IO ?
+  hist : sub-object
+    contains methods to make histograms from raw data
+  plot : sub-object
+    contains methods to plot histos
+  extract : sub-object
+    load phase space from a simulation file
+  
+  Notes
+  -----
+  See sub-objects documentation for more informations
+  """
+  def __init__(self):
+      self.raw  = _Raw()
+      self.hist = _Hist(self)
+      self.plot = _Plot(self)
+      self.tools= _Tools(self)
+      self.extract=_Extract(self)    
+
+
+
+
+
+######### DEPRECATED ############
 
 class PhaseSpaceGeneric(object):
   """

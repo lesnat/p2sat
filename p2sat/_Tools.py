@@ -29,14 +29,16 @@ class _Tools(object):
     w         = []
     x,y,z     = [],[],[]
     px,py,pz  = [],[],[]
+    t         = []
     with open(file_name,'r') as f:
       for line in f.readlines():
         if line[0]!="#":
-          W,X,Y,Z,Px,Py,Pz=line.split()
+          W,X,Y,Z,Px,Py,Pz,T=line.split()
           w.append(float(W))
           x.append(float(X))     ; y.append(float(Y))   ; z.append(float(Z))
           px.append(float(Px))   ; py.append(float(Py)) ; pz.append(float(Pz))
-    self._ps.raw.update(w,x,y,z,px,py,pz,verbose=verbose)
+          t.append(float(T))
+    self._ps.raw.update(w,x,y,z,px,py,pz,t,verbose=verbose)
     if verbose: print('Data succesfully imported')
 
 
@@ -58,11 +60,11 @@ class _Tools(object):
     The format in the output file is
     # title
     # legend
-      w x y z px py pz
-      w x y z px py pz
-      . . . . .  .  .
-      . . . . .  .  .
-      . . . . .  .  .
+      w x y z px py pz t
+      w x y z px py pz t
+      . . . . .  .  .  .
+      . . . . .  .  .  .
+      . . . . .  .  .  .
     with 7 digits precision in scientific notation
 
     Some text can be written if the first character of the line is a "#".
@@ -85,13 +87,13 @@ class _Tools(object):
 
       # Write legend
       f.write("# ")
-      for legend in ('weight','x (um)','y (um)','z (um)','px (MeV/c)','py (MeV/c)','pz (MeV/c)'):
+      for legend in ('weight','x (um)','y (um)','z (um)','px (MeV/c)','py (MeV/c)','pz (MeV/c)','t (fs)'):
         f.write("%-16s"%legend) # the chain is placed under 16 characters
       f.write("\n")
 
       # Write data
       for i in range(len(r.w)):
-        for e in [r.w[i],r.x[i],r.y[i],r.z[i],r.px[i],r.py[i],r.pz[i]]:
+        for e in [r.w[i],r.x[i],r.y[i],r.z[i],r.px[i],r.py[i],r.pz[i],r.t[i]]:
             tmp="% .7E"%e # 7 digits precision with E notation
             f.write("%-16s"%tmp) # the chain is placed under 16 characters
         f.write("\n")
