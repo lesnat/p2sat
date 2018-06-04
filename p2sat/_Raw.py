@@ -47,9 +47,9 @@ class _Raw(object):
     ----------
     axis : str or numpy.ndarray
       axis to filter
-    faxis : str or numpy.ndarray
+    faxis : list of str or list of numpy.ndarray
       filtering axis
-    frange : int, float, list/tuple of 2 float
+    frange : list of int, float, list/tuple of 2 float
       filtering value/range (value if int, range if float or list/tuple). If a frange element is None, the minimum/maximum value is taken
     fpp : float, optional
       relative floating point precision. Default is 1e-7
@@ -76,24 +76,31 @@ class _Raw(object):
 
     If frange is a list/tuple or a float, the filtering is done with a fpp precision
     """
+    # if type(faxis) is not (list or tuple): faxis=[faxis]
+
     # Get a copy of axis and faxis (from a str or not)
     if type(axis) is str: axis=eval("self.%s"%axis)
     axis=np.array(axis)
-    if type(faxis) is str: faxis=eval("self.%s"%faxis)
-    faxis=np.array(faxis)
+    for i,fax in enumerate(faxis):
+      if type(fax) is str: faxis[i]=eval("self.%s"%faxis[i])
+      faxis[i]=np.array(faxis[i])
 
     # Filtering ...
-    if type(frange) is list or type(frange) is tuple:
-      if frange[0] is None: frange[0]=min(axis)
-      if frange[1] is None: frange[1]=max(axis)
-      filtr=np.array([x>frange[0]*(1-fpp) and x<frange[1]*(1+fpp) for x in faxis])
-      axis=axis[filtr]
-    elif type(frange) is int:
-      axis=axis[faxis==frange]
-    elif type(frange) is float:
-      axis=self.select(axis,faxis,frange=[frange,frange])
-    else:
-      raise TypeError('frange type must be int/float or list/tuple of 2 float.')
+    for i,_ in enumerate(faxis):
+      if type(frange[i]) is list or type(frange[i]) is tuple:
+        if frange[i][0] is None: frange[i][0]=min(axis)
+        if frange[i][1] is None: frange[i][1]=max(axis)
+        filtr=np.array([x>frange[i][0]*(1-fpp) and x<frange[i][1]*(1+fpp) for x in faxis[i]])
+        axis=axis[filtr]
+      elif type(frange[i]) is int:
+        axis=axis[faxis[i]==frange[i]]
+      elif type(frange[i]) is float:
+        axis=self.select(axis,faxis=[faxis[i]],frange=[[frange[i],frange[i]]])
+      else:
+        raise TypeError('frange type must be int/float or list/tuple of 2 float.')
+
+      # filter next faxis with current faxis
+      if len(faxis)>i+1:faxis[i+1]=self.select(faxis[i+1],[faxis[i]],[frange[i]])
 
     return axis
 

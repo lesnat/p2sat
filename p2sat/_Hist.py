@@ -180,11 +180,17 @@ class _Hist(object):
     w   = np.array(r.w)
 
     # Filter the data if needed
+    # if select is not None:
+    #   for faxis,frange in select.items():
+    #     print(len(w))
+    #     w = r.select(w,faxis,frange) # FIXME: bug if more than 1 axis
+    #     for i,ax in enumerate(axis):
+    #       print(len(ax))
+    #       axis[i]=r.select(ax,faxis,frange)
     if select is not None:
-      for faxis,frange in select.items():
-        w = r.select(w,faxis,frange) # FIXME: bug if more than 1 axis
-        for i,ax in enumerate(axis):
-          axis[i]=r.select(ax,faxis,frange)
+      w = r.select(w,faxis=select.keys(),frange=select.values())
+      for i,ax in enumerate(axis):
+        axis[i]=r.select(ax,faxis=select.keys(),frange=select.values())
 
     # Define default bin range
     if wnorm is None    : wnorm=[None]*len(axis)
