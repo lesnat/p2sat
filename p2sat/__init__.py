@@ -58,7 +58,7 @@ PhaseSpaceGeant4 :
 - use a while True & try to loop over nthreads
 
 PhaseSpaceTriLens :
-- 
+-
 
 Code structure & names OK ?
 
@@ -77,7 +77,7 @@ tools :?
 - fit MB, gaussian, MJ
 - IO(file_name,mode='r',title="")
 """
-from PhaseSpace import PhaseSpaceGeneric,PhaseSpaceSmilei,PhaseSpaceGeant4,PhaseSpaceTrILEns
+from PhaseSpace import PhaseSpace,PhaseSpaceGeneric,PhaseSpaceSmilei,PhaseSpaceGeant4,PhaseSpaceTrILEns
 
 
 def testing(name="all"):

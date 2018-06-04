@@ -11,7 +11,7 @@ from ._Extract import _Extract
 class PhaseSpace(object):
   """
   Base class for particle phase-space analysis.
-  
+
   Attributes
   ----------
   raw : sub-object
@@ -22,7 +22,7 @@ class PhaseSpace(object):
     contains methods to plot histos
   extract : sub-object
     load phase space from a simulation file
-  
+
   Notes
   -----
   See sub-objects documentation for more informations
@@ -32,10 +32,48 @@ class PhaseSpace(object):
       self.hist = _Hist(self)
       self.plot = _Plot(self)
       self.tools= _Tools(self)
-      self.extract=_Extract(self)    
+      self.extract=_Extract(self)
+
+  def __add__(self,other):
+    """
+    Return a new PhaseSpace object, combination of the 2 previous.
+    """
+    ps = PhaseSpace()
+
+    w   = np.array([list(self.raw.w) + list(other.raw.w)])[0]
+    x   = np.array([list(self.raw.x) + list(other.raw.x)])[0]
+    y   = np.array([list(self.raw.y) + list(other.raw.y)])[0]
+    z   = np.array([list(self.raw.z) + list(other.raw.z)])[0]
+    px  = np.array([list(self.raw.px) + list(other.raw.px)])[0]
+    py  = np.array([list(self.raw.py) + list(other.raw.py)])[0]
+    pz  = np.array([list(self.raw.pz) + list(other.raw.pz)])[0]
+    t   = np.array([list(self.raw.t) + list(other.raw.t)])[0]
+
+    ps.raw.update(w,x,y,z,px,py,pz,t)
+
+    return ps
+
+  def __len__(self):
+    """
+    Return the total number of configurations.
+    """
+    return len(self.raw.w)
 
 
+  def copy(self,verbose=False):
+    """
+    Return a copy of the current PhaseSpace object.
 
+    Parameters
+    ----------
+    verbose : bool
+      verbosity of the function. If True, a message is displayed when the attributes are loaded in memory
+    """
+    new = PhaseSpace()
+    r=self.raw
+    new.raw.update(r.w,r.x,r.y,r.z,r.px,r.py,r.pz,r.t,verbose=verbose)
+
+    return new
 
 
 ######### DEPRECATED ############
@@ -43,7 +81,7 @@ class PhaseSpace(object):
 class PhaseSpaceGeneric(object):
   """
   Base class for particle phase-space analysis.
-  
+
   Attributes
   ----------
   extract : "polymorphic" method
@@ -54,7 +92,7 @@ class PhaseSpaceGeneric(object):
     contains methods to make histograms from raw data
   plot : sub-object
     contains methods to plot histos
-  
+
   Notes
   -----
   See sub-objects documentation for more informations
@@ -64,17 +102,17 @@ class PhaseSpaceGeneric(object):
       self.hist = _Hist(self)
       self.plot = _Plot(self)
       self.tools= _Tools(self)
-  
+
   def extract(self):
     """
     Extract raw data from a simulation file.
-    
+
     Notes
     -----
     This abstract method must be overwritten by the PhaseSpaceGeneric child classes
     """
     raise NotImplementedError
-      
+
 
 class PhaseSpaceSmilei(PhaseSpaceGeneric):
   def __init__(self):
@@ -83,11 +121,11 @@ class PhaseSpaceSmilei(PhaseSpaceGeneric):
       self.plot = _Plot(self)
       self.tools= _Tools(self)
       self.__doc__=PhaseSpaceGeneric.__doc__
-  
+
   def extract(self,Screen,timestep,xnorm=1.0,wnorm=1.0,X=0.0,verbose=True):
     """
     Extract simulation results from a Smilei Screen diagnostic
-    
+
     Parameters
     ----------
     Screen : Smilei object
@@ -102,7 +140,7 @@ class PhaseSpaceSmilei(PhaseSpaceGeneric):
       Screen diagnostic position from the beginning of target solid density, in um
     verbose : bool, optional
       verbosity
-    
+
     Notes
     -----
     The Smilei Screen diagnostic should be declared in the namelist at the following format
@@ -113,7 +151,7 @@ class PhaseSpaceSmilei(PhaseSpaceGeneric):
                   ['px'   , pmin    , pmax    , 301]
                   ]
       )
-      
+
       2D:
       DiagScreen( ...,
             axis = [
@@ -123,7 +161,7 @@ class PhaseSpaceSmilei(PhaseSpaceGeneric):
                   ['px'   , pmin    , pmax    , 301]
                   ]
       )
-      
+
       3D :
       DiagScreen( ...,
             axis = [
@@ -134,11 +172,11 @@ class PhaseSpaceSmilei(PhaseSpaceGeneric):
                   ['px'   , pmin    , pmax    , 301]
                   ]
       )
-      
+
     The order is very important. It is also recommended to have an odd number of bins.
-    
+
     The weights normalization only works for linearly spaced bins.
-    
+
     Examples
     --------
     >>> import happi
@@ -146,7 +184,7 @@ class PhaseSpaceSmilei(PhaseSpaceGeneric):
     >>> nl = S.namelist
     >>> es = p2sat.PhaseSpaceSmilei()
     >>> es.extract(S.Screen.Screen2,nl.Ndt,xnorm=nl.um,wnorm=nc*vol,X=1.0) # With ``nc`` the critical density & ``vol`` the characteristic interaction volume
-    
+
     TODO
     ----
     - Implement
@@ -154,16 +192,16 @@ class PhaseSpaceSmilei(PhaseSpaceGeneric):
     - Check if giving X is mandatory (another way to do it with nl.Screen ?)
     """
     if verbose:print("Extracting screen data ...")
-    
+
     w         = []
     x,y,z     = [],[],[]
     px,py,pz  = [],[],[]
     wNorm     = float(wnorm) # Get a copy of wnorm
-    
+
     dpx,dpy,dpz=[],[],[]
-    
+
     data  = Screen(timesteps=timestep).getData()[0] # TODO: check this
-    
+
     try:
       Z     = Screen().get()['z']
       wNorm*= (max(Z)-min(Z))/len(Z)
@@ -171,7 +209,7 @@ class PhaseSpaceSmilei(PhaseSpaceGeneric):
     except KeyError:
       Z     = [0.0]
       data  = [data]
-    
+
     try:
       Y     = Screen().get()['y']
       wNorm*= (max(Y)-min(Y))/len(Y)
@@ -179,7 +217,7 @@ class PhaseSpaceSmilei(PhaseSpaceGeneric):
     except KeyError:
       Y     = [0.0]
       data  = [data]
-    
+
     try:
       Pz    = Screen().get()['pz']
       wNorm*= (max(Pz)-min(Pz))/len(Pz)
@@ -187,14 +225,14 @@ class PhaseSpaceSmilei(PhaseSpaceGeneric):
     except KeyError:
       Pz    = [0.0]
       data  = [data]
-    
+
     Py      = Screen().get()['py']
     Px      = Screen().get()['px']
     wNorm  *= (max(Py)-min(Py))/len(Py)
     wNorm  *= (max(Px)-min(Px))/len(Px)
     Py     *= 0.511
     Px     *= 0.511
-    
+
     for iz,ez in enumerate(data):
       for iy,ey in enumerate(ez):
         for ipz,epz in enumerate(ey):
@@ -214,39 +252,39 @@ class PhaseSpaceSmilei(PhaseSpaceGeneric):
                   dpz.append(0.0)
                 else:
                   dpz.append(Pz[ipz+1] - Pz[ipz])
-              
+
     if verbose:print("Done !")
 
     self.raw.update(w,x,y,z,px,py,pz,verbose)
-    
+
     self.raw.dpx=np.array(dpx)
     self.raw.dpy=np.array(dpy)
     self.raw.dpz=np.array(dpz)
-    
+
     #self.raw.dp = np.sqrt(self.raw.dpx**2 + self.raw.dpy**2 + self.raw.dpz**2)
     #self.raw.dekin = (np.sqrt((self.raw.dp/0.511)**2+1.0)-1.0)*0.511
     self.raw.dp     = self.raw.px/self.raw.p * self.raw.dpx + self.raw.py/self.raw.p * self.raw.dpy + self.raw.pz/self.raw.p * self.raw.dpz
     self.raw.dekin  = self.raw.p/np.sqrt(self.raw.p**2 + 1.0) * self.raw.dp
-  
+
   def extract_1d(self,Screen,timestep,xnorm,wnorm=1.0,X=0):
     w         = []
     x,y,z     = [],[],[]
     px,py,pz  = [],[],[]
-    
+
     data= Screen(timesteps=timestep).getData()[0]
     Px  = Screen().get()['px'] * 0.511
     Py  = Screen().get()['py'] * 0.511
-    
+
     try:
       Y = Screen().get()['y'] * xnorm
     except:
       Y = [0.0]
       data = [data]
-    
+
     wNorm = wnorm/(0.511**2)
     wNorm *= (max(Px)-min(Px))/len(Px)
     wNorm *= (max(Py)-min(Py))/len(Py)
-    
+
     # redéfinir l'ordre dans namelist ?
     print("Extracting screen data ...")
     for iy,ey in enumerate(data):
@@ -263,25 +301,25 @@ class PhaseSpaceSmilei(PhaseSpaceGeneric):
     z = [0.0] * len(w)
     print("Data succesfully imported")
     self.raw.update(w,x,y,z,px,py,pz)
-    
+
   def extract_2d(self,Screen,timestep,xnorm,wnorm=1.0,X=0):
     w         = []
     x,y,z     = [],[],[]
     px,py,pz  = [],[],[]
-    
+
     data= Screen(timesteps=timestep).getData()[0]
     Px  = Screen().get()['px'] * 0.511
     Py  = Screen().get()['py'] * 0.511
     Pz  = Screen().get()['pz'] * 0.511
 
 
-    
+
     try:
       Y = Screen().get()['y'] * xnorm
     except:
       Y = [0.0]
       data = [data]
-    
+
     wNorm  = wnorm/(0.511**3)
     wNorm *= (max(Px)-min(Px))/len(Px)
     wNorm *= (max(Py)-min(Py))/len(Py)
@@ -298,7 +336,7 @@ class PhaseSpaceSmilei(PhaseSpaceGeneric):
               py.append(Py[ipy])
               pz.append(Pz[ipz])
               w.append(epz*wNorm)
-              
+
     x = [X] * len(w)
     z = [0.0] * len(w)
     print("Data succesfully imported")
@@ -312,11 +350,11 @@ class PhaseSpaceGeant4(PhaseSpaceGeneric):
     self.plot = _Plot(self)
     self.tools= _Tools(self)
     self.__doc__=PhaseSpaceGeneric.__doc__
-    
+
   def extract(self,file_name,nthreads=1,verbose=True):
     """
     Extract simulation results from a Geant4 NTuple output file
-    
+
     Parameters
     ----------
     file_name : str
@@ -325,7 +363,7 @@ class PhaseSpaceGeant4(PhaseSpaceGeneric):
       total number of threads to consider
     verbose : bool, optional
       verbosity
-    
+
     Notes
     -----
     The Geant4 NTuple format should be
@@ -333,14 +371,14 @@ class PhaseSpaceGeant4(PhaseSpaceGeneric):
       . . . . .  .  .
       . . . . .  .  .
       . . . . .  .  .
-      
+
     Yet only xml and csv file format are accepted
-    
+
     Examples
     --------
     >>> eg = p2sat.PhaseSpaceGeant4()
     >>> eg.extract("../Geant4/testem_nt_electron_t*.csv",nthreads=10)
-    
+
     TODO
     ----
     - while True + try/except to loop over nthreads ?
@@ -348,7 +386,7 @@ class PhaseSpaceGeant4(PhaseSpaceGeneric):
     data = []
     fext = file_name.split('.')[-1]   # File extension
     fbase= file_name[:-(len(fext)+1)] # File base name
-    
+
     for thread in range(0,nthreads):
       fname=fbase[:-1]+str(thread)+"."+fext
       if verbose:print("Extracting %s ..."%fname)
@@ -360,13 +398,13 @@ class PhaseSpaceGeant4(PhaseSpaceGeneric):
               for e in line.split(','):
                 data.append(float(e))
       elif fext=="xml":
-        from lxml import etree      
+        from lxml import etree
         with etree.parse(fname) as tree:
           for entry in tree.xpath('/aida/tuple/rows/row/entry'):
             data.append(float(entry.get('value')))
       else:
         raise NameError("Unknown file extension : %s"%fext)
-    
+
     w   = data[0::7]
     x   = data[1::7]
     y   = data[2::7]
@@ -375,7 +413,7 @@ class PhaseSpaceGeant4(PhaseSpaceGeneric):
     py  = data[5::7]
     pz  = data[6::7]
     if verbose:print("Done !")
-    
+
     self.raw.update(w,x,y,z,px,py,pz,verbose)
 
 
@@ -386,11 +424,11 @@ class PhaseSpaceTrILEns(PhaseSpaceGeneric):
     self.plot = _Plot(self)
     self.tools= _Tools(self)
     self.__doc__=PhaseSpaceGeneric.__doc__
-    
+
   def extract(self,path,specie,verbose=True):
     """
     Extract simulation results from a TrILEns output.txt file
-    
+
     Parameters
     ----------
     path : str
@@ -399,32 +437,32 @@ class PhaseSpaceTrILEns(PhaseSpaceGeneric):
       specie to find in the output. The specie name must be in plural form (i.e 'electrons' or 'positrons')
     verbose : bool, optional
       verbosity
-    
+
     Notes
     -----
     ...
-    
+
     Examples
     --------
     >>> et = p2sat.PhaseSpaceTrILEns()
     >>> et.extract("../TrILEns/",specie="positrons")
-    
+
     TODO
     ----
     - Check Interface.f90 at line ~ 120 -> condition for e-/e+ & not working with photons
     """
     if verbose:print("Extracting {} data from {}output.txt ...".format(specie,path))
-    
+
     w         = []
     x,y,z     = [],[],[]
     px,py,pz  = [],[],[]
-    
+
     is_correct_specie=False
-    
+
     with open(path+'output.txt','r') as f:
       for _ in range(34):
         f.readline()
-      
+
       for line in f.readlines():
         try:
           W,X,Y,Z,Px,Py,Pz,Gamma,Chi=line.split()
@@ -437,7 +475,7 @@ class PhaseSpaceTrILEns(PhaseSpaceGeneric):
             is_correct_specie = True
           else:
             is_correct_specie = False
-    
+
     if verbose:print("Data succesfully imported")
-    
+
     self.raw.update(w,x,y,z,px,py,pz,verbose)

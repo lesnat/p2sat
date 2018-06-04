@@ -177,7 +177,7 @@ class _Tools(object):
     else:
       return np.array(w),np.array(x),np.array(y),np.array(z),np.array(px),np.array(py),np.array(pz)
 
-  def discretize_2(self,update=False,verbose=True,**kargs):
+  def discretize(self,update=False,verbose=True,**kargs):
     """
     Discretize the particles phase space in a 6 or 7 D histogram.
 
@@ -205,20 +205,20 @@ class _Tools(object):
     """
     hn=self._ps.hist.hn
     r=self._ps.raw
-    print(r.w)
+
     if verbose : print('Data discretization ...')
     #bi,hi=hn(['x','y','z','px','py','pz'],bwidth=bwidth,brange=brange,wnorm=[1.0]*6,select=select)
-    bi,hi=hn([r.x,r.y,r.z,r.px,r.py,r.pz],wnorm=[1.0]*6,**kargs)
-    bx,by,bz,bpx,bpy,bpz=bi
-    print(hi)
+    bi,hi=hn([r.x,r.y,r.z,r.px,r.py,r.pz,r.t],wnorm=[1.0]*7,**kargs)
+    bx,by,bz,bpx,bpy,bpz,bt=bi
+
     if verbose : print('Done !')
     w       = []
     x,y,z   = [],[],[]
     px,py,pz= [],[],[]
+    t       = []
 
     if verbose : print('Getting new configurations ...')
     hb=hi.nonzero()
-    print(hb)
 
     w   = hi[hb]
     x   = bx[hb[0]]
@@ -227,11 +227,12 @@ class _Tools(object):
     px  = bpx[hb[3]]
     py  = bpy[hb[4]]
     pz  = bpz[hb[5]]
+    t   = bt[hb[6]]
 
     if verbose : print('Done !')
 
     if update:
-      r.update(w,x,y,z,px,py,pz,verbose)
+      r.update(w,x,y,z,px,py,pz,t,verbose=verbose)
     else:
       return np.array(w),np.array(x),np.array(y),np.array(z),np.array(px),np.array(py),np.array(pz)
 
@@ -256,3 +257,41 @@ class _Tools(object):
     ...
     """
     pass
+
+  def export_TrILEns(self,path,with_time=True,verbose=True):
+    """
+    Export particle phase space in a TrILEns input file.
+
+    Parameters
+    ----------
+    path : str
+      path to the output folder
+    verbose : bool, optional
+      verbosity of the function. If True, a message is displayed when the data is exported
+    """
+    if verbose: print("Exporting data ...")
+
+    r=self._ps.raw
+
+    # Opening the output file
+    with open(path+'prop_ph.t','w') as f:
+      if with_time:
+        f.write('9 1.\n')
+        f.write(' poi  phx  phy  phz  pdx  pdy  pdz  gph  tim\n')
+      else:
+        f.write('8 1.\n')
+        f.write(' poi  phx  phy  phz  pdx  pdy  pdz  gph\n')
+
+      # Write data
+      for i in range(len(r.w)):
+        if with_time:
+          data=[r.w[i],r.x[i],r.y[i],r.z[i],r.px[i],r.py[i],r.pz[i],r.gamma[i],r.t[i]]
+        else:
+          data=[r.w[i],r.x[i],r.y[i],r.z[i],r.px[i],r.py[i],r.pz[i],r.gamma[i]]
+
+        for e in data:
+            tmp="% .7E"%e # 7 digits precision with E notation
+            f.write("%-16s"%tmp) # the chain is placed under 16 characters
+        f.write("\n")
+
+    if verbose: print('Data succesfully exported')
