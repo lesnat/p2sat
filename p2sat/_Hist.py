@@ -213,12 +213,13 @@ class _Hist(object):
       else:
         bwidth[i] = (brange[i][1] - brange[i][0])/blen[i]
       if wnorm[i] is None: wnorm[i]=bwidth[i]
-      bins.append(np.linspace(brange[i][0],brange[i][1]+bwidth[i],blen[i]))
+    #   bins.append(np.linspace(brange[i][0],brange[i][1]+bwidth[i],blen[i]))
+      bins.append(np.linspace(brange[i][0],brange[i][1],blen[i]))
 
-    print(bins)
-    print(brange)
-    print(bwidth)
-    print(blen)
+    # print(bins)
+    # print(brange)
+    # print(bwidth)
+    # print(blen)
     # Calculate the multi dimensional histo, normalized by wnorm
     h,b=np.histogramdd(axis,weights=w/np.product(wnorm),bins=bins)
 

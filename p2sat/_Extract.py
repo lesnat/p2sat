@@ -169,4 +169,61 @@ class _Extract(object):
 
     if verbose:print("Data succesfully imported")
 
-    self._ps.raw.update(w,x,y,z,px,py,pz,verbose)
+    self._ps.raw.update(w,x,y,z,px,py,pz,t,verbose=verbose)
+
+  def TrILEns_output(self,path,specie,verbose=True):
+    """
+    Extract simulation results from a TrILEns output.txt file
+
+    Parameters
+    ----------
+    path : str
+      simulation path
+    specie : str
+      specie to find in the output. The specie name must be in plural form (i.e 'electrons' or 'positrons')
+    verbose : bool, optional
+      verbosity
+
+    Notes
+    -----
+    ...
+
+    Examples
+    --------
+    >>> et = p2sat.PhaseSpaceTrILEns()
+    >>> et.extract("../TrILEns/",specie="positrons")
+
+    TODO
+    ----
+    - Check Interface.f90 at line ~ 120 -> condition for e-/e+ & not working with photons
+    """
+    if verbose:print("Extracting {} data from {}output.txt ...".format(specie,path))
+
+    w         = []
+    x,y,z     = [],[],[]
+    px,py,pz  = [],[],[]
+    t         = []
+
+    is_correct_specie=False
+
+    with open(path+'output.txt','r') as f:
+      for _ in range(34):
+        f.readline()
+
+      for line in f.readlines():
+        try:
+          W,X,Y,Z,Px,Py,Pz,Gamma,Chi=line.split()
+          if is_correct_specie:
+            w.append(float(W))
+            x.append(float(X))     ; y.append(float(Y))   ; z.append(float(Z))
+            px.append(float(Px))   ; py.append(float(Py)) ; pz.append(float(Pz))
+            t.append(0.)
+        except ValueError:
+          if specie in line.split():
+            is_correct_specie = True
+          else:
+            is_correct_specie = False
+
+    if verbose:print("Done !")
+
+    self._ps.raw.update(w,x,y,z,px,py,pz,t,verbose=verbose)
