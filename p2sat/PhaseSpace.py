@@ -6,6 +6,7 @@ from ._Hist import _Hist
 from ._Plot import _Plot
 from ._Tools import _Tools
 from ._Extract import _Extract
+from ._Stat import _Stat
 
 
 class PhaseSpace(object):
@@ -33,6 +34,7 @@ class PhaseSpace(object):
       self.plot = _Plot(self)
       self.tools= _Tools(self)
       self.extract=_Extract(self)
+      self.stat=_Stat(self)
 
   def __add__(self,other):
     """

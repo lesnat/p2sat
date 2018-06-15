@@ -177,7 +177,7 @@ class _Tools(object):
     else:
       return np.array(w),np.array(x),np.array(y),np.array(z),np.array(px),np.array(py),np.array(pz)
 
-  def discretize(self,update=False,verbose=True,**kargs):
+  def discretize(self,update=False,verbose=True,with_time=True,**kargs):
     """
     Discretize the particles phase space in a 6 or 7 D histogram.
 
@@ -208,9 +208,12 @@ class _Tools(object):
 
     if verbose : print('Data discretization ...')
     #bi,hi=hn(['x','y','z','px','py','pz'],bwidth=bwidth,brange=brange,wnorm=[1.0]*6,select=select)
-    bi,hi=hn([r.x,r.y,r.z,r.px,r.py,r.pz,r.t],wnorm=[1.0]*7,**kargs)
-    bx,by,bz,bpx,bpy,bpz,bt=bi
-
+    if with_time:
+      bi,hi=hn([r.x,r.y,r.z,r.px,r.py,r.pz,r.t],wnorm=[1.0]*7,**kargs)
+      bx,by,bz,bpx,bpy,bpz,bt=bi
+    else:
+      bi,hi=hn([r.x,r.y,r.z,r.px,r.py,r.pz],wnorm=[1.0]*6,**kargs)
+      bx,by,bz,bpx,bpy,bpz=bi
     if verbose : print('Done !')
     w       = []
     x,y,z   = [],[],[]
@@ -220,6 +223,8 @@ class _Tools(object):
     if verbose : print('Getting new configurations ...')
     hb=hi.nonzero()
 
+    print(bx,by,bz,bpx,bpy,bpz)
+
     w   = hi[hb]
     x   = bx[hb[0]]
     y   = by[hb[1]]
@@ -227,7 +232,10 @@ class _Tools(object):
     px  = bpx[hb[3]]
     py  = bpy[hb[4]]
     pz  = bpz[hb[5]]
-    t   = bt[hb[6]]
+    if with_time:
+      t   = bt[hb[6]]
+    else:
+      t   = [0.0]*len(w)
 
     if verbose : print('Done !')
 
