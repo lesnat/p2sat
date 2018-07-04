@@ -20,7 +20,7 @@ class _Plot(object):
     """
     if self.autoclear : plt.clf()
     b,h=self._h.h1(axis,**kargs)
-    plt.step(b,h,'.',label=label[1],where='post') # Verif
+    plt.step(b[:-1],h,'.',label=label[1],where='post') # Verif
     plt.xlim(xmin=min(b),xmax=max(b))
     plt.xlabel(label[0])
     if log:plt.yscale('log')
