@@ -12,53 +12,161 @@ class _Plot(object):
     self._h=self._ps.hist
     self.autoclear = True
 
-  def h1(self,axis, # axis
-        label=["",""],log=True, # plot options
-        **kargs): # hist options
+  def get_labels(self,axes,wnorm):
     """
+    Returns the labels of given axes.
+    
+    Parameters
+    ----------
+    axes : list of str
+      Names of the axes
+    wnorm : float or None
+      Weight normalization. If None, the last labels element is \"Number\", otherwise it is \"Number/unit1/unit2/...\"
+      
+    Returns
+    -------
+    labels : list of str
+      Labels of given axes and label of weight
+    """
+    names = {
+              'x'     : '$x$',
+              'y'     : '$y$',
+              'z'     : '$z$',
+              'px'    : '$p_x$',
+              'py'    : '$p_y$',
+              'pz'    : '$p_z$',
+              
+              'r'     : '$r$',
+              'p'     : '$p$',
+              'ekin'  : '$E_{kin}$',
+              'gamma' : '$\gamma$',
+              
+              'theta' : '$\\theta$',
+              'phi'   : '$\\phi$'
+             }
+             
+    units = {
+              'x'     : 'µm',
+              'y'     : 'µm',
+              'z'     : 'µm',
+              'px'    : 'MeV/c',
+              'py'    : 'MeV/c',
+              'pz'    : 'MeV/c',
+              
+              'r'     : 'µm',
+              'p'     : 'MeV/c',
+              'ekin'  : 'MeV',
+              'gamma' : None,
+              
+              'theta' : 'deg',
+              'phi'   : 'deg'
+              }
+    
+    labels=[]
+    res=""
+    for ax in axes:
+      name = names[ax]
+      unit = units[ax]
+      if unit is not None:
+        labels.append("{} ({})".format(name,unit))
+        if wnorm is None:res += "/{}".format(unit)
+      else:
+        labels.append(name)
+        
+    labels.append("Number{}".format(res))
+    return labels
 
+  def clear(self,number=None):
     """
-    if self.autoclear : plt.clf()
+    Clear a plot.
+    
+    Parameters
+    ----------
+    number : int, optional
+      Figure number to clear. If None, clear the current figure
+    """
+    if number is not None:
+      plt.figure(number)
+    plt.clf()
+
+  def h1(self,axis,log=True,**kargs):
+    """
+    Plot the 1d histogram of given axis.
+    
+    Parameters
+    ----------
+    axis : str
+      Name of the axis to plot
+    log : bool, optional
+      True to set log scale on y axis
+    kargs : dict, optional
+      Dictionnary to pass to the hist.h1 method
+      
+    See Also
+    --------
+    hist.h1
+    """
+    if self.autoclear : self.clear()
+    
+    labels=self.get_labels([axis],kargs.get('wnorm',None))
+    
     b,h=self._h.h1(axis,**kargs)
-    plt.step(b[:-1],h,'.',label=label[1],where='post') # Verif
+    plt.step(b[:-1],h,'.',where='post') # Verif
+    
     plt.xlim(xmin=min(b),xmax=max(b))
-    plt.xlabel(label[0])
+    plt.ylabel(labels[1])
+    plt.xlabel(labels[0])
     if log:plt.yscale('log')
+    
     plt.legend()
 
-  def h2(self,axis1,axis2,
-        label=["","",""],log=False,contour=True,
-        **kargs):
+  def h2(self,axis1,axis2,log=False,**kargs):
     """
+    Plot the 2d histogram of given axes.
+    
+    Parameters
+    ----------
+    axis1,axis2 : str
+      Name of the axes to plot
+    log : bool, optional
+      True to set log scale on y axis
+    kargs : dict, optional
+      Dictionnary to pass to the hist.h2 method
+      
+    See Also
+    --------
+    hist.h2
+    """
+    if self.autoclear : self.clear()
+    labels=self.get_labels([axis1,axis2],kargs.get('wnorm',None))
+    
+    b1,b2,h=self._h.h2(axis1,axis2,**kargs)
+    g1,g2=np.meshgrid(b1,b2,indexing='ij')
 
-    """
-    if self.autoclear : plt.clf()
     if log:
       from matplotlib.colors import LogNorm
       norm=LogNorm()
     else:
       norm=None
-    b1,b2,h=self._h.h2(axis1,axis2,**kargs)
-    g1,g2=np.meshgrid(b1,b2,indexing='ij')
-    a1=plt.pcolormesh(g1,g2,h,norm=norm) # Voire .T
+
+    a1=plt.pcolormesh(g1,g2,h,norm=norm)
 
     plt.xlim(xmin=min(b1),xmax=max(b1))
     plt.ylim(ymin=min(b2),ymax=max(b2))
-
-    plt.xlabel(label[0])
-    plt.ylabel(label[1])
-    # plt.title(label[2])
-    #ca1=plt.colorbar(a1,orientation='horizontal')
-    plt.colorbar(a1,label=label[2])
+    
+    plt.xlabel(labels[0])
+    plt.ylabel(labels[1])
+    plt.colorbar(a1,label=labels[2])
+    
     plt.legend()
 
-  def contour(self,axis1,axis2,
-              label=["","",""],log=False,gfilter=0.0,
-              **kargs):
+  def c2(self,axis1,axis2,log=False,gfilter=0.0,**kargs):
     """
 
     """
-    if self.autoclear : plt.clf()
+    if self.autoclear : self.clear()
+    labels=self.get_labels([axis1,axis2],kargs.get('wnorm',None))
+    
     if log:
       from matplotlib.colors import LogNorm
       norm=LogNorm()
@@ -74,11 +182,15 @@ class _Plot(object):
 
     plt.xlim(xmin=min(b1),xmax=max(b1))
     plt.ylim(ymin=min(b2),ymax=max(b2))
-    plt.xlabel(label[0])
-    plt.ylabel(label[1])
-    plt.title(label[2])
+    plt.xlabel(labels[0])
+    plt.ylabel(labels[1])
+    #plt.title(labels[2])
     plt.legend()
 
+  def s2(self,axis1,axis2):
+    """
+    """
+    pass
 
   def h1h2(self,axis1,axis2,
           label=["","",""],log=False,
@@ -98,7 +210,7 @@ class _Plot(object):
             }
 
     tmp = bool(self.autoclear)
-    if self.autoclear : plt.clf()
+    if self.autoclear : self.clear()
     self.autoclear=False
 
     plt.subplots_adjust(hspace=0.15,wspace=0.15)
@@ -187,6 +299,20 @@ class _Plot(object):
   def h3(self,axis1,axis2,axis3,
         snorm=1.0,hmin=0.0,
         **kargs):
+    """
+    Plot the 3d histogram of given axes.
+    
+    Parameters
+    ----------
+    axis1,axis2,axis3 : str
+      Name of the axes to plot
+    kargs : dict, optional
+      Dictionnary to pass to the hist.h2 method
+      
+    See Also
+    --------
+    hist.h3
+    """
     from mpl_toolkits.mplot3d import Axes3D
     ax = plt.subplot(projection='3d')
     b1,b2,b3,h=self._h.h3(axis1,axis2,axis3,**kargs)
