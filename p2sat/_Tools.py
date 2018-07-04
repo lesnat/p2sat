@@ -304,8 +304,8 @@ class _Tools(object):
         f.write("\n")
 
     if verbose: print('Data succesfully exported')
-    
-    
+
+
   def fit(self,axis,func_name,plot=False,label="",**kargs):
       """
       """
@@ -317,13 +317,15 @@ class _Tools(object):
           f = lambda x,A,T: A*np.exp(-x/T)/T
           p0 = [sum(w),1]
       elif func_name=="gauss":
+        #   f = lambda x,A,sigma: A/(np.sqrt(2*np.pi) * sigma) * np.exp(-(x)**2/(2*sigma**2))
+        #   p0 = [sum(w),x.std()]
           f = lambda x,A,sigma,mu: A/(np.sqrt(2*np.pi) * sigma) * np.exp(-(x-mu)**2/(2*sigma**2))
           p0 = [sum(w),x.std(),0]
       else:
           raise NameError("Unknown func_name.")
 
       popt,pcov = curve_fit(f,x[:-1],w,p0=p0)
-      
+
       diff = (popt[0]-sum(w))/sum(w) * 100
       print('Error on number of particles for \"{}\" fit : {:.2F} %'.format(func_name,diff))
 
@@ -331,4 +333,3 @@ class _Tools(object):
         plt.plot(x,f(x,*popt),label=label)
 
       return x,popt
-
