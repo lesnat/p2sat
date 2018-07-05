@@ -306,7 +306,7 @@ class _Tools(object):
     if verbose: print('Data succesfully exported')
 
 
-  def fit(self,axis,func_name,plot=False,label="",**kargs):
+  def fit(self,axis,func_name,plot=False,polar=False,**kargs):
       """
       """
       x,w = self._ps.hist.h1(axis,**kargs)
@@ -330,6 +330,11 @@ class _Tools(object):
       print('Error on number of particles for \"{}\" fit : {:.2F} %'.format(func_name,diff))
 
       if plot:
-        plt.plot(x,f(x,*popt),label=label)
+          if polar:
+            a=plt.axes(polar=True)
+            a.plot(np.radians(x),f(x,*popt))
+          else:
+            a=plt.axes()
+            a.plot(x,f(x,*popt),label=label)
 
       return x,popt
