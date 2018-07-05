@@ -133,7 +133,7 @@ class _Raw(object):
     self.p      = np.sqrt(self.px**2+self.py**2+self.pz**2)
     self.theta  = np.degrees(np.arctan(self.py/self.px))
     self.phi    = np.degrees(np.arctan(self.pz/self.px)) # Geometrical effect ? change -> 0 pi
-    self.ekin   = (np.sqrt((self.p/0.511)**2 + 1) - 1) * 0.511
+    self.ekin   = (np.sqrt((self.p/0.511)**2 + 1) - 1) * 0.511 # FIXME: calculation for gamma !
     self.gamma  = self.ekin/0.511 + 1.
 
     """

@@ -310,7 +310,8 @@ class _Tools(object):
       """
       """
       x,w = self._ps.hist.h1(axis,**kargs)
-
+      
+      print(x)
       from scipy.optimize import curve_fit
 
       if func_name=="exp":
@@ -331,10 +332,10 @@ class _Tools(object):
 
       if plot:
           if polar:
-            a=plt.axes(polar=True)
+            a=plt.gca(polar=True)
             a.plot(np.radians(x),f(x,*popt))
           else:
-            a=plt.axes()
-            a.plot(x,f(x,*popt),label=label)
+            a=plt.gca()
+            a.plot(x,f(x,*popt))
 
       return x,popt
