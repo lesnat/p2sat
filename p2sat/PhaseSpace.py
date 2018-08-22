@@ -28,7 +28,8 @@ class PhaseSpace(object):
   -----
   See sub-objects documentation for more informations
   """
-  def __init__(self):
+  def __init__(self,specie=None):
+      self.specie = specie
       self.raw  = _Raw()
       self.hist = _Hist(self)
       self.plot = _Plot(self)

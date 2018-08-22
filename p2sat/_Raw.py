@@ -39,6 +39,43 @@ class _Raw(object):
 
   * detail of the calculus can be found at ... TODO
   """
+  def __init__(self):
+    self.labels = {
+              'w'     : 'Weight',
+              'x'     : '$x$',
+              'y'     : '$y$',
+              'z'     : '$z$',
+              'px'    : '$p_x$',
+              'py'    : '$p_y$',
+              'pz'    : '$p_z$',
+
+              'r'     : '$r$',
+              'p'     : '$p$',
+              'ekin'  : '$E_{kin}$',
+              'gamma' : '$\gamma$',
+
+              'theta' : '$\\theta$',
+              'phi'   : '$\\phi$'
+             }
+
+    self.units = {
+              'w'     : 'None',
+              'x'     : 'µm',
+              'y'     : 'µm',
+              'z'     : 'µm',
+              'px'    : 'MeV/c',
+              'py'    : 'MeV/c',
+              'pz'    : 'MeV/c',
+
+              'r'     : 'µm',
+              'p'     : 'MeV/c',
+              'ekin'  : 'MeV',
+              'gamma' : None,
+
+              'theta' : 'deg',
+              'phi'   : 'deg'
+              }
+
   def select(self,axis,faxis,frange,fpp=1e-7):
     """
     Filter an axis with a value/range on another axis.

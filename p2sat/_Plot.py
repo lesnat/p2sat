@@ -13,6 +13,7 @@ class _Plot(object):
     self.autoclear = True
     #self.cmap="YlGnBu"
     self.cmap="viridis"
+    plt.ion()
 
   def get_labels(self,axes,wnorm):
     """
@@ -30,48 +31,14 @@ class _Plot(object):
     labels : list of str
       Labels of given axes and label of weight
     """
-    names = {
-              'x'     : '$x$',
-              'y'     : '$y$',
-              'z'     : '$z$',
-              'px'    : '$p_x$',
-              'py'    : '$p_y$',
-              'pz'    : '$p_z$',
-
-              'r'     : '$r$',
-              'p'     : '$p$',
-              'ekin'  : '$E_{kin}$',
-              'gamma' : '$\gamma$',
-
-              'theta' : '$\\theta$',
-              'phi'   : '$\\phi$'
-             }
-
-    units = {
-              'x'     : 'µm',
-              'y'     : 'µm',
-              'z'     : 'µm',
-              'px'    : 'MeV/c',
-              'py'    : 'MeV/c',
-              'pz'    : 'MeV/c',
-
-              'r'     : 'µm',
-              'p'     : 'MeV/c',
-              'ekin'  : 'MeV',
-              'gamma' : None,
-
-              'theta' : 'deg',
-              'phi'   : 'deg'
-              }
-
     labels=[]
     res=""
     for ax in axes:
       if type(ax) is not str:
         labels.append("")
       else:
-        name = names[ax]
-        unit = units[ax]
+        name = self._ps.raw.labels[ax]
+        unit = self._ps.raw.units[ax]
         if unit is not None:
           labels.append("{} ({})".format(name,unit))
           if wnorm is None:res += "/{}".format(unit)
@@ -109,7 +76,7 @@ class _Plot(object):
     polar : bool, optional
       True to use a polar plot. axis must be an angle
     reverse : bool, optional
-      True to plot axis against number instead of number against axis 
+      True to plot axis against number instead of number against axis
     kargs : dict, optional
       Dictionnary to pass to the hist.h1 method
 
@@ -203,10 +170,10 @@ class _Plot(object):
       a.set_xlim(xmin=min(b1),xmax=max(b1))
       a.set_xlabel(labels[0])
       a.set_ylabel(labels[1])
-    
+
     a.grid(True)
     plt.colorbar(a2,label=labels[2])
-    
+
     return a
 
   def c2(self,axis1,axis2,log=False,polar=False,gfilter=0.0,**kargs):
@@ -242,11 +209,11 @@ class _Plot(object):
       norm=LogNorm()
     else:
       norm=None
-      
+
     b1,b2,h=self._h.h2(axis1,axis2,**kargs)
-    
+
     if polar: b1 = np.radians(b1)
-    
+
     g1,g2=np.meshgrid(b1,b2,indexing='ij')
     #if gfilter>0.0:
     from scipy.ndimage.filters import gaussian_filter
@@ -262,7 +229,7 @@ class _Plot(object):
       a.set_ylabel(labels[1])
 
     plt.clabel(a2, inline=1, fontsize=10 ,fmt='%1.1e')
-    
+
     return a
 
   def s2(self,axis1,axis2,log=False,polar=False,select=None):
@@ -286,7 +253,7 @@ class _Plot(object):
     else:
       a=plt.gca()
     labels=self.get_labels([axis1,axis2],wnorm=1)
-          
+
     r = self._ps.raw
 
     if type(axis1) is str:axis1 = eval("r.%s"%axis1)
@@ -305,17 +272,17 @@ class _Plot(object):
       norm=LogNorm()
     else:
       norm=None
-    
+
     a2 = a.scatter(axis1,axis2,c=w,norm=norm,cmap=self.cmap)
-    
+
     if polar:
       pass
     else:
       a.set_xlabel(labels[0])
       a.set_ylabel(labels[1])
-      
+
     plt.colorbar(a2,label=labels[2])
-    
+
     return a
 
   def h2h1(self,axis1,axis2,log=False,**kargs):
@@ -339,22 +306,22 @@ class _Plot(object):
     tmp = bool(self.autoclear)
     if self.autoclear : self.clear()
     self.autoclear=False
-    
+
     plt.subplots_adjust(hspace=0.15,wspace=0.15)
 
     ax1=plt.subplot(221)
     self.h1(axis2,log=False,reverse=True)
     if log:ax1.set_xscale('log')
-    
+
     ax2=plt.subplot(224)
-    
+
     self.h1(axis1,log=log)
-    
+
     ax3=plt.subplot(222,sharex=ax2,sharey=ax1)
     self.h2(axis1,axis2,log=log,**kargs)
     plt.setp(ax3.get_yticklabels(), visible=False)
     plt.setp(ax3.get_xticklabels(), visible=False)
-    
+
     self.autoclear=tmp
 
   def s2h1(self,axis1,axis2,log=False):

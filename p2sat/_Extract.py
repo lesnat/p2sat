@@ -116,6 +116,40 @@ class _Extract(object):
 
     self._ps.raw.update(w,x,y,z,px,py,pz,t,verbose)
 
+  def Geant4_csv(self,filename,verbose=True):
+    """
+    """
+    fname = filename+"_nt_"+self._ps.specie+"_t"
+    fext = ".csv"
+    data = []
+    thread = -1
+    while True:
+      thread +=1
+      try:
+        name = fname+str(thread)+fext
+        f = open(name,'r')
+        if verbose:print("Extracting %s ..."%name)
+        for line in f.readlines():
+          if line[0]!='#':
+            for e in line.split(','):
+              data.append(float(e))
+        f.close()
+      except IOError:
+        f.close()
+        break
+
+    w   = data[0::8]
+    x   = data[1::8]
+    y   = data[2::8]
+    z   = data[3::8]
+    px  = data[4::8]
+    py  = data[5::8]
+    pz  = data[6::8]
+    t   = data[7::8]
+    if verbose:print("Done !")
+
+    self._ps.raw.update(w,x,y,z,px,py,pz,t,verbose)
+
   def TrILEns(self,path,specie,verbose=True):
     """
     Extract simulation results from a TrILEns output.txt file
