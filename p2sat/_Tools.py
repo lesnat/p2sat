@@ -310,7 +310,7 @@ class _Tools(object):
       """
       """
       x,w = self._ps.hist.h1(axis,**kargs)
-      
+
       print(x)
       from scipy.optimize import curve_fit
 

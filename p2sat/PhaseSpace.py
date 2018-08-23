@@ -13,6 +13,11 @@ class PhaseSpace(object):
   """
   Base class for particle phase-space analysis.
 
+  Parameters
+  ----------
+  specie : str
+    Name of the particle specie. Availables are gamma,e-,e+,mu-,mu+.
+
   Attributes
   ----------
   raw : sub-object
@@ -28,7 +33,16 @@ class PhaseSpace(object):
   -----
   See sub-objects documentation for more informations
   """
-  def __init__(self):
+  def __init__(self,specie):
+      self.specie = specie
+      if specie in ("gamma","g"):
+          self.mass = 0
+      elif specie in ("positron","electron","e-","e+","e"):
+          self.mass = 0.511
+      elif specie in ("muon","muon+","muon-","mu+","mu-","mu"):
+          self.mass = 105.6
+      else:
+          raise NameError("Unknown particle specie.")
       self.raw  = _Raw()
       self.hist = _Hist(self)
       self.plot = _Plot(self)

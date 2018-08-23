@@ -39,6 +39,67 @@ class _Raw(object):
 
   * detail of the calculus can be found at ... TODO
   """
+  def update(self,w,x,y,z,px,py,pz,t,verbose=True):
+    """
+    Update class attributes with new values.
+
+    Parameters
+    ----------
+    w,x,y,z,px,py,pz : list or numpy.ndarray
+      particle phase space. More information can be found in raw object documentation
+    verbose : bool
+      verbosity of the function. If True, a message is displayed when the attributes are loaded in memory
+
+    TODO: get np array to be immutable with x.writeable=False ?
+    """
+    if verbose: print("Updating raw values ...")
+    # Save values into np.array objects
+    self.w  = np.array(w)
+    self.x  = np.array(x)
+    self.y  = np.array(y)
+    self.z  = np.array(z)
+    self.px = np.array(px)
+    self.py = np.array(py)
+    self.pz = np.array(pz)
+    self.t  = np.array(t)
+
+    # Calculate other parameters from it
+    self.r      = np.sqrt(self.y**2+self.z**2)
+    self.p      = np.sqrt(self.px**2+self.py**2+self.pz**2)
+    self.theta  = np.degrees(np.arctan(self.py/self.px))
+    self.phi    = np.degrees(np.arctan(self.pz/self.px)) # Geometrical effect ? change -> 0 pi
+    if specie == "gamma":
+        self.ekin   = self.p
+        self.gamma  = self.ekin # FIXME : vérifier
+    else:
+        mass = self._ps.mass
+        self.ekin   = (np.sqrt((self.p/mass)**2 + 1) - 1) * mass
+        self.gamma  = self.ekin/mass + 1.
+
+    """
+    self.w.flags.writeable  = False
+
+    self.x.flags.writeable  = False
+    self.y.flags.writeable  = False
+    self.z.flags.writeable  = False
+
+    self.px.flags.writeable = False
+    self.py.flags.writeable = False
+    self.pz.flags.writeable = False
+
+    self.r.flags.writeable  = False
+    self.p.flags.writeable  = False
+    self.theta.flags.writeable = False
+    self.phi.flags.writeable = False
+    self.ekin.flags.writeable = False
+    """
+    if verbose: print("Done !")
+
+  def generate(self,**kargs):
+      """
+      """
+      pass
+
   def select(self,axis,faxis,frange,fpp=1e-7):
     """
     Filter an axis with a value/range on another axis.
@@ -103,54 +164,3 @@ class _Raw(object):
       if len(faxis)>i+1:faxis[i+1]=self.select(faxis[i+1],[faxis[i]],[frange[i]])
 
     return axis
-
-  def update(self,w,x,y,z,px,py,pz,t,verbose=True):
-    """
-    Update class attributes with new values.
-
-    Parameters
-    ----------
-    w,x,y,z,px,py,pz : list or numpy.ndarray
-      particle phase space. More information can be found in raw object documentation
-    verbose : bool
-      verbosity of the function. If True, a message is displayed when the attributes are loaded in memory
-
-    TODO: get np array to be immutable with x.writeable=False ?
-    """
-    if verbose: print("Updating raw values ...")
-    # Save values into np.array objects
-    self.w  = np.array(w)
-    self.x  = np.array(x)
-    self.y  = np.array(y)
-    self.z  = np.array(z)
-    self.px = np.array(px)
-    self.py = np.array(py)
-    self.pz = np.array(pz)
-    self.t  = np.array(t)
-
-    # Calculate other parameters from it
-    self.r      = np.sqrt(self.y**2+self.z**2)
-    self.p      = np.sqrt(self.px**2+self.py**2+self.pz**2)
-    self.theta  = np.degrees(np.arctan(self.py/self.px))
-    self.phi    = np.degrees(np.arctan(self.pz/self.px)) # Geometrical effect ? change -> 0 pi
-    self.ekin   = (np.sqrt((self.p/0.511)**2 + 1) - 1) * 0.511 # FIXME: calculation for gamma !
-    self.gamma  = self.ekin/0.511 + 1.
-
-    """
-    self.w.flags.writeable  = False
-
-    self.x.flags.writeable  = False
-    self.y.flags.writeable  = False
-    self.z.flags.writeable  = False
-
-    self.px.flags.writeable = False
-    self.py.flags.writeable = False
-    self.pz.flags.writeable = False
-
-    self.r.flags.writeable  = False
-    self.p.flags.writeable  = False
-    self.theta.flags.writeable = False
-    self.phi.flags.writeable = False
-    self.ekin.flags.writeable = False
-    """
-    if verbose: print("Done !")
