@@ -2,12 +2,22 @@
 
 p2sat is an open-source, object-oriented python package created to simplify particle phase-space analysis.
 
-Basically, the particle phase-space informations (statistical weight, position, momentum ; one line for one particle) are stored in numpy arrays, and some methods are available to make 1d/2d/3d histograms and plots in a simple way. Other particles informations (kinetic energy, divergence angles, ...) are automatically calculated from particle phase-space and any of them can be used to filter an histogram or a plot, such as filtering a divergence plot to represent only particles that are in a defined position, or having a defined energy range.
+Core features of the package are :
+- Automatic calculation of kinetic energy, divergence angle and gamma factor of the particles from phase space informations
+- Histogram making (1D, 2D, 3D) and data fits (1D)
+- Plotting (1D to 3D histograms, scatter and contour plots) with automatic normalizations and legend
+- Particle filtering with a given property (for example select all the particles at a given position)
+- Statistical tools (standard deviation, covariance, ...)
+- Import data from simulation files (Smilei, Geant4, text files, ...)
+- Low memory load
+
+This allows to process complex operations in a very concise and clear way, as shown in the examples.
 
 See objects documentation for more informations.
 
-**Note :**
-This package was made for my personal use and then contains only few methods to import data from code results, but thank to object inheritance, it can be adapted very easily to other codes (see `PhaseSpaceGeneric` object in *p2sat/PhaseSpace.py*).
+**Notes :**
+- This package was made for my personal use and then contains only few methods to import data from code results, but you can easily add your own (please, share !) and use it to perform your data analysis. See sub-object ``_Extract`` for more informations.
+- This tool can be usefull to physicists working with Particle-In-Cell or Monte Carlo codes
 
 ## Installation
 
@@ -21,23 +31,35 @@ if p2sat_path not in sys.path: sys.path.append(p2sat_path)
 import p2sat
 ```
 
-## Example
+## Examples
 
-Here is one quick example of p2sat plot usage, with my Geant4 app results.
+Here is one quick example of p2sat usage, with my Geant4 app results (see ``examples/`` for more informations).
+
+### Import results from a simulation file
 
 ```python
-import matplotlib.pyplot as plt
+es = p2sat.PhaseSpace(specie="electron")
+es.extract.Geant4_csv("Al_target",nthreads=10)
+```
 
-es = p2sat.PhaseSpaceGeant4()
-es.extract("../Geant4/ps_nt_electron_t*.csv",nthreads=10)
+### 1D histogram
 
-es.plot.h1('ekin',bwidth=0.1,select={'x':[50.0,100.0]})
-plt.title('Electron spectrum for $x \in [50,100] \mu m$')
-plt.xlabel('ekin (MeV)')
-plt.ylabel('Number per MeV')
+Spectrum (Number/MeV) of all the electrons with time selection between 0 and 100 fs (bin width of 0.1 MeV)
+```python
+ekin,spectrum = es.hist.h1('ekin',bwidth=0.1,select={'t':[0.0,100.0]})
+```
 
-es.plot.h2('y','z',bwidth1=10.0,bwidth2=10.0,brange1=[-500.,500.],brange2=[-500.,500.],select={'x':50,'ekin':[0.511,None]})
-plt.title('Transverse particle dispersion at $x=50$, for $E_{kin} > 0.511 MeV$')
-plt.xlabel('y (um)')
-plt.ylabel('z (um)')
+### 1D histogram plot and fit
+
+Spectrum of electrons with x position between 50 and 100 µm (bin width of 0.1 MeV, exponential fit, log scale)
+```python
+es.plot.h1('ekin',log=True,bwidth=0.1,select={'x':[50.0,100.0]})
+es.plot.f1('ekin',func_name="exp",log=True,bwidth=0.1,select={'x':[50.0,100.0]})
+```
+
+### 2D histogram plot
+
+Transverse particle dispersion at x = 50 µm, for electrons with kinetic energy > 0.511 MeV (bin width of 10 µm between -500 and 500 µm)
+```python
+es.plot.h2('y','z',bwidth1=10.0,bwidth2=10.0,brange1=[-500.,500.],brange2=[-500.,500.],select={'x':50.0,'ekin':[0.511,None]})
 ```

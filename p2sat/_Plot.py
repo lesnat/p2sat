@@ -8,7 +8,6 @@ class _Plot(object):
   """
   def __init__(self,PhaseSpace):
     self._ps=PhaseSpace
-    self._r=self._ps.raw
     self._h=self._ps.hist
     self.autoclear = True
     #self.cmap="YlGnBu"
@@ -254,16 +253,16 @@ class _Plot(object):
       a=plt.gca()
     labels=self.get_labels([axis1,axis2],wnorm=1)
 
-    r = self._ps.raw
+    d = self._ps.data
 
-    if type(axis1) is str:axis1 = eval("r.%s"%axis1)
-    if type(axis2) is str:axis2 = eval("r.%s"%axis2)
-    w   = np.array(r.w)
+    if type(axis1) is str:axis1 = eval("d.%s"%axis1)
+    if type(axis2) is str:axis2 = eval("d.%s"%axis2)
+    w   = np.array(d.w)
 
     if select is not None:
-      w = r.select(w,faxis=select.keys(),frange=select.values())
-      axis1=r.select(axis1,faxis=select.keys(),frange=select.values())
-      axis2=r.select(axis2,faxis=select.keys(),frange=select.values())
+      w = d.select(w,faxis=select.keys(),frange=select.values())
+      axis1=d.select(axis1,faxis=select.keys(),frange=select.values())
+      axis2=d.select(axis2,faxis=select.keys(),frange=select.values())
 
     if polar: axis1=np.radians(axis1)
 
