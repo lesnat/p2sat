@@ -46,7 +46,7 @@ class _Export(object):
     """
     if verbose: print("Exporting data ...")
 
-    r=self._ps.raw
+    d=self._ps.data
 
     # Opening the output file
     with open(file_name,'w') as f:
@@ -61,8 +61,8 @@ class _Export(object):
       f.write("\n")
 
       # Write data
-      for i in range(len(r.w)):
-        for e in [r.w[i],r.x[i],r.y[i],r.z[i],r.px[i],r.py[i],r.pz[i],r.t[i]]:
+      for i in range(len(d.w)):
+        for e in [d.w[i],d.x[i],d.y[i],d.z[i],d.px[i],d.py[i],d.pz[i],d.t[i]]:
             tmp = "% .7E"%e # 7 digits precision with E notation
             tmp+= sep       # separator
             f.write("%-16s"%tmp) # the chain is placed under 16 characters
@@ -83,7 +83,7 @@ class _Export(object):
     """
     if verbose: print("Exporting data ...")
 
-    r=self._ps.raw
+    d=self._ps.data
 
     # Opening the output file
     with open(path+'prop_ph.t','w') as f:
@@ -95,11 +95,11 @@ class _Export(object):
         f.write(' poi  phx  phy  phz  pdx  pdy  pdz  gph\n')
 
       # Write data
-      for i in range(len(r.w)):
+      for i in range(len(d.w)):
         if with_time:
-          data=[r.w[i],r.x[i],r.y[i],r.z[i],r.px[i],r.py[i],r.pz[i],r.gamma[i],r.t[i]]
+          data=[d.w[i],d.x[i],d.y[i],d.z[i],d.px[i],d.py[i],d.pz[i],d.gamma[i],d.t[i]]
         else:
-          data=[r.w[i],r.x[i],r.y[i],r.z[i],r.px[i],r.py[i],r.pz[i],r.gamma[i]]
+          data=[d.w[i],d.x[i],d.y[i],d.z[i],d.px[i],d.py[i],d.pz[i],d.gamma[i]]
 
         for e in data:
             tmp="% .7E"%e # 7 digits precision with E notation

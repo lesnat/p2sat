@@ -10,7 +10,7 @@ class _Extract(object):
 
   def txt(self,file_name,sep=",",verbose=True):
     """
-    Import particle phase space from a text file.
+    Load particle phase space from a text file.
 
     Parameters
     ----------
@@ -33,12 +33,12 @@ class _Extract(object):
     with open(file_name,'r') as f:
       for line in f.readlines():
         if line[0]!="#":
-          W,X,Y,Z,Px,Py,Pz,T=line.split()
+          W,X,Y,Z,Px,Py,Pz,T=line.split(sep)
           w.append(float(W))
           x.append(float(X))     ; y.append(float(Y))   ; z.append(float(Z))
           px.append(float(Px))   ; py.append(float(Py)) ; pz.append(float(Pz))
           t.append(float(T))
-    self._ps.raw.update(w,x,y,z,px,py,pz,t,verbose=verbose)
+    self._ps.data.update(w,x,y,z,px,py,pz,t,verbose=verbose)
     if verbose: print('Data succesfully imported')
 
   def Smilei_Screen_1d(self,Screen,xnorm,wnorm,tnorm,X=0):
@@ -80,8 +80,7 @@ class _Extract(object):
     x = [X] * len(w)
     z = [0.0] * len(w)
     print("Data succesfully imported")
-    self._ps.raw.update(w,x,y,z,px,py,pz,t)
-
+    self._ps.data.update(w,x,y,z,px,py,pz,t)
 
   def Geant4_csv(self,file_name,nthreads=1,verbose=True):
     """
@@ -147,7 +146,7 @@ class _Extract(object):
     t   = data[7::8]
     if verbose:print("Done !")
 
-    self._ps.raw.update(w,x,y,z,px,py,pz,t,verbose)
+    self._ps.data.update(w,x,y,z,px,py,pz,t,verbose)
 
   def TrILEns_output(self,path,specie,verbose=True):
     """
@@ -204,4 +203,4 @@ class _Extract(object):
 
     if verbose:print("Done !")
 
-    self._ps.raw.update(w,x,y,z,px,py,pz,t,verbose=verbose)
+    self._ps.data.update(w,x,y,z,px,py,pz,t,verbose=verbose)

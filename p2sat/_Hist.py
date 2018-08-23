@@ -7,7 +7,6 @@ class _Hist(object):
   """
   def __init__(self,PhaseSpace):
     self._ps=PhaseSpace
-    r=self._ps.raw
 
   def hn(self,axis,blen=None,bwidth=None,brange=None,wnorm=None,select=None):
     """
@@ -54,28 +53,28 @@ class _Hist(object):
 
     returns a number of e- per um per MeV at x=150 um
     """
-    r=self._ps.raw
+    d=self._ps.data
 
     # Get a copy the axis from a str if needed
     for i,ax in enumerate(axis):
-      if type(ax) is str:ax = eval("r.%s"%ax)
+      if type(ax) is str:ax = eval("d.%s"%ax)
       axis[i]=np.array(ax)
 
     # Get a copy of particle statistical weight
-    w   = np.array(r.w)
+    w   = np.array(d.w)
 
     # Filter the data if needed
     # if select is not None:
     #   for faxis,frange in select.items():
     #     print(len(w))
-    #     w = r.select(w,faxis,frange) # FIXME: bug if more than 1 axis
+    #     w = d.select(w,faxis,frange) # FIXME: bug if more than 1 axis
     #     for i,ax in enumerate(axis):
     #       print(len(ax))
-    #       axis[i]=r.select(ax,faxis,frange)
+    #       axis[i]=d.select(ax,faxis,frange)
     if select is not None:
-      w = r.select(w,faxis=select.keys(),frange=select.values())
+      w = d.select(w,faxis=select.keys(),frange=select.values())
       for i,ax in enumerate(axis):
-        axis[i]=r.select(ax,faxis=select.keys(),frange=select.values())
+        axis[i]=d.select(ax,faxis=select.keys(),frange=select.values())
 
     # Define default bin range
     if wnorm is None    : wnorm=[None]*len(axis)

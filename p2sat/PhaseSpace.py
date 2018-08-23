@@ -1,7 +1,7 @@
 #coding:utf8
 import numpy as np
 
-from ._Raw import _Raw
+from ._Data import _Data
 from ._Hist import _Hist
 from ._Plot import _Plot
 from ._Export import _Export
@@ -20,10 +20,10 @@ class PhaseSpace(object):
 
   Attributes
   ----------
-  raw : sub-object
-    contains raw data and methods to manipulate it, such as discretization or transformation.
+  data : sub-object
+    contains data data and methods to manipulate it, such as discretization or transformation.
   hist : sub-object
-    make histograms from raw data
+    make histograms from data data
   plot : sub-object
     plot histograms
   extract : sub-object
@@ -47,7 +47,7 @@ class PhaseSpace(object):
           self.mass = 105.6
       else:
           raise NameError("Unknown particle specie.")
-      self.raw      = _Raw(self)
+      self.data     = _Data(self)
       self.hist     = _Hist(self)
       self.plot     = _Plot(self)
       self.extract  = _Extract(self)
@@ -60,16 +60,16 @@ class PhaseSpace(object):
     """
     ps = PhaseSpace()
 
-    w   = np.array([list(self.raw.w) + list(other.raw.w)])[0]
-    x   = np.array([list(self.raw.x) + list(other.raw.x)])[0]
-    y   = np.array([list(self.raw.y) + list(other.raw.y)])[0]
-    z   = np.array([list(self.raw.z) + list(other.raw.z)])[0]
-    px  = np.array([list(self.raw.px) + list(other.raw.px)])[0]
-    py  = np.array([list(self.raw.py) + list(other.raw.py)])[0]
-    pz  = np.array([list(self.raw.pz) + list(other.raw.pz)])[0]
-    t   = np.array([list(self.raw.t) + list(other.raw.t)])[0]
+    w   = np.array([list(self.data.w) + list(other.data.w)])[0]
+    x   = np.array([list(self.data.x) + list(other.data.x)])[0]
+    y   = np.array([list(self.data.y) + list(other.data.y)])[0]
+    z   = np.array([list(self.data.z) + list(other.data.z)])[0]
+    px  = np.array([list(self.data.px) + list(other.data.px)])[0]
+    py  = np.array([list(self.data.py) + list(other.data.py)])[0]
+    pz  = np.array([list(self.data.pz) + list(other.data.pz)])[0]
+    t   = np.array([list(self.data.t) + list(other.data.t)])[0]
 
-    ps.raw.update(w,x,y,z,px,py,pz,t)
+    ps.data.update(w,x,y,z,px,py,pz,t)
 
     return ps
 
@@ -77,7 +77,7 @@ class PhaseSpace(object):
     """
     Return the total number of configurations.
     """
-    return len(self.raw.w)
+    return len(self.data.w)
 
 
   def copy(self,verbose=False):
@@ -90,7 +90,7 @@ class PhaseSpace(object):
       verbosity of the function. If True, a message is displayed when the attributes are loaded in memory
     """
     new = PhaseSpace()
-    r=self.raw
-    new.raw.update(r.w,r.x,r.y,r.z,r.px,r.py,r.pz,r.t,verbose=verbose)
+    d=self.data
+    new.data.update(d.w,d.x,d.y,d.z,d.px,d.py,d.pz,d.t,verbose=verbose)
 
     return new

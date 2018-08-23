@@ -1,7 +1,7 @@
 #coding:utf8
 import numpy as np
 
-class _Raw(object):
+class _Data(object):
   """
   Class containing raw data and methods to manipulate it.
 
@@ -216,15 +216,14 @@ class _Raw(object):
     hist.hn
     """
     hn=self._ps.hist.hn
-    r=self._ps.raw
 
     if verbose : print('Data discretization ...')
     #bi,hi=hn(['x','y','z','px','py','pz'],bwidth=bwidth,brange=brange,wnorm=[1.0]*6,select=select)
     if with_time:
-      bi,hi=hn([r.x,r.y,r.z,r.px,r.py,r.pz,r.t],wnorm=[1.0]*7,**kargs)
+      bi,hi=hn([self.x,self.y,self.z,self.px,self.py,self.pz,self.t],wnorm=[1.0]*7,**kargs)
       bx,by,bz,bpx,bpy,bpz,bt=bi
     else:
-      bi,hi=hn([r.x,r.y,r.z,r.px,r.py,r.pz],wnorm=[1.0]*6,**kargs)
+      bi,hi=hn([self.x,self.y,self.z,self.px,self.py,self.pz],wnorm=[1.0]*6,**kargs)
       bx,by,bz,bpx,bpy,bpz=bi
     if verbose : print('Done !')
     w       = []
@@ -251,4 +250,4 @@ class _Raw(object):
 
     if verbose : print('Done !')
 
-    r.update(w,x,y,z,px,py,pz,t,verbose=verbose)
+    self.update(w,x,y,z,px,py,pz,t,verbose=verbose)
