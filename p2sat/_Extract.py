@@ -8,6 +8,7 @@ class _Extract(object):
   Notes
   -----
   If you want to add a method to import data from another code, you must proceed as follow :
+
   - Add a method to this object, with the name of your code. It must contains the keyword `self` as a first argument (because of object-oriented paradigm), and all the other parameters you need
   - Get the data from your file and put it in lists or numpy arrays, one line describing one particle
   - Call the `update` method of `data` sub-object (access via `self._ps.data.update`)

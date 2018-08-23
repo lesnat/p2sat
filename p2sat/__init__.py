@@ -49,8 +49,8 @@ Plot some results
 
 
 
-TODO
-====
+TODO :
+
 PhaseSpaceSmilei :
 - change name & use a generic method
 
@@ -77,7 +77,7 @@ tools :?
 - fit MB, gaussian, MJ
 - IO(file_name,mode='r',title="")
 """
-from PhaseSpace import PhaseSpace,PhaseSpaceGeneric,PhaseSpaceSmilei,PhaseSpaceGeant4,PhaseSpaceTrILEns
+from PhaseSpace import PhaseSpace
 
 
 def testing(name="all"):

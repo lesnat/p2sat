@@ -11,7 +11,7 @@ Core features of the package are :
 - Import data from simulation files (Smilei, Geant4, text files, ...)
 - Low memory load
 
-This allows to plot complicated graphs in a very concise and clear way, as shown in the following examples.
+This allows to process complex operations in a very concise and clear way, as shown in the examples.
 
 See objects documentation for more informations.
 
@@ -31,25 +31,35 @@ if p2sat_path not in sys.path: sys.path.append(p2sat_path)
 import p2sat
 ```
 
-## Example
+## Examples
 
-Here is one quick example of p2sat plot usage, with my Geant4 app results.
+Here is one quick example of p2sat usage, with my Geant4 app results (see ``examples/`` for more informations).
 
 ### Import results from a simulation file
+
 ```python
-# Instanciate a PhaseSpace object for electron
 es = p2sat.PhaseSpace(specie="electron")
-# Import results from a simulation file
 es.extract.Geant4_csv("Al_target",nthreads=10)
 ```
 
-### Plot and fit electron spectrum for x position between 50 and 100 µm
+### 1D histogram
+
+Spectrum (Number/MeV) of all the electrons with time selection between 0 and 100 fs (bin width of 0.1 MeV)
 ```python
-es.plot.h1('ekin',bwidth=0.1,select={'x':[50.0,100.0]})
-es.plot.f1('ekin',bwidth=0.1,select={'x':[50.0,100.0]})
+ekin,spectrum = es.hist.h1('ekin',bwidth=0.1,select={'t':[0.0,100.0]})
 ```
 
-### Plot transverse particle dispersion at x = 50µm, for electrons with energy > 0.511 MeV
+### 1D histogram plot and fit
+
+Spectrum of electrons with x position between 50 and 100 µm (bin width of 0.1 MeV, exponential fit, log scale)
 ```python
-es.plot.h2('y','z',bwidth1=10.0,bwidth2=10.0,brange1=[-500.,500.],brange2=[-500.,500.],select={'x':50,'ekin':[0.511,None]})
+es.plot.h1('ekin',log=True,bwidth=0.1,select={'x':[50.0,100.0]})
+es.plot.f1('ekin',func_name="exp",log=True,bwidth=0.1,select={'x':[50.0,100.0]})
+```
+
+### 2D histogram plot
+
+Transverse particle dispersion at x = 50 µm, for electrons with kinetic energy > 0.511 MeV (bin width of 10 µm between -500 and 500 µm)
+```python
+es.plot.h2('y','z',bwidth1=10.0,bwidth2=10.0,brange1=[-500.,500.],brange2=[-500.,500.],select={'x':50.0,'ekin':[0.511,None]})
 ```
