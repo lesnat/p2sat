@@ -3,10 +3,54 @@ import numpy as np
 
 class _Extract(object):
   """
-  Extract data from simulation files.
+  Import data from a file.
+
+  Notes
+  -----
+  If you want to add a method to import data from another code, you must proceed as follow :
+
+  - Add a method to this object, with the name of your code. It must contains the keyword `self` as a first argument (because of object-oriented paradigm), and all the other parameters you need
+  - Get the data from your file and put it in lists or numpy arrays, one line describing one particle
+  - Call the `update` method of `data` sub-object (access via `self._ps.data.update`)
+  - Please write a documentation and share !
+
+  You can copy-paste the `txt` method to have a basic example of file import.
   """
   def __init__(self,PhaseSpace):
     self._ps=PhaseSpace
+
+  def txt(self,file_name,sep=",",verbose=True):
+    """
+    Load particle phase space from a text file.
+
+    Parameters
+    ----------
+    file_name : str
+      name of the input file
+    sep : str
+      character used to separate values. Default is ','
+    verbose : bool, optional
+      verbosity of the function. If True, a message is displayed when the data is imported
+
+    See Also
+    --------
+    export.txt
+    """
+    if verbose: print("Importing data ...")
+    w         = []
+    x,y,z     = [],[],[]
+    px,py,pz  = [],[],[]
+    t         = []
+    with open(file_name,'r') as f:
+      for line in f.readlines():
+        if line[0]!="#":
+          W,X,Y,Z,Px,Py,Pz,T=line.split(sep)
+          w.append(float(W))
+          x.append(float(X))     ; y.append(float(Y))   ; z.append(float(Z))
+          px.append(float(Px))   ; py.append(float(Py)) ; pz.append(float(Pz))
+          t.append(float(T))
+    self._ps.data.update(w,x,y,z,px,py,pz,t,verbose=verbose)
+    if verbose: print('Data succesfully imported')
 
   def Smilei_Screen_1d(self,Screen,xnorm,wnorm,tnorm,X=0):
     w         = []
@@ -47,12 +91,11 @@ class _Extract(object):
     x = [X] * len(w)
     z = [0.0] * len(w)
     print("Data succesfully imported")
-    self._ps.raw.update(w,x,y,z,px,py,pz,t)
+    self._ps.data.update(w,x,y,z,px,py,pz,t)
 
-
-  def Geant4(self,file_name,nthreads=1,verbose=True):
+  def Geant4_csv(self,file_name,nthreads=1,verbose=True):
     """
-    Extract simulation results from a Geant4 NTuple output file
+    Extract simulation results from a Geant4 NTuple csv output file
 
     Parameters
     ----------
@@ -70,8 +113,6 @@ class _Extract(object):
       . . . . .  .  .
       . . . . .  .  .
       . . . . .  .  .
-
-    Yet only xml and csv file format are accepted
 
     Examples
     --------
@@ -114,62 +155,7 @@ class _Extract(object):
     t   = data[7::8]
     if verbose:print("Done !")
 
-    self._ps.raw.update(w,x,y,z,px,py,pz,t,verbose)
-
-  def TrILEns(self,path,specie,verbose=True):
-    """
-    Extract simulation results from a TrILEns output.txt file
-
-    Parameters
-    ----------
-    path : str
-      simulation path
-    specie : str
-      specie to find in the output. The specie name must be in plural form (i.e 'electrons' or 'positrons')
-    verbose : bool, optional
-      verbosity
-
-    Notes
-    -----
-    ...
-
-    Examples
-    --------
-    >>> et = p2sat.PhaseSpaceTrILEns()
-    >>> et.extract("../TrILEns/",specie="positrons")
-
-    TODO
-    ----
-    - Check Interface.f90 at line ~ 120 -> condition for e-/e+ & not working with photons
-    """
-    if verbose:print("Extracting {} data from {}output.txt ...".format(specie,path))
-
-    w         = []
-    x,y,z     = [],[],[]
-    px,py,pz  = [],[],[]
-
-    is_correct_specie=False
-
-    with open(path+'output.txt','r') as f:
-      for _ in range(34):
-        f.readline()
-
-      for line in f.readlines():
-        try:
-          W,X,Y,Z,Px,Py,Pz,Gamma,Chi=line.split()
-          if is_correct_specie:
-            w.append(float(W))
-            x.append(float(X))     ; y.append(float(Y))   ; z.append(float(Z))
-            px.append(float(Px))   ; py.append(float(Py)) ; pz.append(float(Pz))
-        except ValueError:
-          if specie in line.split():
-            is_correct_specie = True
-          else:
-            is_correct_specie = False
-
-    if verbose:print("Data succesfully imported")
-
-    self._ps.raw.update(w,x,y,z,px,py,pz,t,verbose=verbose)
+    self._ps.data.update(w,x,y,z,px,py,pz,t,verbose)
 
   def TrILEns_output(self,path,specie,verbose=True):
     """
@@ -226,4 +212,4 @@ class _Extract(object):
 
     if verbose:print("Done !")
 
-    self._ps.raw.update(w,x,y,z,px,py,pz,t,verbose=verbose)
+    self._ps.data.update(w,x,y,z,px,py,pz,t,verbose=verbose)
