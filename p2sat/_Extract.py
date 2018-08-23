@@ -3,7 +3,17 @@ import numpy as np
 
 class _Extract(object):
   """
-  Extract data from simulation files.
+  Import data from a file.
+
+  Notes
+  -----
+  If you want to add a method to import data from another code, you must proceed as follow :
+  - Add a method to this object, with the name of your code. It must contains the keyword `self` as a first argument (because of object-oriented paradigm), and all the other parameters you need
+  - Get the data from your file and put it in lists or numpy arrays, one line describing one particle
+  - Call the `update` method of `data` sub-object (access via `self._ps.data.update`)
+  - Please write a documentation and share !
+
+  You can copy-paste the `txt` method to have a basic example of file import.
   """
   def __init__(self,PhaseSpace):
     self._ps=PhaseSpace
@@ -84,7 +94,7 @@ class _Extract(object):
 
   def Geant4_csv(self,file_name,nthreads=1,verbose=True):
     """
-    Extract simulation results from a Geant4 NTuple output file
+    Extract simulation results from a Geant4 NTuple csv output file
 
     Parameters
     ----------
@@ -102,8 +112,6 @@ class _Extract(object):
       . . . . .  .  .
       . . . . .  .  .
       . . . . .  .  .
-
-    Yet only xml and csv file format are accepted
 
     Examples
     --------
