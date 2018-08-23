@@ -155,7 +155,10 @@ class _Plot(object):
     hist.h2
     """
     if self.autoclear : self.clear()
-    if polar:plt.axes(polar=True)
+    if polar:
+      a=plt.axes(polar=True)
+    else:
+      a=plt.axes()
     labels=self.get_labels([axis1,axis2],kargs.get('wnorm',None))
 
     b1,b2,h=self._h.h2(axis1,axis2,**kargs)
@@ -167,18 +170,18 @@ class _Plot(object):
     else:
       norm=None
 
-    a1=plt.pcolormesh(g1,g2,h,norm=norm)
+    a1=a.pcolormesh(g1,g2,h,norm=norm)
 
-    if not polar:
-      plt.xlim(xmin=min(b1),xmax=max(b1))
-      plt.ylim(ymin=min(b2),ymax=max(b2))
-      plt.grid()
-      plt.xlabel(labels[0])
-      plt.ylabel(labels[1])
-      plt.colorbar(a1,label=labels[2])
+    if polar:
+      a.set_thetalim(thetamin=min(b1),thetamax=max(b1))
     else:
-      pass
+      a.set_xlim(xmin=min(b1),xmax=max(b1))
+      a.set_ylim(ymin=min(b2),ymax=max(b2))
+      a.grid()
+      a.set_xlabel(labels[0])
+      a.set_ylabel(labels[1])
     #   plt.rgrids()
+    plt.colorbar(a1,label=labels[2])
 
 
   def c2(self,axis1,axis2,log=False,polar=False,gfilter=0.0,**kargs):
