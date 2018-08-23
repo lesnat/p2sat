@@ -11,6 +11,8 @@ class _Raw(object):
     particle statistical weight
   x,y,z : numpy.ndarray
     particle x,y,z position in um
+  t : numpy.ndarray
+    particle time in fs
   r : numpy.ndarray
     absolute distance to the x axis in um
   px,py,pz : numpy.ndarray
@@ -30,15 +32,31 @@ class _Raw(object):
   the input data might be firstly converted to those units.
 
   Calculations :
+
   - r is defined as :math:`\sqrt{y^2+z^2}`
   - p is defined as :math:`\sqrt{p_x^2+p_y^2+p_z^2}`
-  - ekin is defined as :math:`(\sqrt{(p/m_e c)^2+1}-1) \\times m_e c^2` *
   - theta is defined as :math:`\\arctan{p_y/p_x}`
   - phi is defined (yet) as :math:`\\arctan{p_z/p_x}`
+  - ekin is defined as
+    - :math:`(\sqrt{(p/m_e c)^2+1}-1) \\times m_e c^2` for massive species
+    - :math:`p` otherwise (here ekin is the total particle energy)
+  - gamma is defined as
+    - :math:`E_{kin}/m_e c^2 + 1` for massive species
+    - :math:`...` otherwise
 
-
-  * detail of the calculus can be found at ... TODO
+  Details of the calculations can be found at ... TODO
   """
+  def __init__(self,PhaseSpace):
+    self._ps= PhaseSpace
+    self.w  = None
+    self.x  = None
+    self.y  = None
+    self.z  = None
+    self.px = None
+    self.py = None
+    self.pz = None
+    self.t  = None
+
   def update(self,w,x,y,z,px,py,pz,t,verbose=True):
     """
     Update class attributes with new values.
@@ -68,35 +86,20 @@ class _Raw(object):
     self.p      = np.sqrt(self.px**2+self.py**2+self.pz**2)
     self.theta  = np.degrees(np.arctan(self.py/self.px))
     self.phi    = np.degrees(np.arctan(self.pz/self.px)) # Geometrical effect ? change -> 0 pi
-    if specie == "gamma":
+    mass = self._ps.mass
+    if mass == 0:
         self.ekin   = self.p
         self.gamma  = self.ekin # FIXME : vérifier
     else:
-        mass = self._ps.mass
         self.ekin   = (np.sqrt((self.p/mass)**2 + 1) - 1) * mass
         self.gamma  = self.ekin/mass + 1.
-
-    """
-    self.w.flags.writeable  = False
-
-    self.x.flags.writeable  = False
-    self.y.flags.writeable  = False
-    self.z.flags.writeable  = False
-
-    self.px.flags.writeable = False
-    self.py.flags.writeable = False
-    self.pz.flags.writeable = False
-
-    self.r.flags.writeable  = False
-    self.p.flags.writeable  = False
-    self.theta.flags.writeable = False
-    self.phi.flags.writeable = False
-    self.ekin.flags.writeable = False
-    """
     if verbose: print("Done !")
 
   def generate(self,**kargs):
       """
+      Generate a particle phase space from given laws
+
+      TODO
       """
       pass
 
@@ -164,3 +167,88 @@ class _Raw(object):
       if len(faxis)>i+1:faxis[i+1]=self.select(faxis[i+1],[faxis[i]],[frange[i]])
 
     return axis
+
+  def transformate(self,translation=(0.0,0.0,0.0),rotation=(0.0,0.0)):
+    """
+    Transformate the particle phase space with given translation and rotation.
+
+    TODO
+
+    Parameters
+    ----------
+    ...
+
+
+    Notes
+    -----
+    ...
+
+    Examples
+    --------
+    ...
+    """
+    pass
+
+  def discretize(self,with_time=True,verbose=True,**kargs):
+    """
+    Discretize the particles phase space in a 6 or 7 D histogram.
+
+    Parameters
+    ----------
+    with_time : bool, optional
+      discretize with time (7D). Default is True
+    verbose : bool, optional
+      verbosity. Default is True
+    kargs
+      optional keyword arguments to pass to the hist.hn function
+
+    Notes
+    -----
+    This method can be used to significantly reduce disk space usage
+    when saving data into output file.
+
+    Examples
+    --------
+    ...
+
+    See Also
+    --------
+    hist.hn
+    """
+    hn=self._ps.hist.hn
+    r=self._ps.raw
+
+    if verbose : print('Data discretization ...')
+    #bi,hi=hn(['x','y','z','px','py','pz'],bwidth=bwidth,brange=brange,wnorm=[1.0]*6,select=select)
+    if with_time:
+      bi,hi=hn([r.x,r.y,r.z,r.px,r.py,r.pz,r.t],wnorm=[1.0]*7,**kargs)
+      bx,by,bz,bpx,bpy,bpz,bt=bi
+    else:
+      bi,hi=hn([r.x,r.y,r.z,r.px,r.py,r.pz],wnorm=[1.0]*6,**kargs)
+      bx,by,bz,bpx,bpy,bpz=bi
+    if verbose : print('Done !')
+    w       = []
+    x,y,z   = [],[],[]
+    px,py,pz= [],[],[]
+    t       = []
+
+    if verbose : print('Getting new configurations ...')
+    hb=hi.nonzero()
+
+    print(bx,by,bz,bpx,bpy,bpz)
+
+    w   = hi[hb]
+    x   = bx[hb[0]]
+    y   = by[hb[1]]
+    z   = bz[hb[2]]
+    px  = bpx[hb[3]]
+    py  = bpy[hb[4]]
+    pz  = bpz[hb[5]]
+    if with_time:
+      t   = bt[hb[6]]
+    else:
+      t   = [0.0]*len(w)
+
+    if verbose : print('Done !')
+
+    r.update(w,x,y,z,px,py,pz,t,verbose=verbose)
