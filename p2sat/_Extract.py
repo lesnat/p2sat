@@ -109,10 +109,11 @@ class _Extract(object):
     Notes
     -----
     The Geant4 NTuple format should be
-      w,x,y,z,px,py,pz
-      . . . . .  .  .
-      . . . . .  .  .
-      . . . . .  .  .
+    ::
+      w,x,y,z,px,py,pz,t
+      . . . . .  .  .  .
+      . . . . .  .  .  .
+      . . . . .  .  .  .
 
     Examples
     --------
