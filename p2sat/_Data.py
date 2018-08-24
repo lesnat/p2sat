@@ -206,7 +206,7 @@ class _Data(object):
 
     See Also
     --------
-    hist.hn
+    hn
     """
     hn=self._ps.hist.hn
 

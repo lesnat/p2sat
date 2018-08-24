@@ -9,7 +9,7 @@ class _Export(object):
   def __init__(self,PhaseSpace):
     self._ps=PhaseSpace
 
-  def txt(self,file_name,title="",sep=",",verbose=True):
+  def txt(self,file_name,header=True,title="",sep=",",verbose=True):
     """
     Export particle phase space in a text file.
 
@@ -17,6 +17,8 @@ class _Export(object):
     ----------
     file_name : str
       name of the output file
+    header : bool, optional
+      True to put informations at the beginning of the file. Default is True
     title : str, optional
       title of the file
     sep : str, optional
@@ -39,12 +41,6 @@ class _Export(object):
     with 7 digits precision in scientific notation
 
     Some text can be written if the first character of the line is a '#'.
-
-    See Also
-    --------
-    import_data
-
-    TODO: add parameter 'header=True' to use header or not ?
     """
     if verbose: print("Exporting data ...")
 
@@ -52,14 +48,14 @@ class _Export(object):
 
     # Opening the output file
     with open(file_name,'w') as f:
-      # Write title
-      f.write("# Title : %s\n"%title)
-
-      # Write legend
-      f.write("# ")
-      for legend in ('weight','x (um)','y (um)','z (um)','px (MeV/c)','py (MeV/c)','pz (MeV/c)','t (fs)'):
-        f.write("%-16s"%legend) # the chain is placed under 16 characters
-      f.write("\n")
+      if header:
+        # Write title
+        f.write("# Title : %s\n"%title)
+        # Write legend
+        f.write("# ")
+        for legend in ('weight','x (um)','y (um)','z (um)','px (MeV/c)','py (MeV/c)','pz (MeV/c)','t (fs)'):
+          f.write("%-16s"%legend) # the chain is placed under 16 characters
+        f.write("\n")
 
       # Write data
       for i in range(len(d.w)):
