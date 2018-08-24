@@ -1,13 +1,10 @@
-=======
-Install
-=======
+============
+Installation
+============
 
 p2sat is written for python 2.7 but might be compatible with 3.
 
 Its only dependancies are python packages `numpy` and `matplotlib`.
-
-Installation
-============
 
 Download and extract the source code, and use the following lines at the beginning of your script
 

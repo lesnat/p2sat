@@ -189,6 +189,11 @@ class _Data(object):
     """
     pass
 
+  def propagate(self):
+    """
+    """
+    pass
+
   def discretize(self,with_time=True,verbose=True,**kargs):
     """
     Discretize the particles phase space in a 6 or 7 D histogram.

@@ -1,81 +1,106 @@
 #coding:utf8
 """
+Problematic
+===========
+
+When you deal with phase space analysis, the philosophy is often the same :
+
+- Import data from a file
+- Make calculations with this raw data (kinetic energy, divergence, ...)
+- Filter some of it (divergence with a condition on energy, ...)
+- Make histograms
+- Make fits
+- Plot results
+- Format the axes
+
+It is often long and leads to many programmation errors, and when there is a need
+to compare several set of datas, it become more and more complicated.
+
+p2sat objective is to unify a set of phase space data in a single object, and
+give all the needed methods to manipulate and analyse these datas.
+
+This way the analysis and comparison of several sources need much less efforts
+and physicists can do what they like to do : physics.
+
 Package Structure
 =================
 
-PhaseSpaceGeneric : mother object
-PhaseSpaceXXXX : child object
+All the package structure relies on one single object : `PhaseSpace`.
 
-Available :
-PhaseSpaceSmilei
-PhaseSpaceGeant4
+This object is a "box" containing all the informations about a given particle
+phase space, and all the methods to interact with it (make histograms, statistics or plots).
 
+Once you create such object, the data it contains are isolated from the
+rest of your script (see examples below to show how to acess data), so there is no
+risk of confuse between different data sources.
+This object-oriented approach is so completely coherent when you need to compare
+data from several simulation files for examples : the methods you use are the same,
+only the instances names are changing.
 
+Particle phase space
+====================
 
-Examples
-========
-Creating a random set of data
+The phase space of a set of particles gives the most complete description of a
+dynamical system (assuming particles are independant), and all the needed informations
+can be reconstructed from it.
 
->>> import numpy as np
->>> size=1000
->>> w=np.random.uniform(low=0.0,high=100.0,size=size)
->>> x=np.random.randint(low=1.0,high=11.0,size=size)
->>> y=np.random.normal(loc=0.0,scale=1.0,size=size)
->>> z=np.random.normal(loc=0.0,scale=2.0,size=size)
->>> px=np.random.exponential(scale=1.0,size=size)
->>> py=np.random.exponential(scale=1.0,size=size)
->>> pz=np.random.exponential(scale=1.0,size=size)
+This phase space contains informations such as particles positions, momentum and time.
+There is also given a statistical weight to each configuration.
+The phase space is then a 7D space (3 for momentum, 3 for space, 1 for time).
+If it is discretized, this represent a tremendous amount of possible configurations,
+so give a statistical weight to **EACH** of them is not the good approach.
+The p2sat approach is to save only the informations on configurations that have
+a non-zero statistical weight, and list them, one configuration per line.
+To have access to a given configuration, there is only the need of knowing its index.
 
-Instanciate a p2sat object, let say an electron phase space, with generated data
+Informations about units can be found in the `_Data` object (access via `PhaseSpace.data`)
 
->>> eps=PhaseSpaceGeneric()
->>> eps.raw.update(w,x,y,z,px,py,pz)
+Quick example
+=============
 
-Get histograms
+Assuming `p2sat` is imported, you can instanciate a `PhaseSpace` object for,
+let say, electrons, and import a simulation file containing the phase space
+informations.
 
->>> ekin,spectrum=eps.hist.h1('ekin',bwidth=0.1,select={'x':5}) # number of e- per MeV at x==5, with a 0.1 MeV bin width
+>>> eps = p2sat.PhaseSpace(specie="electron")
+>>> eps.extract.txt("example.dat",sep=None)
 
-Plot some results
+All the data in you simulation file can now be found at `eps.data`
 
->>> # save bins characteristics in a dictionnary
->>> bdict = dict(bwidth1=0.5,bwidth2=1,brange1=[-5,5],brange2=[-10,10])
->>> # plots number of e- per um^2 with energy superior to 0.511 MeV, at x==5
->>> eps.plot.h2('y','z',select={'x':5,'ekin':[0.511,None]},**bdict)
->>> # add the gaussian filtered contour plot of this diag
->>> eps.plot.contour('y','z',select={'x':5,'ekin':[0.511,None]},gfilter=1.0,**bdict)
+>>> # List of all the statistical weights
+>>> print(eps.data.w)
+[1456.0, 1233.0 , 756.0, ... ]
+>>> # List of all the x position
+>>> print(eps.data.x)
+[10.0, 50.0, 30.0, ... ]
+>>> # List of all the kinetic energies
+>>> print(eps.data.ekin)
+[1.58, 4.61, 3.28, ... ]
 
+This means that at the first index, there is an electron at position
+x=10.0 um with 1.58 MeV of kinetic energy and with statistical weight of 1456.0.
 
+You can now do statistics with this data, for example get the standard deviation
+of theta angle for all the electrons
 
+>>> theta_std = eps.stat.standard_deviation('theta')
 
+and get an histogram (Number/degree, bin width = 1 degree) of this quantity
 
+>>> theta,Ntheta = eps.hist.h1('theta', bwidth=0.1)
 
-TODO :
+It is also possible to make simple or complicated plot in a elegant way
 
-PhaseSpaceSmilei :
-- change name & use a generic method
+>>> eps.plot.figure(0)
+>>> eps.plot.h1('theta', log=True, bwidth=0.1)
+>>> eps.plot.figure(1)
+>>> eps.plot.h2('theta','ekin',
+...             log=True, polar=True
+...             bwidth1=1.0,bwidth2=0.1,
+...             select={'x':10.0,'t':[0.0,100.0]})
 
-PhaseSpaceGeant4 :
-- use a while True & try to loop over nthreads
+See folder `examples/` or documentation to a more complete set of p2sat capabilities.
 
-PhaseSpaceTriLens :
--
-
-Code structure & names OK ?
-
-raw :
-- theta,phi schema
-- theta,phi,ekin calculations
-
-hist :
-- doc hn
-- use nbins OK ?
-
-plot :
-- doc
-
-tools :?
-- fit MB, gaussian, MJ
-- IO(file_name,mode='r',title="")
 """
 from PhaseSpace import PhaseSpace
 

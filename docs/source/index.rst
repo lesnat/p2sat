@@ -22,15 +22,14 @@ Core features of the package are :
 
 This allows to process complex operations in a very concise and clear way, as shown in the examples.
 
-See objects documentation for more informations.
+See documentation for more informations.
 
 **Notes :**
 
 - This package was made for my personal use and then contains only few methods to import data from code results, but you can easily add your own (please, share !) and use it to perform your data analysis. See sub-object ``_Extract`` for more informations.
 - This tool can be usefull to physicists working with Particle-In-Cell or Monte Carlo codes
 
-Contents
---------
+**Contents :**
 
 .. toctree::
   :maxdepth: 3
