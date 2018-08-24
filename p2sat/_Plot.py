@@ -9,8 +9,7 @@ class _Plot(object):
   def __init__(self,PhaseSpace):
     self._ps=PhaseSpace
     self._h=self._ps.hist
-    self.autoclear = True
-    #self.cmap="YlGnBu"
+    self.autoclear = False
     self.cmap="viridis"
 
   def get_labels(self,axes,wnorm):
@@ -47,14 +46,14 @@ class _Plot(object):
              }
 
     units = {
-              'x'     : 'µm',
-              'y'     : 'µm',
-              'z'     : 'µm',
+              'x'     : 'um',
+              'y'     : 'um',
+              'z'     : 'um',
               'px'    : 'MeV/c',
               'py'    : 'MeV/c',
               'pz'    : 'MeV/c',
 
-              'r'     : 'µm',
+              'r'     : 'um',
               'p'     : 'MeV/c',
               'ekin'  : 'MeV',
               'gamma' : None,
@@ -80,6 +79,24 @@ class _Plot(object):
     labels.append("Number{}".format(res))
     return labels
 
+  def figure(self,number=None,clear=True):
+    """
+    Creates a new figure with given number.
+
+    Parameters
+    ----------
+    number : int, optional
+      Figure number to create
+    clear : bool, optional
+      Call or not the `clear` method for given number. Default is True
+
+    See Also
+    --------
+    clear
+    """
+    plt.figure(number)
+    if clear: self.clear(number)
+
   def clear(self,number=None):
     """
     Clear a plot.
@@ -92,6 +109,12 @@ class _Plot(object):
     if number is not None:
       plt.figure(number)
     plt.clf()
+
+  def set_title(self,title):
+    """
+
+    """
+    pass
 
   def h1(self,axis,where='post',log=False,polar=False,reverse=False,**kargs):
     """
@@ -203,8 +226,8 @@ class _Plot(object):
       labels[0]=tmp[1]
       labels[1]=tmp[0]
 
-    a.plot(b,h,'-',label="%s fit.")
-
+    a.plot(b,h,'-',label="%s fit"%func_name)
+    a.legend()
     if polar:
       if log:a.set_rscale('log')
     else:
@@ -242,6 +265,8 @@ class _Plot(object):
     else:
       a=plt.gca()
     labels=self.get_labels([axis1,axis2],kargs.get('wnorm',None))
+
+    print(labels)
 
     b1,b2,h=self._h.h2(axis1,axis2,**kargs)
     g1,g2=np.meshgrid(b1,b2,indexing='ij')
