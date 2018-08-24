@@ -38,9 +38,11 @@ class _Data(object):
   - theta is defined as :math:`\\arctan{p_y/p_x}`
   - phi is defined (yet) as :math:`\\arctan{p_z/p_x}`
   - ekin is defined as
+
     - :math:`(\sqrt{(p/m_e c)^2+1}-1) \\times m_e c^2` for massive species
     - :math:`p` otherwise (here ekin is the total particle energy)
   - gamma is defined as
+
     - :math:`E_{kin}/m_e c^2 + 1` for massive species
     - :math:`...` otherwise
 
@@ -173,24 +175,14 @@ class _Data(object):
     Transformate the particle phase space with given translation and rotation.
 
     TODO
-
-    Parameters
-    ----------
-    ...
-
-
-    Notes
-    -----
-    ...
-
-    Examples
-    --------
-    ...
     """
     pass
 
   def propagate(self):
     """
+    Propagate the phase space to a given position or time.
+
+    TODO
     """
     pass
 
@@ -211,10 +203,6 @@ class _Data(object):
     -----
     This method can be used to significantly reduce disk space usage
     when saving data into output file.
-
-    Examples
-    --------
-    ...
 
     See Also
     --------
