@@ -190,7 +190,7 @@ class _Plot(object):
 
     labels=self.get_labels([axis],kargs.get('wnorm',None))
 
-    b,h=self._h.f1(axis,func_name,**kargs)
+    b,h=self._h.f1(axis,func_name,return_fit=True,**kargs)
 
     if polar: b = np.radians(b)
 
@@ -203,7 +203,7 @@ class _Plot(object):
       labels[0]=tmp[1]
       labels[1]=tmp[0]
 
-    a.plot(b,h,'.',label="%s fit.")
+    a.plot(b,h,'-',label="%s fit.")
 
     if polar:
       if log:a.set_rscale('log')

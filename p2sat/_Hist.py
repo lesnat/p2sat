@@ -225,7 +225,7 @@ class _Hist(object):
 
     return b[0],b[1],b[2],h
 
-  def f1(self,axis,func_name,verbose=True,**kargs):
+  def f1(self,axis,func_name,return_fit=False,verbose=True,**kargs):
       """
       """
       # Get the hist data
@@ -251,9 +251,14 @@ class _Hist(object):
         diff = (popt[0]-sum(w))/sum(w) * 100
         print('Error on number of particles for \"{}\" fit : {:.2F} %'.format(func_name,diff))
 
-      # Format the result in a list
-      res = [x]
-      for e in popt:
-        res.append(e)
-
-      return res
+      # Choice of the return values
+      if return_fit:
+        # Return axis and spectrum
+        return x,f(x,*popt)
+      else:
+        # Format the result in a list
+        res = [x]
+        for e in popt:
+          res.append(e)
+        # Return axis and fit parameters
+        return res
