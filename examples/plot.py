@@ -3,7 +3,7 @@
 """
 This is an example of how to use the `PhaseSpace.plot` object of p2sat.
 
-It allows to make histogram from phase space data in a very simple way
+It allows to make plots from phase space data in a very simple way
 """
 
 # Import p2sat
@@ -16,7 +16,7 @@ import p2sat
 eps = p2sat.PhaseSpace(specie="electron")
 
 # Import data from a file
-eps.extract.txt("input.tsv",sep=None)
+eps.extract.txt("input.tsv",sep=None,verbose=False)
 
 # Plot spectrum in log scale (Number/MeV, bin width of 0.1 MeV)
 eps.plot.figure(0)
@@ -33,10 +33,15 @@ eps.plot.h2('y','z',log=True,
             select={'ekin':[0.511,None]})
 
 # Add a contour plot
+"""
 eps.plot.c2('y','z',log=True,
+            bwidth1=10.0,bwidth2=10.0,
+            brange1=[-500.,500.],brange2=[-500.,500.],
             select={'ekin':[0.511,None]})
-
+"""
 
 # Plot angle/energy polar distribution of the particles
 eps.plot.figure(2)
-eps.plot.h2('theta','ekin',log=True,polar=True)
+eps.plot.h2('theta','ekin',
+            log=True,polar=True,
+            bwidth1=1.0,bwidth2=0.1)

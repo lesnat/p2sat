@@ -266,8 +266,6 @@ class _Plot(object):
       a=plt.gca()
     labels=self.get_labels([axis1,axis2],kargs.get('wnorm',None))
 
-    print(labels)
-
     b1,b2,h=self._h.h2(axis1,axis2,**kargs)
     g1,g2=np.meshgrid(b1,b2,indexing='ij')
 
