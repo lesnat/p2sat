@@ -225,13 +225,13 @@ class _Hist(object):
 
     return b[0],b[1],b[2],h
 
-  def f1(self,axis,func_name,**kargs):
+  def f1(self,axis,func_name,verbose=True,**kargs):
       """
       """
+      # Get the hist data
       x,w = self._ps.hist.h1(axis,**kargs)
 
-      from scipy.optimize import curve_fit
-
+      # Define fit function and default values for fit parameters
       if func_name=="exp":
           f = lambda x,A,T: A*np.exp(-x/T)/T
           p0 = [sum(w),1]
@@ -241,9 +241,19 @@ class _Hist(object):
       else:
           raise NameError("Unknown func_name.")
 
+      # Fit the curve
+      from scipy.optimize import curve_fit
       popt,pcov = curve_fit(f,x[:-1],w,p0=p0)
 
-      diff = (popt[0]-sum(w))/sum(w) * 100
-      print('Error on number of particles for \"{}\" fit : {:.2F} %'.format(func_name,diff))
+      # Print error on number of particles
+      if verbose:
+        print('Parameters are {}'.format(popt))
+        diff = (popt[0]-sum(w))/sum(w) * 100
+        print('Error on number of particles for \"{}\" fit : {:.2F} %'.format(func_name,diff))
 
-      return x,popt
+      # Format the result in a list
+      res = [x]
+      for e in popt:
+        res.append(e)
+
+      return res

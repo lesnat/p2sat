@@ -159,6 +159,63 @@ class _Plot(object):
 
     return a
 
+  def f1(self,axis,func_name,log=False,polar=False,reverse=False,**kargs):
+    """
+    Plot the 1d fit of given axis.
+
+    Parameters
+    ----------
+    axis : str
+      Name of the axis to plot
+    func_name : str
+      name of the fit function
+    log : bool, optional
+      True to set log scale on y axis
+    polar : bool, optional
+      True to use a polar plot. axis must be an angle
+    reverse : bool, optional
+      True to plot axis against number instead of number against axis
+    kargs : dict, optional
+      Dictionnary to pass to the hist.h1 method
+
+    See Also
+    --------
+    hist.f1
+    """
+    if self.autoclear : self.clear()
+    if polar:
+      a=plt.gca(polar=True)
+    else:
+      a=plt.gca()
+
+    labels=self.get_labels([axis],kargs.get('wnorm',None))
+
+    b,h=self._h.f1(axis,func_name,**kargs)
+
+    if polar: b = np.radians(b)
+
+    if reverse:
+      # Reverse values
+      tmp = [b,h]
+      h,b = tmp
+      # Reverse labels
+      tmp=list(labels)
+      labels[0]=tmp[1]
+      labels[1]=tmp[0]
+
+    a.plot(b,h,'.',label="%s fit.")
+
+    if polar:
+      if log:a.set_rscale('log')
+    else:
+      a.set_xlim(xmin=min(b),xmax=max(b))
+      a.set_xlabel(labels[0])
+      a.set_ylabel(labels[1])
+      if log:a.set_yscale('log')
+
+    a.grid(True)
+
+    return a
 
   def h2(self,axis1,axis2,log=False,polar=False,**kargs):
     """
