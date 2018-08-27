@@ -69,8 +69,8 @@ class _Plot(object):
       if type(ax) is not str:
         labels.append("")
       else:
-        name = names[ax]
-        unit = units[ax]
+        name = self._ps.raw.labels[ax]
+        unit = self._ps.raw.units[ax]
         if unit is not None:
           labels.append("{} ({})".format(name,unit))
           if wnorm is None:res += "/{}".format(unit)
