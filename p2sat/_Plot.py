@@ -11,6 +11,7 @@ class _Plot(object):
     self._h=self._ps.hist
     self.autoclear = False
     self.cmap="viridis"
+    plt.ion()
 
   def get_labels(self,axes,wnorm):
     """
