@@ -38,28 +38,36 @@ Here is one quick example of p2sat usage, with my Geant4 app results (see ``exam
 ### Import results from a simulation file
 
 ```python
-es = p2sat.PhaseSpace(specie="electron")
-es.extract.Geant4_csv("Al_target",nthreads=10)
+eps = p2sat.PhaseSpace(specie="electron")
+eps.extract.txt("example.csv", sep=",")
 ```
 
 ### 1D histogram
 
-Spectrum (Number/MeV) of all the electrons with time selection between 0 and 100 fs (bin width of 0.1 MeV)
+Spectrum (Number/MeV) of all the electrons with time selection between 700 and 900 fs (bin width of 0.1 MeV)
 ```python
-ekin,spectrum = es.hist.h1('ekin',bwidth=0.1,select={'t':[0.0,100.0]})
+ekin,spectrum = eps.hist.h1('ekin',bwidth=0.1,select={'t':[700.0,900.0]})
 ```
 
 ### 1D histogram plot and fit
 
-Spectrum of electrons with x position between 50 and 100 µm (bin width of 0.1 MeV, exponential fit, log scale)
+Spectrum of electrons, and exponential fit for energy > 0.511 MeV (bin width of 0.1 MeV, log scale)
 ```python
-es.plot.h1('ekin',log=True,bwidth=0.1,select={'x':[50.0,100.0]})
-es.plot.f1('ekin',func_name="exp",log=True,bwidth=0.1,select={'x':[50.0,100.0]})
+eps.plot.h1('ekin', log=True, bwidth=0.1)
+eps.plot.f1('ekin', func_name="exp", log=True, bwidth=0.1, select={'ekin':[0.511,None]})
 ```
+
+![](Figure_0.png)
 
 ### 2D histogram plot
 
-Transverse particle dispersion at x = 50 µm, for electrons with kinetic energy > 0.511 MeV (bin width of 10 µm between -500 and 500 µm)
+Transverse particle dispersion (y, z) at x = 300 µm, for electrons with kinetic energy > 0.511 MeV (log color scale, bin width of 5 µm each, between -300 and 300 µm each)
 ```python
-es.plot.h2('y','z',bwidth1=10.0,bwidth2=10.0,brange1=[-500.,500.],brange2=[-500.,500.],select={'x':50.0,'ekin':[0.511,None]})
+eps.plot.h2('y','z',log=True,
+            bwidth1=5.0,bwidth2=5.0,
+            brange1=[-300.,300.],brange2=[-300.,300.],
+            select={'x':300,'ekin':[0.511,None]})
 ```
+
+![](Figure_1.png)
+

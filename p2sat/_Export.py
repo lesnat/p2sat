@@ -9,7 +9,7 @@ class _Export(object):
   def __init__(self,PhaseSpace):
     self._ps=PhaseSpace
 
-  def txt(self,file_name,title="",sep=",",verbose=True):
+  def txt(self,file_name,header=True,title="",sep=",",verbose=True):
     """
     Export particle phase space in a text file.
 
@@ -17,6 +17,8 @@ class _Export(object):
     ----------
     file_name : str
       name of the output file
+    header : bool, optional
+      True to put informations at the beginning of the file. Default is True
     title : str, optional
       title of the file
     sep : str, optional
@@ -27,22 +29,18 @@ class _Export(object):
     Notes
     -----
     The format in the output file is
-    # title
-    # legend
+    ::
+      # title
+      # legend
       w x y z px py pz t
       w x y z px py pz t
       . . . . .  .  .  .
       . . . . .  .  .  .
       . . . . .  .  .  .
+
     with 7 digits precision in scientific notation
 
-    Some text can be written if the first character of the line is a "#".
-
-    See Also
-    --------
-    import_data
-
-    TODO: add parameter 'header=True' to use header or not ?
+    Some text can be written if the first character of the line is a '#'.
     """
     if verbose: print("Exporting data ...")
 
@@ -50,22 +48,21 @@ class _Export(object):
 
     # Opening the output file
     with open(file_name,'w') as f:
-
-      # Write title
-      f.write("# Title : %s\n"%title)
-
-      # Write legend
-      f.write("# ")
-      for legend in ('weight','x (um)','y (um)','z (um)','px (MeV/c)','py (MeV/c)','pz (MeV/c)','t (fs)'):
-        f.write("%-16s"%legend) # the chain is placed under 16 characters
-      f.write("\n")
+      if header:
+        # Write title
+        f.write("# Title : %s\n"%title)
+        # Write legend
+        f.write("# ")
+        for legend in ('weight','x (um)','y (um)','z (um)','px (MeV/c)','py (MeV/c)','pz (MeV/c)','t (fs)'):
+          f.write("%-16s"%legend) # the chain is placed under 16 characters
+        f.write("\n")
 
       # Write data
       for i in range(len(d.w)):
         for e in [d.w[i],d.x[i],d.y[i],d.z[i],d.px[i],d.py[i],d.pz[i],d.t[i]]:
-            tmp = "% .7E"%e # 7 digits precision with E notation
-            tmp+= sep       # separator
-            f.write("%-16s"%tmp) # the chain is placed under 16 characters
+          tmp = "% .7E"%e # 7 digits precision with E notation
+          tmp+= sep       # separator
+          f.write("%-16s"%tmp) # the chain is placed under 16 characters
         f.write("\n")
 
     if verbose: print('Data succesfully exported')

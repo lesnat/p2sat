@@ -44,11 +44,11 @@ class _Extract(object):
     with open(file_name,'r') as f:
       for line in f.readlines():
         if line[0]!="#":
-          W,X,Y,Z,Px,Py,Pz,T=line.split(sep)
-          w.append(float(W))
-          x.append(float(X))     ; y.append(float(Y))   ; z.append(float(Z))
-          px.append(float(Px))   ; py.append(float(Py)) ; pz.append(float(Pz))
-          t.append(float(T))
+          data=line.split(sep)
+          w.append(float(data[0]))
+          x.append(float(data[1]))  ; y.append(float(data[2]))  ; z.append(float(data[3]))
+          px.append(float(data[4])) ; py.append(float(data[5])) ; pz.append(float(data[6]))
+          t.append(float(data[7]))
     self._ps.data.update(w,x,y,z,px,py,pz,t,verbose=verbose)
     if verbose: print('Data succesfully imported')
 
@@ -109,10 +109,11 @@ class _Extract(object):
     Notes
     -----
     The Geant4 NTuple format should be
-      w,x,y,z,px,py,pz
-      . . . . .  .  .
-      . . . . .  .  .
-      . . . . .  .  .
+    ::
+      w,x,y,z,px,py,pz,t
+      . . . . .  .  .  .
+      . . . . .  .  .  .
+      . . . . .  .  .  .
 
     Examples
     --------

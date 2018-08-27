@@ -3,7 +3,7 @@ import numpy as np
 
 class _Hist(object):
   """
-  Histograms
+  Create histograms from raw data.
   """
   def __init__(self,PhaseSpace):
     self._ps=PhaseSpace
@@ -64,13 +64,6 @@ class _Hist(object):
     w   = np.array(d.w)
 
     # Filter the data if needed
-    # if select is not None:
-    #   for faxis,frange in select.items():
-    #     print(len(w))
-    #     w = d.select(w,faxis,frange) # FIXME: bug if more than 1 axis
-    #     for i,ax in enumerate(axis):
-    #       print(len(ax))
-    #       axis[i]=d.select(ax,faxis,frange)
     if select is not None:
       w = d.select(w,faxis=select.keys(),frange=select.values())
       for i,ax in enumerate(axis):
@@ -100,10 +93,6 @@ class _Hist(object):
     #   bins.append(np.linspace(brange[i][0],brange[i][1]+bwidth[i],blen[i]))
       bins.append(np.linspace(brange[i][0],brange[i][1],blen[i]))
 
-    # print(bins)
-    # print(brange)
-    # print(bwidth)
-    # print(blen)
     # Calculate the multi dimensional histo, normalized by wnorm
     h,b=np.histogramdd(axis,weights=w/np.product(wnorm),bins=bins)
 
@@ -144,10 +133,6 @@ class _Hist(object):
 
     b,h=self.hn([axis],bwidth=[bwidth],brange=[brange],wnorm=[wnorm],select=select)
 
-    # # Verifier b[:-1]
-    # h=list(h)
-    # h.append(0.0)
-    # h=np.array(h)
     return b[0],h
 
   def h2(self,axis1,axis2,bwidth1=None,bwidth2=None,brange1=None,brange2=None,wnorm=None,select=None):
@@ -156,18 +141,18 @@ class _Hist(object):
 
     Parameters
     ----------
-    axis1, axis2 : str or np.array
+    axis1,axis2 : str or np.array
       axis to hist
-    bwidth1, bwidth2 : float, optional
+    bwidth1,bwidth2 : float, optional
       bin width. If None, a calculation is done to have 10 bins in the axis
-    brange1, brange2 : list of 2 float, optional
+    brange1,brange2 : list of 2 float, optional
       bin maximum and minimum. If a brange element is None, the axis minimum/maximum is taken
     select : dict, optional
       filtering dictionnary
 
     Returns
     -------
-    b1, b2 : np.array
+    b1,b2 : np.array
       bins
     h : np.array
       histogram
@@ -193,18 +178,18 @@ class _Hist(object):
 
     Parameters
     ----------
-    axis1, axis2, axis3 : str or np.array
+    axis1,axis2,axis3 : str or np.array
       axis to hist
-    bwidth1, bwidth2, bwidth3 : float, optional
+    bwidth1,bwidth2,bwidth3 : float, optional
       bin width. If None, a calculation is done to have 10 bins in the axis
-    brange1, brange2, brange3 : list of 2 float, optional
+    brange1,brange2,brange3 : list of 2 float, optional
       bin maximum and minimum. If a brange element is None, the axis minimum/maximum is taken
     select : dict, optional
       filtering dictionnary
 
     Returns
     -------
-    b1, b2, b3 : np.array
+    b1,b2,b3 : np.array
       bins
     h : np.array
       histogram
@@ -225,25 +210,71 @@ class _Hist(object):
 
     return b[0],b[1],b[2],h
 
-  def f1(self,axis,func_name,**kargs):
-      """
-      """
-      x,w = self._ps.hist.h1(axis,**kargs)
+  def f1(self,axis,func_name,return_fit=False,verbose=True,**kargs):
+    """
+    Fit a 1D histogram with given law.
 
-      from scipy.optimize import curve_fit
+    Parameters
+    ----------
+    axis : str or np.array
+      axis to fit
+    func_name : str
+      name of the fit law. Available are `exp` for exponential law and `gauss` for gaussian law
+    return_fit : bool, optional
+      returns the spectrum instead of fited parameters
+    verbose : bool, optional
+      verbosity
+    kargs : dict, optional
+      dictionnary to pass to the hist.h1 method
 
-      if func_name=="exp":
-          f = lambda x,A,T: A*np.exp(-x/T)/T
-          p0 = [sum(w),1]
-      elif func_name=="gauss":
-          f = lambda x,A,sigma,mu: A/(np.sqrt(2*np.pi) * sigma) * np.exp(-(x-mu)**2/(2*sigma**2))
-          p0 = [sum(w),x.std(),0]
-      else:
-          raise NameError("Unknown func_name.")
+    Returns
+    -------
+    x : np.array
+      fit abscissa
+    param1,param2 : float
+      fit parameters
 
-      popt,pcov = curve_fit(f,x[:-1],w,p0=p0)
+    Notes
+    -----
+    The `exp` law is defined as
+    :math:`\\frac{A}{T} \exp{(-x/T)}`
+    and returns fit parameters A,T.
 
+    The `gauss` law is defined as
+    :math:`\\frac{A}{ \sigma \sqrt{2 \pi}} \exp{(-\\frac{(x-\mu)^2}{2 \sigma^2})}`
+    and returns fit parameters A,sigma,mu.
+    """
+    # Get the hist data
+    x,w = self._ps.hist.h1(axis,**kargs)
+
+    # Define fit function and default values for fit parameters
+    if func_name=="exp":
+      f = lambda x,A,T: A*np.exp(-x/T)/T
+      p0 = [sum(w),1]
+    elif func_name=="gauss":
+      f = lambda x,A,sigma,mu: A/(np.sqrt(2*np.pi) * sigma) * np.exp(-(x-mu)**2/(2*sigma**2))
+      p0 = [sum(w),x.std(),0]
+    else:
+      raise NameError("Unknown func_name.")
+
+    # Fit the curve
+    from scipy.optimize import curve_fit
+    popt,pcov = curve_fit(f,x[:-1],w,p0=p0)
+
+    # Print error on number of particles
+    if verbose:
+      print('Parameters are {}'.format(popt))
       diff = (popt[0]-sum(w))/sum(w) * 100
       print('Error on number of particles for \"{}\" fit : {:.2F} %'.format(func_name,diff))
 
-      return x,popt
+    # Choice of the return values
+    if return_fit:
+      # Return axis and spectrum
+      return x,f(x,*popt)
+    else:
+      # Format the result in a list
+      res = [x]
+      for e in popt:
+        res.append(e)
+      # Return axis and fit parameters
+      return res

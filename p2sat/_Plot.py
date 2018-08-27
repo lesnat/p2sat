@@ -9,8 +9,7 @@ class _Plot(object):
   def __init__(self,PhaseSpace):
     self._ps=PhaseSpace
     self._h=self._ps.hist
-    self.autoclear = True
-    #self.cmap="YlGnBu"
+    self.autoclear = False
     self.cmap="viridis"
     plt.ion()
 
@@ -30,6 +29,40 @@ class _Plot(object):
     labels : list of str
       Labels of given axes and label of weight
     """
+    names = {
+              'x'     : '$x$',
+              'y'     : '$y$',
+              'z'     : '$z$',
+              'px'    : '$p_x$',
+              'py'    : '$p_y$',
+              'pz'    : '$p_z$',
+
+              'r'     : '$r$',
+              'p'     : '$p$',
+              'ekin'  : '$E_{kin}$',
+              'gamma' : '$\gamma$',
+
+              'theta' : '$\\theta$',
+              'phi'   : '$\\phi$'
+             }
+
+    units = {
+              'x'     : 'um',
+              'y'     : 'um',
+              'z'     : 'um',
+              'px'    : 'MeV/c',
+              'py'    : 'MeV/c',
+              'pz'    : 'MeV/c',
+
+              'r'     : 'um',
+              'p'     : 'MeV/c',
+              'ekin'  : 'MeV',
+              'gamma' : None,
+
+              'theta' : 'deg',
+              'phi'   : 'deg'
+              }
+
     labels=[]
     res=""
     for ax in axes:
@@ -47,6 +80,24 @@ class _Plot(object):
     labels.append("Number{}".format(res))
     return labels
 
+  def figure(self,number=None,clear=True):
+    """
+    Creates a new figure with given number.
+
+    Parameters
+    ----------
+    number : int, optional
+      Figure number to create
+    clear : bool, optional
+      Call or not the `clear` method for given number. Default is True
+
+    See Also
+    --------
+    clear
+    """
+    plt.figure(number)
+    if clear: self.clear(number)
+
   def clear(self,number=None):
     """
     Clear a plot.
@@ -59,6 +110,12 @@ class _Plot(object):
     if number is not None:
       plt.figure(number)
     plt.clf()
+
+  def set_title(self,title):
+    """
+
+    """
+    pass
 
   def h1(self,axis,where='post',log=False,polar=False,reverse=False,**kargs):
     """
@@ -126,6 +183,63 @@ class _Plot(object):
 
     return a
 
+  def f1(self,axis,func_name,log=False,polar=False,reverse=False,**kargs):
+    """
+    Plot the 1d fit of given axis.
+
+    Parameters
+    ----------
+    axis : str
+      Name of the axis to plot
+    func_name : str
+      name of the fit function
+    log : bool, optional
+      True to set log scale on y axis
+    polar : bool, optional
+      True to use a polar plot. axis must be an angle
+    reverse : bool, optional
+      True to plot axis against number instead of number against axis
+    kargs : dict, optional
+      Dictionnary to pass to the hist.h1 method
+
+    See Also
+    --------
+    hist.f1
+    """
+    if self.autoclear : self.clear()
+    if polar:
+      a=plt.gca(polar=True)
+    else:
+      a=plt.gca()
+
+    labels=self.get_labels([axis],kargs.get('wnorm',None))
+
+    b,h=self._h.f1(axis,func_name,return_fit=True,**kargs)
+
+    if polar: b = np.radians(b)
+
+    if reverse:
+      # Reverse values
+      tmp = [b,h]
+      h,b = tmp
+      # Reverse labels
+      tmp=list(labels)
+      labels[0]=tmp[1]
+      labels[1]=tmp[0]
+
+    a.plot(b,h,'-',label="%s fit"%func_name)
+    a.legend()
+    if polar:
+      if log:a.set_rscale('log')
+    else:
+      a.set_xlim(xmin=min(b),xmax=max(b))
+      a.set_xlabel(labels[0])
+      a.set_ylabel(labels[1])
+      if log:a.set_yscale('log')
+
+    a.grid(True)
+
+    return a
 
   def h2(self,axis1,axis2,log=False,polar=False,**kargs):
     """
