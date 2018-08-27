@@ -23,22 +23,20 @@ eps.plot.figure(0)
 eps.plot.h1('ekin', log=True, bwidth=0.1)
 
 # Fit the last spectrum for ekin > 0.511 MeV
-#eps.plot.f1('ekin', func_name="exp", log=True, bwidth=0.1, select={'ekin':[0.511,None]})
+eps.plot.f1('ekin', func_name="exp", log=True, bwidth=0.1, select={'ekin':[0.511,None]})
 
 # Plot Transverse particle dispersion for electrons with kinetic energy > 0.511 MeV (bin width of 10 µm between -500 and 500 µm)
 eps.plot.figure(1)
 eps.plot.h2('y','z',log=True,
-            bwidth1=10.0,bwidth2=10.0,
-            brange1=[-500.,500.],brange2=[-500.,500.],
+            bwidth1=5.0,bwidth2=5.0,
+            brange1=[-300.,300.],brange2=[-300.,300.],
             select={'x':300,'ekin':[0.511,None]})
 
 # Add a contour plot
-"""
-eps.plot.c2('y','z',log=True,
-            bwidth1=10.0,bwidth2=10.0,
-            brange1=[-500.,500.],brange2=[-500.,500.],
-            select={'x':500,'ekin':[0.511,None]})
-"""
+eps.plot.c2('y','z',log=True, gfilter=3.5,
+            bwidth1=5.0,bwidth2=5.0,
+            brange1=[-300.,300.],brange2=[-300.,300.],
+            select={'x':300,'ekin':[0.511,None]})
 
 # Plot angle/energy polar distribution of the particles
 eps.plot.figure(2)
