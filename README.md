@@ -57,7 +57,7 @@ eps.plot.h1('ekin', log=True, bwidth=0.1)
 eps.plot.f1('ekin', func_name="exp", log=True, bwidth=0.1, select={'ekin':[0.511,None]})
 ```
 
-![](/mnt/local/esnault/Modules/p2sat/Figure_0.png)
+![](Figure_0.png)
 
 ### 2D histogram plot
 
@@ -69,5 +69,5 @@ eps.plot.h2('y','z',log=True,
             select={'x':300,'ekin':[0.511,None]})
 ```
 
-![](/mnt/local/esnault/Modules/p2sat/Figure_1.png)
+![](Figure_1.png)
 
