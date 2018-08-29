@@ -21,9 +21,9 @@ class PhaseSpace(object):
   Attributes
   ----------
   data : sub-object
-    contains data data and methods to manipulate it, such as discretization or transformation.
+    contains raw data and methods to manipulate it, such as discretization or transformation.
   hist : sub-object
-    make histograms from data data
+    make histograms from data
   plot : sub-object
     plot histograms
   extract : sub-object
