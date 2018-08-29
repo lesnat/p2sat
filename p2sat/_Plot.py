@@ -29,48 +29,14 @@ class _Plot(object):
     labels : list of str
       Labels of given axes and label of weight
     """
-    names = {
-              'x'     : '$x$',
-              'y'     : '$y$',
-              'z'     : '$z$',
-              'px'    : '$p_x$',
-              'py'    : '$p_y$',
-              'pz'    : '$p_z$',
-
-              'r'     : '$r$',
-              'p'     : '$p$',
-              'ekin'  : '$E_{kin}$',
-              'gamma' : '$\gamma$',
-
-              'theta' : '$\\theta$',
-              'phi'   : '$\\phi$'
-             }
-
-    units = {
-              'x'     : 'um',
-              'y'     : 'um',
-              'z'     : 'um',
-              'px'    : 'MeV/c',
-              'py'    : 'MeV/c',
-              'pz'    : 'MeV/c',
-
-              'r'     : 'um',
-              'p'     : 'MeV/c',
-              'ekin'  : 'MeV',
-              'gamma' : None,
-
-              'theta' : 'deg',
-              'phi'   : 'deg'
-              }
-
     labels=[]
     res=""
     for ax in axes:
       if type(ax) is not str:
         labels.append("")
       else:
-        name = self._ps.raw.labels[ax]
-        unit = self._ps.raw.units[ax]
+        name = self._ps.data.labels[ax]
+        unit = self._ps.data.units[ax]
         if unit is not None:
           labels.append("{} ({})".format(name,unit))
           if wnorm is None:res += "/{}".format(unit)

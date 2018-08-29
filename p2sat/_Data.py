@@ -58,6 +58,39 @@ class _Data(object):
     self.py = None
     self.pz = None
     self.t  = None
+    self.labels = {
+              'x'     : '$x$',
+              'y'     : '$y$',
+              'z'     : '$z$',
+              'px'    : '$p_x$',
+              'py'    : '$p_y$',
+              'pz'    : '$p_z$',
+
+              'r'     : '$r$',
+              'p'     : '$p$',
+              'ekin'  : '$E_{kin}$',
+              'gamma' : '$\gamma$',
+
+              'theta' : '$\\theta$',
+              'phi'   : '$\\phi$'
+             }
+
+    self.units = {
+              'x'     : 'um',
+              'y'     : 'um',
+              'z'     : 'um',
+              'px'    : 'MeV/c',
+              'py'    : 'MeV/c',
+              'pz'    : 'MeV/c',
+
+              'r'     : 'um',
+              'p'     : 'MeV/c',
+              'ekin'  : 'MeV',
+              'gamma' : None,
+
+              'theta' : 'deg',
+              'phi'   : 'deg'
+              }
 
   def update(self,w,x,y,z,px,py,pz,t,verbose=True):
     """
