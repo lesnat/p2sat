@@ -128,8 +128,10 @@ class _Data(object):
         self.ekin   = self.p
         self.gamma  = np.inf
     else:
-        self.ekin   = (np.sqrt((self.p/mass)**2 + 1) - 1) * mass
-        self.gamma  = self.ekin/mass + 1.
+        # self.ekin   = (np.sqrt((self.p/mass)**2 + 1) - 1) * mass
+        # self.gamma  = self.ekin/mass + 1.
+        self.gamma  = np.sqrt((self.p/mass)**2 + 1.)
+        self.ekin   = (self.gamma - 1) * mass
     if verbose: print("Done !")
 
   def generate(self,Nconf,Npart,ekin,theta,phi,pos=None,time=None,verbose=True):
@@ -216,7 +218,8 @@ class _Data(object):
 
       # Reconstruct momentum from energy and angle distributions
       mass = self._ps.mass
-      px = np.sqrt((ekin0/mass)**2/(1. + np.tan(theta0)**2 + np.tan(phi0)**2)) * mass
+      etot = ekin0 + mass
+      px = np.sqrt((etot**2 - mass**2)/(1. + np.tan(theta0)**2 + np.tan(phi0)**2))
       py = px * np.tan(theta0)
       pz = px * np.tan(phi0)
 
