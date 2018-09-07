@@ -73,6 +73,28 @@ class PhaseSpace(object):
 
     return ps
 
+  def __str__(self):
+    txt = ""
+    txt += "p2sat PhaseSpace instance located at %s\n\n"%hex(id(self))
+    txt += "Specie                      : %s\n"%self.specie
+    txt += "Number of configurations    : %i\n"%len(self)
+    txt += "Total number of particles   : %.4E\n\n"%sum(self.data.w)
+    txt += "Statistics  : ( min      ,  max      ,  mean     ,  std      ) unit\n"
+    txt += "    x       : (% .3E, % .3E, % .3E, % .3E) um\n"%(min(self.data.x),max(self.data.x),self.data.x.mean(),self.data.x.std())
+    txt += "    y       : (% .3E, % .3E, % .3E, % .3E) um\n"%(min(self.data.y),max(self.data.y),self.data.y.mean(),self.data.y.std())
+    txt += "    z       : (% .3E, % .3E, % .3E, % .3E) um\n"%(min(self.data.z),max(self.data.z),self.data.z.mean(),self.data.z.std())
+    txt += "    r       : (% .3E, % .3E, % .3E, % .3E) um\n\n"%(min(self.data.r),max(self.data.r),self.data.r.mean(),self.data.r.std())
+    txt += "    px      : (% .3E, % .3E, % .3E, % .3E) MeV/c\n"%(min(self.data.px),max(self.data.px),self.data.px.mean(),self.data.px.std())
+    txt += "    py      : (% .3E, % .3E, % .3E, % .3E) MeV/c\n"%(min(self.data.py),max(self.data.py),self.data.py.mean(),self.data.py.std())
+    txt += "    pz      : (% .3E, % .3E, % .3E, % .3E) MeV/c\n"%(min(self.data.pz),max(self.data.pz),self.data.pz.mean(),self.data.pz.std())
+    txt += "    p       : (% .3E, % .3E, % .3E, % .3E) MeV/c\n\n"%(min(self.data.p),max(self.data.p),self.data.p.mean(),self.data.p.std())
+    txt += "    ekin    : (% .3E, % .3E, % .3E, % .3E) MeV\n"%(min(self.data.ekin),max(self.data.ekin),self.data.ekin.mean(),self.data.ekin.std())
+    txt += "    theta   : (% .3E, % .3E, % .3E, % .3E) deg\n"%(min(self.data.theta),max(self.data.theta),self.data.theta.mean(),self.data.theta.std())
+    txt += "    phi     : (% .3E, % .3E, % .3E, % .3E) deg\n"%(min(self.data.phi),max(self.data.phi),self.data.phi.mean(),self.data.phi.std())
+    txt += ""
+
+    return txt
+
   def __len__(self):
     """
     Return the total number of configurations.
