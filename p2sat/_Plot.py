@@ -39,11 +39,11 @@ class _Plot(object):
         unit = self._ps.data.units[ax]
         if unit is not None:
           labels.append("{} ({})".format(name,unit))
-          if wnorm is None:res += "/{}".format(unit)
+          if wnorm is None:res += "{} ".format(unit)
         else:
           labels.append(name)
 
-    labels.append("Number{}".format(res))
+    labels.append("Number/({})".format(res[:-1]))
     return labels
 
   def figure(self,number=None,clear=True):

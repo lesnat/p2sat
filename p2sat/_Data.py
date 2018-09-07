@@ -124,19 +124,64 @@ class _Data(object):
     mass = self._ps.mass
     if mass == 0:
         self.ekin   = self.p
-        self.gamma  = self.ekin # FIXME : vérifier
+        self.gamma  = np.inf
     else:
         self.ekin   = (np.sqrt((self.p/mass)**2 + 1) - 1) * mass
         self.gamma  = self.ekin/mass + 1.
     if verbose: print("Done !")
 
-  def generate(self,**kargs):
+  def generate(self,Nconf,Npart,ekin,theta,phi,pos=None,time=None,verbose=True):
       """
       Generate a particle phase space from given laws
 
       TODO
       """
-      pass
+      # Print a starting message
+      if verbose:
+        print("Generate particle phase-space for \"%s\" ekin law, \"%s\" theta law, \"%s\" phi law ..."
+        %(ekin["law"],theta["law"],phi["law"]))
+
+      # Ensure that Nconf is of type int (for values such as 1e6)
+      Nconf = int(Nconf)
+      # Generate weights
+      wnorm = float(Npart)/Nconf
+      w = np.array([wnorm] * Nconf)
+
+      # Generate theta angle
+      if theta["law"]=="iso":
+        theta0 = np.random.uniform(0.,np.pi,Nconf)
+      elif theta["law"]=="gauss":
+        pass
+      # Generate phi angle
+      if phi["law"]=="iso":
+        phi0 = np.random.uniform(0,np.pi,Nconf)
+      elif phi["law"]=="gauss":
+        pass
+      # Generate energy
+      if ekin["law"]=="mono":
+        ekin0 = np.array([ekin["E"]] * Nconf)
+      elif ekin["law"]=="exp":
+        pass
+
+      # Reconstruct momentum from energy and angle distributions
+      mass = self._ps.mass
+      px = np.sqrt((ekin0/mass)**2/(1. + np.tan(theta0)**2 + np.tan(phi0)**2)) * mass
+      py = px * np.tan(theta0)
+      pz = px * np.tan(phi0)
+
+      # Generate position
+      if pos is None:
+        x = np.array([0.] * Nconf)
+        y = np.array([0.] * Nconf)
+        z = np.array([0.] * Nconf)
+
+      # Generate time
+      if time is None:
+        t = np.array([0.] * Nconf)
+
+      if verbose: print("Done !")
+      # Update current object
+      self.update(w,x,y,z,px,py,pz,t,verbose=verbose)
 
   def select(self,axis,faxis,frange,fpp=1e-7):
     """
