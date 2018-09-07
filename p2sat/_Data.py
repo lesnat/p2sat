@@ -65,6 +65,7 @@ class _Data(object):
               'px'    : '$p_x$',
               'py'    : '$p_y$',
               'pz'    : '$p_z$',
+              't'     : '$t$',
 
               'r'     : '$r$',
               'p'     : '$p$',
@@ -82,6 +83,7 @@ class _Data(object):
               'px'    : 'MeV/c',
               'py'    : 'MeV/c',
               'pz'    : 'MeV/c',
+              't'     : 'fs',
 
               'r'     : 'um',
               'p'     : 'MeV/c',
@@ -312,6 +314,81 @@ class _Data(object):
     TODO
     """
     pass
+
+  def lorrentz(self,beta_CM,pos_CM=None):
+    """
+    Lorrentz-transformate the particle phase-space with given speed of the center of mass.
+    """
+    # If no position given, default is the origin
+    if pos_CM is None:
+      pos_CM = [0.,0.,0.]
+    # Calculate gamma factor from beta_CM
+    # beta_CM = np.array(beta_CM)
+    # v_CM = beta_CM * 2.99792458e8 * 1e6/1e15 # speed of CM in um/fs
+    # gamma_CM = 1./np.sqrt(1-beta_CM**2)
+    # # Time transformation
+    # t = gamma_CM*(self.t
+    # # Position transformation
+    # # x = (self.x - pos_CM[0])*gamma_CM[0]
+    # # y = (self.y - pos_CM[1])*gamma_CM[1]
+    # # z = (self.z - pos_CM[2])*gamma_CM[2]
+    # x = self.x
+    # y = self.y
+    # z = self.z
+    # # Momentum transformation
+    # px = self.px*gamma_CM[0]
+    # py = self.px*gamma_CM[1]
+    # pz = self.px*gamma_CM[2]
+    # # No transformations on statistical weights
+    # w = self.w
+    beta_CM = np.array(beta_CM)
+    b = np.dot(beta_CM,beta_CM)
+    n = beta_CM/b
+    c = 2.99792458e8 * 1e6/1e15 # speed of CM in um/fs
+    v = b * c
+    gamma = 1./np.sqrt(1-beta_CM**2)
+    g = 1./np.sqrt(1-b**2)
+
+    G = np.matrix([
+    [g           ,-g*b*n[0]          ,-g*b*n[1]          ,-g*b*n[2]      ],
+    [-g*b*n[0]   ,1+(g-1)*n[0]**2    ,(g-1)*n[0]*n[1]    ,(g-1)*n[0]*n[2]],
+    [-g*b*n[1]   ,(g-1)*n[1]*n[0]    ,1+(g-1)*n[1]**2    ,(g-1)*n[1]*n[2]],
+    [-g*b*n[2]   ,(g-1)*n[2]*n[0]    ,(g-1)*n[2]*n[1]    ,1+(g-1)*n[2]**2]
+    ])
+    print(G)
+    # Time transformation
+    q1 = [c*self.t.copy(),self.x.copy(),self.y.copy(),self.z.copy()]
+    p1 = [self.ekin.copy()/c,self.px.copy(),self.py.copy(),self.pz.copy()]
+
+    q2 = np.dot(G,q1)
+    p2 = np.dot(G,p1)
+    # print(q2)
+    # print()
+    # print(p2)
+    w = self.w
+    t = np.array(q2[0]/c)[0]
+    x = np.array(q2[1])[0]
+    y = np.array(q2[2])[0]
+    z = np.array(q2[3])[0]
+    px = np.array(p1[1])[0]
+    py = np.array(p1[2])[0]
+    pz = np.array(p1[3])[0]
+    # print(x,y)
+    # self.update(w,x[0],y[0],z[0],px[0],py[0],pz[0],t[0])
+    self.update(w,x,y,z,px,py,pz,t)
+    # # Position transformation
+    # # x = (self.x - pos_CM[0])*gamma_CM[0]
+    # # y = (self.y - pos_CM[1])*gamma_CM[1]
+    # # z = (self.z - pos_CM[2])*gamma_CM[2]
+    # x = self.x
+    # y = self.y
+    # z = self.z
+    # # Momentum transformation
+    # px = self.px*gamma_CM[0]
+    # py = self.px*gamma_CM[1]
+    # pz = self.px*gamma_CM[2]
+    # # No transformations on statistical weights
+    # w = self.w
 
   def discretize(self,with_time=True,verbose=True,**kargs):
     """
