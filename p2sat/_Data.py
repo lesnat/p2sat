@@ -44,7 +44,7 @@ class _Data(object):
   - gamma is defined as
 
     - :math:`E_{kin}/m_e c^2 + 1` for massive species
-    - :math:`...` otherwise
+    - :math:`+\infty` otherwise
 
   Details of the calculations can be found at ... TODO
   """
@@ -132,9 +132,46 @@ class _Data(object):
 
   def generate(self,Nconf,Npart,ekin,theta,phi,pos=None,time=None,verbose=True):
       """
-      Generate a particle phase space from given laws
+      Generate a particle phase space from given laws.
 
-      TODO
+      Parameters
+      ----------
+      Nconf : int
+        total number of configurations
+      Npart : float
+        total number of particles
+      ekin : dict
+        parameters to generate kinetic energy
+      theta : dict
+        parameters to generate theta angle distribution
+      phi : dict
+        parameters to generate phi angle distribution
+      pos : dict, optional
+        parameters to generate position distribution. Default is 0 for x,y,z
+      time : dict
+        parameters to generate time distribution. Default is 0
+
+      Notes
+      -----
+      The dictionnaries must each time at least contain the key 'law' with a value
+      depending on which law are available for each physical quantity
+
+      For dict `ekin`, available laws are :
+      - 'mono', for a mono-energetic source. Energy must be given as a value of keyword 'energy'
+      - 'exp', for exponential energy. Temperature must be given as a value of keyword 'T'
+
+      For dict `theta` and `phi`, available laws are :
+      - 'mono', for a directional source. Angle must be given as a value of keyword 'angle'
+      - 'iso', for an isotropic source. An optional keyword 'max' can be given to specify a maximum angle
+      - 'gauss', for a gaussian spreading. Center of the distribution must be given with keyword 'mu', and standard deviantion with keyword 'sigma'
+
+      Examples
+      --------
+      Assuming a `PhaseSpace` object is instanciated as `eps`, you can generate
+      a mono-energetic source in isotropic direction for 1e12 particles represented
+      by 1e6 configurations as follows
+
+      >>> eps.data.generate(Nconf=1e6,Npart=1e12,ekin={"law":"mono","E":20.0},theta={"law":"iso"},phi={"law":"iso"})
       """
       # Print a starting message
       if verbose:
@@ -148,20 +185,32 @@ class _Data(object):
       w = np.array([wnorm] * Nconf)
 
       # Generate theta angle
-      if theta["law"]=="iso":
-        theta0 = np.random.uniform(0.,np.pi,Nconf)
+      if theta["law"]=="mono":
+        theta0 = np.array([theta["angle"]] * Nconf)
+      elif theta["law"]=="iso":
+        try:
+          mangle = theta["max"]*np.pi/180.
+        except KeyError:
+          mangle = np.pi
+        theta0 = np.random.uniform(0.,mangle,Nconf)
       elif theta["law"]=="gauss":
-        pass
+        theta0 = np.random.normal(theta["mu"],theta["sigma"],Nconf)
       # Generate phi angle
-      if phi["law"]=="iso":
-        phi0 = np.random.uniform(0,np.pi,Nconf)
+      if phi["law"]=="mono":
+        phi0 = np.array([phi["angle"]] * Nconf)
+      elif phi["law"]=="iso":
+        try:
+          mangle = theta["max"]*np.pi/180.
+        except KeyError:
+          mangle = np.pi
+        phi0 = np.random.uniform(0,mangle,Nconf)
       elif phi["law"]=="gauss":
-        pass
+        phi0 = np.random.normal(phi["mu"],phi["sigma"],Nconf)
       # Generate energy
       if ekin["law"]=="mono":
         ekin0 = np.array([ekin["E"]] * Nconf)
       elif ekin["law"]=="exp":
-        pass
+        ekin0 = np.random.exponential(ekin["T"],Nconf)
 
       # Reconstruct momentum from energy and angle distributions
       mass = self._ps.mass
