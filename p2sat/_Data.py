@@ -128,10 +128,8 @@ class _Data(object):
         self.ekin   = self.p
         self.gamma  = np.inf
     else:
-        # self.ekin   = (np.sqrt((self.p/mass)**2 + 1) - 1) * mass
-        # self.gamma  = self.ekin/mass + 1.
-        self.gamma  = np.sqrt((self.p/mass)**2 + 1.)
-        self.ekin   = (self.gamma - 1) * mass
+        self.ekin   = (np.sqrt((self.p/mass)**2 + 1) - 1) * mass
+        self.gamma  = self.ekin/mass + 1.
     if verbose: print("Done !")
 
   def generate(self,Nconf,Npart,ekin,theta,phi,pos=None,time=None,verbose=True):
@@ -344,54 +342,56 @@ class _Data(object):
     # pz = self.px*gamma_CM[2]
     # # No transformations on statistical weights
     # w = self.w
+
+    # beta_CM = np.array(beta_CM)
+    # b = np.dot(beta_CM,beta_CM)
+    # n = beta_CM/b
+    # c = 2.99792458e8 * 1e6/1e15 # speed of CM in um/fs
+    # v = b * c
+    # gamma = 1./np.sqrt(1-beta_CM**2)
+    # g = 1./np.sqrt(1-b**2)
+    # G = np.matrix([
+    # [g           ,-g*b*n[0]          ,-g*b*n[1]          ,-g*b*n[2]      ],
+    # [-g*b*n[0]   ,1+(g-1)*n[0]**2    ,(g-1)*n[0]*n[1]    ,(g-1)*n[0]*n[2]],
+    # [-g*b*n[1]   ,(g-1)*n[1]*n[0]    ,1+(g-1)*n[1]**2    ,(g-1)*n[1]*n[2]],
+    # [-g*b*n[2]   ,(g-1)*n[2]*n[0]    ,(g-1)*n[2]*n[1]    ,1+(g-1)*n[2]**2]
+    # ])
+    # print(G)
+    # # Time transformation
+    # q1 = [c*self.t.copy(),self.x.copy(),self.y.copy(),self.z.copy()]
+    # p1 = [self.ekin.copy()/c,self.px.copy(),self.py.copy(),self.pz.copy()]
+    # q2 = np.dot(G,q1)
+    # p2 = np.dot(G,p1)
+    # w = self.w
+    # t = np.array(q2[0]/c)[0]
+    # x = np.array(q2[1])[0]
+    # y = np.array(q2[2])[0]
+    # z = np.array(q2[3])[0]
+    # px = np.array(p1[1])[0]
+    # py = np.array(p1[2])[0]
+    # pz = np.array(p1[3])[0]
+    # self.update(w,x,y,z,px,py,pz,t)
+
     beta_CM = np.array(beta_CM)
     b = np.dot(beta_CM,beta_CM)
     n = beta_CM/b
     c = 2.99792458e8 * 1e6/1e15 # speed of CM in um/fs
-    v = b * c
+    v = beta_CM * c
     gamma = 1./np.sqrt(1-beta_CM**2)
     g = 1./np.sqrt(1-b**2)
 
-    G = np.matrix([
-    [g           ,-g*b*n[0]          ,-g*b*n[1]          ,-g*b*n[2]      ],
-    [-g*b*n[0]   ,1+(g-1)*n[0]**2    ,(g-1)*n[0]*n[1]    ,(g-1)*n[0]*n[2]],
-    [-g*b*n[1]   ,(g-1)*n[1]*n[0]    ,1+(g-1)*n[1]**2    ,(g-1)*n[1]*n[2]],
-    [-g*b*n[2]   ,(g-1)*n[2]*n[0]    ,(g-1)*n[2]*n[1]    ,1+(g-1)*n[2]**2]
-    ])
-    print(G)
-    # Time transformation
-    q1 = [c*self.t.copy(),self.x.copy(),self.y.copy(),self.z.copy()]
-    p1 = [self.ekin.copy()/c,self.px.copy(),self.py.copy(),self.pz.copy()]
+    w1 = self.w
+    t1 = self.t
+    r1 = np.array([self.x,self.y,self.z])
+    p1 = np.array([self.px,self.py,self.pz])
 
-    q2 = np.dot(G,q1)
-    p2 = np.dot(G,p1)
-    # print(q2)
-    # print()
-    # print(p2)
-    w = self.w
-    t = np.array(q2[0]/c)[0]
-    x = np.array(q2[1])[0]
-    y = np.array(q2[2])[0]
-    z = np.array(q2[3])[0]
-    px = np.array(p1[1])[0]
-    py = np.array(p1[2])[0]
-    pz = np.array(p1[3])[0]
-    # print(x,y)
-    # self.update(w,x[0],y[0],z[0],px[0],py[0],pz[0],t[0])
-    self.update(w,x,y,z,px,py,pz,t)
-    # # Position transformation
-    # # x = (self.x - pos_CM[0])*gamma_CM[0]
-    # # y = (self.y - pos_CM[1])*gamma_CM[1]
-    # # z = (self.z - pos_CM[2])*gamma_CM[2]
-    # x = self.x
-    # y = self.y
-    # z = self.z
-    # # Momentum transformation
-    # px = self.px*gamma_CM[0]
-    # py = self.px*gamma_CM[1]
-    # pz = self.px*gamma_CM[2]
-    # # No transformations on statistical weights
-    # w = self.w
+    w2 = w1
+    t2 = g*(t1 + sum(r1*v)/c**2)
+    r2 = r1 + ((g-1)/np.dot(v,v) * sum(r1*v) + g*t1)*v
+    p2 = p1
+
+    self.update(w2,r2[0],r2[1],r2[2],p2[0],p2[1],p2[2],t2)
+
 
   def discretize(self,with_time=True,verbose=True,**kargs):
     """
