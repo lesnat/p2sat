@@ -203,8 +203,8 @@ class _Data(object):
       # Ensure that Nconf is of type int (for values such as 1e6)
       Nconf = int(Nconf)
       # Generate weights
-      wnorm = float(Npart)/Nconf
-      w = np.array([wnorm] * Nconf)
+      weight = float(Npart)/Nconf
+      w = np.array([weight] * Nconf)
 
       # Generate theta angle
       if theta["law"]=="mono":
@@ -437,12 +437,12 @@ class _Data(object):
     hn=self._ps.hist.hn
 
     if verbose : print('Data discretization ...')
-    #bi,hi=hn(['x','y','z','px','py','pz'],bwidth=bwidth,brange=brange,wnorm=[1.0]*6,select=select)
+
     if with_time:
-      bi,hi=hn([self.x,self.y,self.z,self.px,self.py,self.pz,self.t],wnorm=[1.0]*7,**kargs)
+      bi,hi=hn([self.x,self.y,self.z,self.px,self.py,self.pz,self.t],normed=False,**kargs)
       bx,by,bz,bpx,bpy,bpz,bt=bi
     else:
-      bi,hi=hn([self.x,self.y,self.z,self.px,self.py,self.pz],wnorm=[1.0]*6,**kargs)
+      bi,hi=hn([self.x,self.y,self.z,self.px,self.py,self.pz],normed=False,**kargs)
       bx,by,bz,bpx,bpy,bpz=bi
     if verbose : print('Done !')
     w       = []

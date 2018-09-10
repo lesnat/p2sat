@@ -8,7 +8,7 @@ class _Hist(object):
   def __init__(self,PhaseSpace):
     self._ps=PhaseSpace
 
-  def hn(self,axis,blen=None,bwidth=None,brange=None,wnorm=None,select=None):
+  def hn(self,axis,blen=None,bwidth=None,brange=None,normed=True,select=None):
     """
     Create and return the n-dimensional histo of axis list.
 
@@ -22,8 +22,8 @@ class _Hist(object):
       list of bin width. If a bwidth element is None, a calculation is done to have 10 bins in the correspondant axis
     brange : list of list of 2 float, optional
       list of bin minimum and maximum. If a brange element is None, the minimum/maximum of the axis is taken
-    wnorm : list of float, optional
-      weight normalization. If a wnorm element is None, the bin width is taken
+    normed : list of bool, optional
+      weight normalization. If a normed element is True, the bin width is taken
     select : dict, optional
       filtering dictionary
 
@@ -44,10 +44,10 @@ class _Hist(object):
     Examples
     --------
 
-    >>> hn(['x'],bwidth=[50],brange=[[0,1000]],wnorm=[1.0],select={'ekin':(0.511,None)})
+    >>> hn(['x'],bwidth=[50],brange=[[0,1000]],normed=[True],select={'ekin':(0.511,None)})
 
     returns the number of particles with :math:`ekin \in [0.511, +\infty] MeV` in function of x
-    wnorm=[1.0] to not divide nb of particles by bin width (otherwise number per um)
+    normed=[True] to not divide nb of particles by bin width (otherwise number per um)
 
     >>> hn(['r','ekin'],bwidth=[10.0,0.1],brange=[[0,1000],[0.1,50.0]],select={'x':150})
 
@@ -70,7 +70,12 @@ class _Hist(object):
         axis[i]=d.select(ax,faxis=select.keys(),frange=select.values())
 
     # Define default bin range
-    if wnorm is None    : wnorm=[None]*len(axis)
+    if type(normed) is bool:
+      if normed:
+        normed=[True]*len(axis)
+      else:
+        normed=[False]*len(axis)
+
     if brange is None   : brange=[[None,None]]*len(axis)
     if bwidth is None   : bwidth=[None]*len(axis)
     if blen is None     : blen=[None]*len(axis)
@@ -89,17 +94,19 @@ class _Hist(object):
           bwidth[i] = (brange[i][1] - brange[i][0])/blen[i]
       else:
         bwidth[i] = (brange[i][1] - brange[i][0])/blen[i]
-      if wnorm[i] is None: wnorm[i]=bwidth[i]
+
+      wnorm = 1.
+      if normed[i] is True: wnorm*=bwidth[i]
     #   bins.append(np.linspace(brange[i][0],brange[i][1]+bwidth[i],blen[i]))
       bins.append(np.linspace(brange[i][0],brange[i][1],blen[i]))
 
     # Calculate the multi dimensional histo, normalized by wnorm
-    h,b=np.histogramdd(axis,weights=w/np.product(wnorm),bins=bins)
+    h,b=np.histogramdd(axis,weights=w/wnorm,bins=bins)
 
     # Return the bins and histo
     return b,h
 
-  def h1(self,axis,bwidth=None,brange=None,wnorm=None,select=None):
+  def h1(self,axis,bwidth=None,brange=None,normed=True,select=None):
     """
     Create and return the 1 dimensional histogram of given axis.
 
@@ -131,11 +138,11 @@ class _Hist(object):
     """
     if not brange : brange = [None,None]
 
-    b,h=self.hn([axis],bwidth=[bwidth],brange=[brange],wnorm=[wnorm],select=select)
+    b,h=self.hn([axis],bwidth=[bwidth],brange=[brange],normed=normed,select=select)
 
     return b[0],h
 
-  def h2(self,axis1,axis2,bwidth1=None,bwidth2=None,brange1=None,brange2=None,wnorm=None,select=None):
+  def h2(self,axis1,axis2,bwidth1=None,bwidth2=None,brange1=None,brange2=None,normed=True,select=None):
     """
     Create and return the 2 dimensional histogram of given axis.
 
@@ -168,7 +175,7 @@ class _Hist(object):
     if not brange1 : brange1 = [None,None]
     if not brange2 : brange2 = [None,None]
 
-    b,h=self.hn([axis1,axis2],bwidth=[bwidth1,bwidth2],brange=[brange1,brange2],wnorm=wnorm,select=select)
+    b,h=self.hn([axis1,axis2],bwidth=[bwidth1,bwidth2],brange=[brange1,brange2],normed=normed,select=select)
 
     return b[0],b[1],h
 

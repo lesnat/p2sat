@@ -13,7 +13,7 @@ class _Plot(object):
     self.cmap="viridis"
     plt.ion()
 
-  def get_labels(self,axes,wnorm):
+  def get_labels(self,axes,normed):
     """
     Returns the labels of given axes.
 
@@ -21,7 +21,7 @@ class _Plot(object):
     ----------
     axes : list of str
       Names of the axes
-    wnorm : float or None
+    normed : float or None
       Weight normalization. If None, the last labels element is \"Number\", otherwise it is \"Number/unit1/unit2/...\"
 
     Returns
@@ -35,7 +35,7 @@ class _Plot(object):
     N_name=""
     N_unit=""
     # Loop over all the axes
-    for ax in axes:
+    for i,ax in enumerate(axes):
       # No label if ax is not a str
       if type(ax) is not str:
         labels.append("")
@@ -49,8 +49,8 @@ class _Plot(object):
         # Format the label for axis and unit of N
         if ax_unit is not None:
           labels.append("{} ({})".format(ax_name,ax_unit))
-          if wnorm is None:N_name += "d%s "%(ax_name[1:-1]) # LaTeX without '$'
-          if wnorm is None:N_unit += "%s "%(ax_unit)
+          if normed[i]: N_name += "d%s "%(ax_name[1:-1]) # LaTeX without '$'
+          if normed[i]: N_unit += "%s "%(ax_unit)
         else:
           labels.append(ax_name)
 
@@ -129,7 +129,7 @@ class _Plot(object):
     else:
       a=plt.gca()
 
-    labels=self.get_labels([axis],kargs.get('wnorm',None))
+    labels=self.get_labels([axis],kargs.get('normed',[True]))
 
     b,h=self._h.h1(axis,**kargs)
 
@@ -197,7 +197,7 @@ class _Plot(object):
     else:
       a=plt.gca()
 
-    labels=self.get_labels([axis],kargs.get('wnorm',None))
+    labels=self.get_labels([axis],kargs.get('normed',[True,True]))
 
     b,h=self._h.f1(axis,func_name,return_fit=True,**kargs)
 
@@ -252,7 +252,7 @@ class _Plot(object):
       a=plt.gca(polar=True)
     else:
       a=plt.gca()
-    labels=self.get_labels([axis1,axis2],kargs.get('wnorm',None))
+    labels=self.get_labels([axis1,axis2],kargs.get('normed',[True,True]))
 
     b1,b2,h=self._h.h2(axis1,axis2,**kargs)
     g1,g2=np.meshgrid(b1,b2,indexing='ij')
@@ -304,7 +304,7 @@ class _Plot(object):
       a=plt.gca(polar=True)
     else:
       a=plt.gca()
-    labels=self.get_labels([axis1,axis2],kargs.get('wnorm',None))
+    labels=self.get_labels([axis1,axis2],kargs.get('normed',[True,True]))
 
     if log:
       from matplotlib.colors import LogNorm
@@ -356,7 +356,7 @@ class _Plot(object):
       a=plt.gca(polar=True)
     else:
       a=plt.gca()
-    labels=self.get_labels([axis1,axis2],wnorm=1)
+    labels=self.get_labels([axis1,axis2],normed=[True,True])
 
     d = self._ps.data
 
