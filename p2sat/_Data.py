@@ -167,6 +167,21 @@ class _Data(object):
       - 'iso', for an isotropic source. An optional keyword 'max' can be given to specify a maximum angle
       - 'gauss', for a gaussian spreading. Center of the distribution must be given with keyword 'mu', and standard deviantion with keyword 'sigma'
 
+      Details of the calculations :
+      
+      Considering :math:`E_T = E_k + E_m` being the total energy, with
+      :math:`E_k` the kinetic energy and :math:`E_m` the rest mass energy, we have
+      :math:`E_T^2 = p^2 + E_m^2` and :math:`p^2=p_x^2 + p_y^2 + p_z^2` so
+      :math:`p_x^2+p_y^2+p_z^2=E_T^2 - E_m^2`.
+
+      Assuming :math:`\\tan{\\theta}=\\frac{p_y}{p_x}` and
+      :math:`\\tan{\\phi}=\\frac{p_z}{p_x}` we get
+
+      :math:`p_x = \sqrt{\\frac{E_T^2 - E_m^2}{1 + \\tan{\\theta}^2 + \\tan{\phi}^2}}`
+      :math:`p_y = p_x \\tan{\\theta}`
+      :math:`p_z = p_x \\tan{\phi}`
+
+
       Examples
       --------
       Assuming a `PhaseSpace` object is instanciated as `eps`, you can generate
@@ -202,7 +217,7 @@ class _Data(object):
         phi0 = np.array([phi["angle"]] * Nconf)
       elif phi["law"]=="iso":
         try:
-          mangle = theta["max"]*np.pi/180.
+          mangle = phi["max"]*np.pi/180.
         except KeyError:
           mangle = np.pi
         phi0 = np.random.uniform(0,mangle,Nconf)
@@ -323,75 +338,35 @@ class _Data(object):
     # If no position given, default is the origin
     if pos_CM is None:
       pos_CM = [0.,0.,0.]
-    # Calculate gamma factor from beta_CM
-    # beta_CM = np.array(beta_CM)
-    # v_CM = beta_CM * 2.99792458e8 * 1e6/1e15 # speed of CM in um/fs
-    # gamma_CM = 1./np.sqrt(1-beta_CM**2)
-    # # Time transformation
-    # t = gamma_CM*(self.t
-    # # Position transformation
-    # # x = (self.x - pos_CM[0])*gamma_CM[0]
-    # # y = (self.y - pos_CM[1])*gamma_CM[1]
-    # # z = (self.z - pos_CM[2])*gamma_CM[2]
-    # x = self.x
-    # y = self.y
-    # z = self.z
-    # # Momentum transformation
-    # px = self.px*gamma_CM[0]
-    # py = self.px*gamma_CM[1]
-    # pz = self.px*gamma_CM[2]
-    # # No transformations on statistical weights
-    # w = self.w
-
-    # beta_CM = np.array(beta_CM)
-    # b = np.dot(beta_CM,beta_CM)
-    # n = beta_CM/b
-    # c = 2.99792458e8 * 1e6/1e15 # speed of CM in um/fs
-    # v = b * c
-    # gamma = 1./np.sqrt(1-beta_CM**2)
-    # g = 1./np.sqrt(1-b**2)
-    # G = np.matrix([
-    # [g           ,-g*b*n[0]          ,-g*b*n[1]          ,-g*b*n[2]      ],
-    # [-g*b*n[0]   ,1+(g-1)*n[0]**2    ,(g-1)*n[0]*n[1]    ,(g-1)*n[0]*n[2]],
-    # [-g*b*n[1]   ,(g-1)*n[1]*n[0]    ,1+(g-1)*n[1]**2    ,(g-1)*n[1]*n[2]],
-    # [-g*b*n[2]   ,(g-1)*n[2]*n[0]    ,(g-1)*n[2]*n[1]    ,1+(g-1)*n[2]**2]
-    # ])
-    # print(G)
-    # # Time transformation
-    # q1 = [c*self.t.copy(),self.x.copy(),self.y.copy(),self.z.copy()]
-    # p1 = [self.ekin.copy()/c,self.px.copy(),self.py.copy(),self.pz.copy()]
-    # q2 = np.dot(G,q1)
-    # p2 = np.dot(G,p1)
-    # w = self.w
-    # t = np.array(q2[0]/c)[0]
-    # x = np.array(q2[1])[0]
-    # y = np.array(q2[2])[0]
-    # z = np.array(q2[3])[0]
-    # px = np.array(p1[1])[0]
-    # py = np.array(p1[2])[0]
-    # pz = np.array(p1[3])[0]
-    # self.update(w,x,y,z,px,py,pz,t)
 
     beta_CM = np.array(beta_CM)
     b = np.dot(beta_CM,beta_CM)
     n = beta_CM/b
     c = 2.99792458e8 * 1e6/1e15 # speed of CM in um/fs
-    v = beta_CM * c
+    v = b * c
     gamma = 1./np.sqrt(1-beta_CM**2)
     g = 1./np.sqrt(1-b**2)
+    G = np.matrix([
+    [g           ,-g*b*n[0]          ,-g*b*n[1]          ,-g*b*n[2]      ],
+    [-g*b*n[0]   ,1+(g-1)*n[0]**2    ,(g-1)*n[0]*n[1]    ,(g-1)*n[0]*n[2]],
+    [-g*b*n[1]   ,(g-1)*n[1]*n[0]    ,1+(g-1)*n[1]**2    ,(g-1)*n[1]*n[2]],
+    [-g*b*n[2]   ,(g-1)*n[2]*n[0]    ,(g-1)*n[2]*n[1]    ,1+(g-1)*n[2]**2]
+    ])
 
-    w1 = self.w
-    t1 = self.t
-    r1 = np.array([self.x,self.y,self.z])
-    p1 = np.array([self.px,self.py,self.pz])
-
-    w2 = w1
-    t2 = g*(t1 + sum(r1*v)/c**2)
-    r2 = r1 + ((g-1)/np.dot(v,v) * sum(r1*v) + g*t1)*v
-    p2 = p1
-
-    self.update(w2,r2[0],r2[1],r2[2],p2[0],p2[1],p2[2],t2)
-
+    # # Time transformation
+    q1 = [c*self.t.copy(),self.x.copy(),self.y.copy(),self.z.copy()]
+    p1 = [self.ekin.copy()/c,self.px.copy(),self.py.copy(),self.pz.copy()]
+    ct,x,y,z        = np.dot(G,q1)
+    ekin_c,px,py,pz = np.dot(G,p1)
+    w = self.w
+    t = np.array(ct)[0]/c
+    x = np.array(x)[0]
+    y = np.array(y)[0]
+    z = np.array(z)[0]
+    px = np.array(px)[0]
+    py = np.array(py)[0]
+    pz = np.array(pz)[0]
+    self.update(w,x,y,z,px,py,pz,t)
 
   def discretize(self,with_time=True,verbose=True,**kargs):
     """
