@@ -71,6 +71,8 @@ class _Data(object):
               'p'     : '$p$',
               'ekin'  : '$E_{kin}$',
               'gamma' : '$\gamma$',
+              'beta'  : '$\\beta$',
+              'v'     : '$v$',
 
               'theta' : '$\\theta$',
               'phi'   : '$\\phi$',
@@ -129,12 +131,17 @@ class _Data(object):
     self.theta  = np.degrees(np.arctan(self.py/self.px))
     self.phi    = np.degrees(np.arctan(self.pz/self.px)) # Geometrical effect ? change -> 0 pi
     mass = self._ps.mass
+    c = 2.99792458e8 * 1e6/1e15 # speed of light in um/fs
     if mass == 0:
         self.ekin   = self.p
         self.gamma  = np.inf
+        self.beta   = 1
+        self.v      = c
     else:
         self.ekin   = (np.sqrt((self.p/mass)**2 + 1) - 1) * mass
         self.gamma  = self.ekin/mass + 1.
+        self.beta   = np.sqrt(1.-1/self.gamma**2)
+        self.v      = self.beta * c
     if verbose: print("Done !")
 
   def generate(self,Nconf,Npart,ekin,theta,phi,pos=None,time=None,verbose=True):
