@@ -206,8 +206,8 @@ class _Data(object):
       """
       # Print a starting message
       if verbose:
-        print("Generate particle phase-space for \"%s\" ekin law, \"%s\" theta law, \"%s\" phi law ..."
-        %(ekin["law"],theta["law"],phi["law"]))
+        print("Generate %s phase-space for \"%s\" ekin law, \"%s\" theta law, \"%s\" phi law ..."
+        %(self._ps.specie,ekin["law"],theta["law"],phi["law"]))
 
       # Ensure that Nconf is of type int (for values such as 1e6)
       Nconf = int(Nconf)
@@ -381,21 +381,18 @@ class _Data(object):
     self.update(w,x,y,z,px,py,pz,t,verbose=verbose)
 
 
-  def lorrentz(self,beta_CM,pos_CM=None):
+  def lorentz(self,beta_CM,verbose=True):
     """
-    Lorrentz-transformate the particle phase-space with given speed of the center of mass.
+    Lorentz-transformate the particle phase-space with given speed of the center of mass.
 
     Notes
     -----
     https://en.wikipedia.org/wiki/Lorentz_transformation#Transformation_of_other_quantities
     """
-    # If no position given, default is the origin
-    if pos_CM is None:
-      pos_CM = [0.,0.,0.]
-
+    if verbose: print("Lorentz-transform %s phase-space with center of mass frame moving at %s c."%(self._ps.specie,beta_CM))
     # lowercase : scalar, caption : vector
 
-    B = np.array(beta_CM)
+    B = -np.array(beta_CM)
     b = np.dot(B,B)
     N = B/b
     c = 2.99792458e8 * 1e6/1e15 # speed of light in um/fs
@@ -427,35 +424,6 @@ class _Data(object):
 
     w = self.w
     self.update(w,x,y,z,px,py,pz,t)
-    #
-    # beta_CM = np.array(beta_CM)
-    # b = np.dot(beta_CM,beta_CM)
-    # n = beta_CM/b
-    # c = 2.99792458e8 * 1e6/1e15 # speed of CM in um/fs
-    # v = b * c
-    # gamma = 1./np.sqrt(1-beta_CM**2)
-    # g = 1./np.sqrt(1-b**2)
-    # G = np.matrix([
-    # [g           ,-g*b*n[0]          ,-g*b*n[1]          ,-g*b*n[2]      ],
-    # [-g*b*n[0]   ,1+(g-1)*n[0]**2    ,(g-1)*n[0]*n[1]    ,(g-1)*n[0]*n[2]],
-    # [-g*b*n[1]   ,(g-1)*n[1]*n[0]    ,1+(g-1)*n[1]**2    ,(g-1)*n[1]*n[2]],
-    # [-g*b*n[2]   ,(g-1)*n[2]*n[0]    ,(g-1)*n[2]*n[1]    ,1+(g-1)*n[2]**2]
-    # ])
-    #
-    # # # Time transformation
-    # q1 = [c*self.t.copy(),self.x.copy(),self.y.copy(),self.z.copy()]
-    # p1 = [self.ekin.copy()/c,self.px.copy(),self.py.copy(),self.pz.copy()]
-    # ct,x,y,z        = np.dot(G,q1)
-    # ekin_c,px,py,pz = np.dot(G,p1)
-    # w = self.w
-    # t = np.array(ct)[0]/c
-    # x = np.array(x)[0]
-    # y = np.array(y)[0]
-    # z = np.array(z)[0]
-    # px = np.array(px)[0]
-    # py = np.array(py)[0]
-    # pz = np.array(pz)[0]
-    # self.update(w,x,y,z,px,py,pz,t)
 
   def discretize(self,with_time=True,verbose=True,**kargs):
     """
