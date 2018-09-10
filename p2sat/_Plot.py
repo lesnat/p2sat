@@ -147,6 +147,8 @@ class _Plot(object):
 
     a.grid(True)
 
+    plt.show()
+
     return a
 
   def f1(self,axis,func_name,log=False,polar=False,reverse=False,**kargs):
@@ -205,6 +207,8 @@ class _Plot(object):
 
     a.grid(True)
 
+    plt.show()
+
     return a
 
   def h2(self,axis1,axis2,log=False,polar=False,**kargs):
@@ -252,6 +256,8 @@ class _Plot(object):
 
     a.grid(True)
     plt.colorbar(a2,label=labels[2])
+
+    plt.show()
 
     return a
 
@@ -309,6 +315,8 @@ class _Plot(object):
 
     plt.clabel(a2, inline=1, fontsize=10 ,fmt='%1.1e')
 
+    plt.show()
+
     return a
 
   def s2(self,axis1,axis2,log=False,polar=False,select=None):
@@ -362,6 +370,8 @@ class _Plot(object):
 
     plt.colorbar(a2,label=labels[2])
 
+    plt.show()
+
     return a
 
   def h2h1(self,axis1,axis2,log=False,**kargs):
@@ -403,6 +413,8 @@ class _Plot(object):
 
     self.autoclear=tmp
 
+    plt.show()
+
   def s2h1(self,axis1,axis2,log=False):
     """
     """
@@ -441,3 +453,5 @@ class _Plot(object):
             tmp[i1][i2][i3]=e3
 
     a.scatter3D(g1,g2,g3,s=snorm*tmp,cmap='hot')
+
+    plt.show()
