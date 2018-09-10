@@ -8,7 +8,7 @@ class _Hist(object):
   def __init__(self,PhaseSpace):
     self._ps=PhaseSpace
 
-  def hn(self,axis,blen=None,bwidth=None,brange=None,normed=True,select=None):
+  def hn(self,axis,bwidth=None,brange=None,normed=True,select=None):
     """
     Create and return the n-dimensional histo of axis list.
 
@@ -16,14 +16,12 @@ class _Hist(object):
     ----------
     axis : list of str/np.array
       list of axis to hist
-    blen : list of int, optional
-      list of number of bins. If a blen element is None, the default value is 10
     bwidth : list of float, optional
       list of bin width. If a bwidth element is None, a calculation is done to have 10 bins in the correspondant axis
     brange : list of list of 2 float, optional
       list of bin minimum and maximum. If a brange element is None, the minimum/maximum of the axis is taken
-    normed : list of bool, optional
-      weight normalization. If a normed element is True, the bin width is taken
+    normed : bool or list of bool, optional
+      weight normalization. If a normed element is True, the bin width is taken as weight normalization
     select : dict, optional
       filtering dictionary
 
@@ -44,18 +42,19 @@ class _Hist(object):
     Examples
     --------
 
-    >>> hn(['x'],bwidth=[50],brange=[[0,1000]],normed=[True],select={'ekin':(0.511,None)})
+    >>> hn(['x'],bwidth=[50],brange=[[0,1000]],normed=[False],select={'ekin':(0.511,None)})
 
     returns the number of particles with :math:`ekin \in [0.511, +\infty] MeV` in function of x
-    normed=[True] to not divide nb of particles by bin width (otherwise number per um)
+    normed=[False] to not divide nb of particles by bin width (otherwise number per um)
 
     >>> hn(['r','ekin'],bwidth=[10.0,0.1],brange=[[0,1000],[0.1,50.0]],select={'x':150})
 
     returns a number of e- per um per MeV at x=150 um
     """
+    # Get a shortcut to data object
     d=self._ps.data
 
-    # Get a copy the axis from a str if needed
+    # Get a copy of the axes
     for i,ax in enumerate(axis):
       if type(ax) is str:ax = eval("d.%s"%ax)
       axis[i]=np.array(ax)
@@ -69,36 +68,38 @@ class _Hist(object):
       for i,ax in enumerate(axis):
         axis[i]=d.select(ax,faxis=select.keys(),frange=select.values())
 
-    # Define default bin range
+    # Define bin range
+    if brange is None   : brange=[[None,None]]*len(axis)
+    for i,_ in enumerate(axis):
+      if brange[i][0] is None:brange[i][0]=min(axis[i])
+      if brange[i][1] is None:brange[i][1]=max(axis[i])
+
+    # Define bin width
+    if bwidth is None   : bwidth=[None]*len(axis)
+    blen=[None]*len(axis)
+    for i,_ in enumerate(axis):
+      if bwidth[i] is not None:
+        # Bin width is over-estimated to fit with bin range
+        blen[i]   = int(np.ceil((brange[i][1] + bwidth[i] - brange[i][0])/bwidth[i]))
+      else:
+        # Default is 10 bins
+        blen[i]   = 10
+        bwidth[i] = float(brange[i][1] - brange[i][0])/blen[i]
+
+    # Calculate bins
+    bins=[]
+    for i,_ in enumerate(axis):
+      bins.append(np.linspace(brange[i][0],brange[i][1],blen[i]))
+
+    # Get weight normalization
     if type(normed) is bool:
       if normed:
         normed=[True]*len(axis)
       else:
         normed=[False]*len(axis)
-
-    if brange is None   : brange=[[None,None]]*len(axis)
-    if bwidth is None   : bwidth=[None]*len(axis)
-    if blen is None     : blen=[None]*len(axis)
-    bins=[]
+    wnorm = 1.
     for i,_ in enumerate(axis):
-      if brange[i][0] is None:brange[i][0]=min(axis[i])
-      if brange[i][1] is None:brange[i][1]=max(axis[i])
-    #   if brange[i][0]==brange[i][1]:
-    #     brange[i][1]=2
-    #     blen[i]=2
-      if blen[i] is None:
-        if bwidth[i] is not None:
-          blen[i]   = int(np.ceil((brange[i][1] + bwidth[i] - brange[i][0])/bwidth[i]))
-        else:
-          blen[i]   = 10
-          bwidth[i] = (brange[i][1] - brange[i][0])/blen[i]
-      else:
-        bwidth[i] = (brange[i][1] - brange[i][0])/blen[i]
-
-      wnorm = 1.
-      if normed[i] is True: wnorm*=bwidth[i]
-    #   bins.append(np.linspace(brange[i][0],brange[i][1]+bwidth[i],blen[i]))
-      bins.append(np.linspace(brange[i][0],brange[i][1],blen[i]))
+      if normed[i]: wnorm*=bwidth[i]
 
     # Calculate the multi dimensional histo, normalized by wnorm
     h,b=np.histogramdd(axis,weights=w/wnorm,bins=bins)
