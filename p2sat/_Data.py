@@ -73,7 +73,12 @@ class _Data(object):
               'gamma' : '$\gamma$',
 
               'theta' : '$\\theta$',
-              'phi'   : '$\\phi$'
+              'phi'   : '$\\phi$',
+
+              'e-'    : '$e^-$',
+              'e+'    : '$e^+$',
+              'mu-'   : '$\mu^-$',
+              'mu+'   : '$\mu^+$'
              }
 
     self.units = {
@@ -372,7 +377,7 @@ class _Data(object):
     for i in range(len(a1)):
         a2.append(g*(a1[i] - (v*np.dot(N,Z1[i]))/c))
         Z2.append(Z1[i] + (g-1)*np.dot(Z1[i],N)*N - g*(a1[i]*v*N)/c)
-    
+
     px,py,pz = np.array(Z2).T
 
     w = self.w

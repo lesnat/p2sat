@@ -38,12 +38,20 @@ class PhaseSpace(object):
   See sub-objects documentation for more informations
   """
   def __init__(self,specie):
-      self.specie = specie
       if specie in ("gamma","g"):
+          self.specie = "gamma"
           self.mass = 0
-      elif specie in ("positron","electron","e-","e+","e"):
+      elif specie in ("positron","e+"):
+          self.specie = "e+"
           self.mass = 0.511
-      elif specie in ("muon","muon+","muon-","mu+","mu-","mu"):
+      elif specie in ("electron","e-"):
+          self.specie = "e-"
+          self.mass = 0.511
+      elif specie in ("muon+","mu+"):
+          self.specie = "mu+"
+          self.mass = 105.6
+      elif specie in ("muon-","mu-"):
+          self.specie = "mu-"
           self.mass = 105.6
       else:
           raise NameError("Unknown particle specie.")

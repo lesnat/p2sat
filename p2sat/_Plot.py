@@ -29,21 +29,38 @@ class _Plot(object):
     labels : list of str
       Labels of given axes and label of weight
     """
+    # Initialization
+    specie = self._ps.specie
     labels=[]
-    res=""
+    N_name=""
+    N_unit=""
+    # Loop over all the axes
     for ax in axes:
+      # No label if ax is not a str
       if type(ax) is not str:
         labels.append("")
       else:
-        name = self._ps.data.labels[ax]
-        unit = self._ps.data.units[ax]
-        if unit is not None:
-          labels.append("{} ({})".format(name,unit))
-          if wnorm is None:res += "{} ".format(unit)
+        # Else get axis name and unit from dicts
+        ax_name = self._ps.data.labels[ax]
+        ax_unit = self._ps.data.units[ax]
+        # ekin is E_\gamma when specie is gamma
+        if ax=="ekin" and specie =="gamma":
+          ax_name = "$E_\gamma$"
+        # Format the label for axis and unit of N
+        if ax_unit is not None:
+          labels.append("{} ({})".format(ax_name,ax_unit))
+          if wnorm is None:N_name += "d%s "%(ax_name[1:-1]) # LaTeX without '$'
+          if wnorm is None:N_unit += "%s "%(ax_unit)
         else:
-          labels.append(name)
+          labels.append(ax_name)
 
-    labels.append("Number/({})".format(res[:-1]))
+    # Format number name
+    specie_name = self._ps.data.labels[specie]
+    if N_unit =="":
+      labels.append("$N_{%s}$"%(specie_name[1:-1]))
+    else:
+      labels.append("$\\frac{d N_{%s}}{%s}$ (%s)$^{-1}$"%(specie_name[1:-1],N_name[:-1],N_unit[:-1]))
+
     return labels
 
   def figure(self,number=None,clear=True):
