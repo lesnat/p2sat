@@ -34,6 +34,11 @@ class _Plot(object):
     labels=[]
     N_name=""
     N_unit=""
+    if type(normed) is bool:
+      if normed:
+        normed=[True]*len(axes)
+      else:
+        normed=[False]*len(axes)
     # Loop over all the axes
     for i,ax in enumerate(axes):
       # No label if ax is not a str
@@ -129,7 +134,7 @@ class _Plot(object):
     else:
       a=plt.gca()
 
-    labels=self.get_labels([axis],kargs.get('normed',[True]))
+    labels=self.get_labels([axis],kargs.get('normed',True))
 
     b,h=self._h.h1(axis,**kargs)
 
@@ -197,7 +202,7 @@ class _Plot(object):
     else:
       a=plt.gca()
 
-    labels=self.get_labels([axis],kargs.get('normed',[True,True]))
+    labels=self.get_labels([axis],kargs.get('normed',True))
 
     b,h=self._h.f1(axis,func_name,return_fit=True,**kargs)
 
@@ -252,7 +257,7 @@ class _Plot(object):
       a=plt.gca(polar=True)
     else:
       a=plt.gca()
-    labels=self.get_labels([axis1,axis2],kargs.get('normed',[True,True]))
+    labels=self.get_labels([axis1,axis2],kargs.get('normed',True))
 
     b1,b2,h=self._h.h2(axis1,axis2,**kargs)
     g1,g2=np.meshgrid(b1,b2,indexing='ij')
@@ -304,7 +309,7 @@ class _Plot(object):
       a=plt.gca(polar=True)
     else:
       a=plt.gca()
-    labels=self.get_labels([axis1,axis2],kargs.get('normed',[True,True]))
+    labels=self.get_labels([axis1,axis2],kargs.get('normed',True))
 
     if log:
       from matplotlib.colors import LogNorm
@@ -356,7 +361,7 @@ class _Plot(object):
       a=plt.gca(polar=True)
     else:
       a=plt.gca()
-    labels=self.get_labels([axis1,axis2],normed=[True,True])
+    labels=self.get_labels([axis1,axis2],normed=True)
 
     d = self._ps.data
 
