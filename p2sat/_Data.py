@@ -135,15 +135,15 @@ class _Data(object):
     mass = self._ps.mass
     c = 2.99792458e8 * 1e6/1e15 # speed of light in um/fs
     if mass == 0:
-        self.ekin   = self.p
-        self.gamma  = np.array([np.inf]*len(w))
-        self.beta   = np.array([1]*len(w))
-        self.v      = np.array([c]*len(w))
+      self.ekin   = self.p
+      self.gamma  = np.array([np.inf]*len(w))
+      self.beta   = np.array([1.]*len(w))
+      self.v      = np.array([c]*len(w))
     else:
-        self.ekin   = (np.sqrt((self.p/mass)**2 + 1) - 1) * mass
-        self.gamma  = self.ekin/mass + 1.
-        self.beta   = np.sqrt(1.-1/self.gamma**2)
-        self.v      = self.beta * c
+      self.ekin   = (np.sqrt((self.p/mass)**2 + 1) - 1) * mass
+      self.gamma  = self.ekin/mass + 1.
+      self.beta   = np.sqrt(1.-1/self.gamma**2)
+      self.v      = self.beta * c
     if verbose: print("Done !")
 
   def generate(self,Nconf,Npart,ekin,theta,phi,pos=None,time=None,verbose=True):
@@ -234,7 +234,7 @@ class _Data(object):
           mangle = phi["max"]*np.pi/180.
         except KeyError:
           mangle = np.pi
-        phi0 = np.random.uniform(0,mangle,Nconf)
+        phi0 = np.random.uniform(0.,mangle,Nconf)
       elif phi["law"]=="gauss":
         phi0 = np.random.normal(phi["mu"],phi["sigma"],Nconf)
       # Generate energy
@@ -379,7 +379,6 @@ class _Data(object):
       z = self.z + (self.pz/self.p)*self.v*Dt
 
     self.update(w,x,y,z,px,py,pz,t,verbose=verbose)
-
 
   def lorentz(self,beta_CM,verbose=True):
     """
