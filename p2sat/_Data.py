@@ -96,6 +96,8 @@ class _Data(object):
               'p'     : 'MeV/c',
               'ekin'  : 'MeV',
               'gamma' : None,
+              'beta'  : None,
+              'v'     : 'um/fs',
 
               'theta' : 'deg',
               'phi'   : 'deg'
@@ -134,9 +136,9 @@ class _Data(object):
     c = 2.99792458e8 * 1e6/1e15 # speed of light in um/fs
     if mass == 0:
         self.ekin   = self.p
-        self.gamma  = np.inf
-        self.beta   = 1
-        self.v      = c
+        self.gamma  = np.array([np.inf]*len(w))
+        self.beta   = np.array([1]*len(w))
+        self.v      = np.array([c]*len(w))
     else:
         self.ekin   = (np.sqrt((self.p/mass)**2 + 1) - 1) * mass
         self.gamma  = self.ekin/mass + 1.
@@ -335,13 +337,49 @@ class _Data(object):
     """
     pass
 
-  def propagate(self):
+  def propagate(self,x_pos=None,time=None,verbose=True):
     """
     Propagate the phase space to a given position or time.
 
-    TODO
+    Parameters
+    ----------
+    x_pos : float, optional
+      propagate the phase-space untill x = x_pos. Default is None (no propagation)
+    time : float, optional
+      propagate the phase-space untill t = time. Default is None (no propagation)
+
+    Notes
+    -----
+    x_pos and time can not be defined simultaneously.
     """
-    pass
+    if time is None and x_pos is None:
+      raise ValueError("You must define time or x_pos.")
+    if time is not None and x_pos is not None:
+      raise ValueError("time and x_pos can not be defined simultaneously.")
+
+    w = self.w
+    px = self.px
+    py = self.py
+    pz = self.pz
+
+    if time is not None:
+      if verbose: print("Propagate %s phase-space to time = %.4E fs."%(self._ps.specie,time))
+      t = np.array([time]*len(w))
+      Dt = t - self.t
+      x = self.x + (self.px/self.p)*self.v*Dt
+      y = self.y + (self.py/self.p)*self.v*Dt
+      z = self.z + (self.pz/self.p)*self.v*Dt
+
+    if x_pos is not None:
+      if verbose: print("Propagate %s phase-space to x = %.4E um."%(self._ps.specie,x_pos))
+      x = np.array([x_pos]*len(w))
+      Dt = (x - self.x)/self.v
+      t = self.t + Dt
+      y = self.y + (self.py/self.p)*self.v*Dt
+      z = self.z + (self.pz/self.p)*self.v*Dt
+
+    self.update(w,x,y,z,px,py,pz,t,verbose=verbose)
+
 
   def lorrentz(self,beta_CM,pos_CM=None):
     """
