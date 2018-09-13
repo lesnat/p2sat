@@ -253,15 +253,17 @@ class _Hist(object):
     and returns fit parameters A,sigma,mu.
     """
     # Get the hist data
+    if verbose:print("Processing 1D \"{}\" fit of \"{}\" ...".format(func_name,str(axis)))
     x,w = self._ps.hist.h1(axis,**kargs)
 
+    Ntot = np.trapz(w,x[:-1])
     # Define fit function and default values for fit parameters
     if func_name=="exp":
       f = lambda x,A,T: A*np.exp(-x/T)/T
-      p0 = [sum(w),1]
+      p0 = [Ntot,1]
     elif func_name=="gauss":
       f = lambda x,A,sigma,mu: A/(np.sqrt(2*np.pi) * sigma) * np.exp(-(x-mu)**2/(2*sigma**2))
-      p0 = [sum(w),x.std(),0]
+      p0 = [Ntot,x.std(),0]
     else:
       raise NameError("Unknown func_name.")
 
@@ -271,9 +273,9 @@ class _Hist(object):
 
     # Print error on number of particles
     if verbose:
-      print('Parameters are {}'.format(popt))
-      diff = (popt[0]-sum(w))/sum(w) * 100
-      print('Error on number of particles for \"{}\" fit : {:.2F} %'.format(func_name,diff))
+      print('Parameters : {}'.format(popt))
+      diff = (popt[0]-Ntot)/Ntot * 100
+      print('Error on number of particles : {:.2F} %'.format(diff))
 
     # Choice of the return values
     if return_fit:
