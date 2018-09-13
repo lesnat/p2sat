@@ -44,7 +44,7 @@ class _Data(object):
   - gamma is defined as
 
     - :math:`E_{kin}/m_e c^2 + 1` for massive species
-    - :math:`...` otherwise
+    - :math:`+\infty` otherwise
 
   Details of the calculations can be found at ... TODO
   """
@@ -65,14 +65,22 @@ class _Data(object):
               'px'    : '$p_x$',
               'py'    : '$p_y$',
               'pz'    : '$p_z$',
+              't'     : '$t$',
 
               'r'     : '$r$',
               'p'     : '$p$',
               'ekin'  : '$E_{kin}$',
               'gamma' : '$\gamma$',
+              'beta'  : '$\\beta$',
+              'v'     : '$v$',
 
               'theta' : '$\\theta$',
-              'phi'   : '$\\phi$'
+              'phi'   : '$\\phi$',
+
+              'e-'    : '$e^-$',
+              'e+'    : '$e^+$',
+              'mu-'   : '$\mu^-$',
+              'mu+'   : '$\mu^+$'
              }
 
     self.units = {
@@ -82,11 +90,14 @@ class _Data(object):
               'px'    : 'MeV/c',
               'py'    : 'MeV/c',
               'pz'    : 'MeV/c',
+              't'     : 'fs',
 
               'r'     : 'um',
               'p'     : 'MeV/c',
               'ekin'  : 'MeV',
               'gamma' : None,
+              'beta'  : None,
+              'v'     : 'um/fs',
 
               'theta' : 'deg',
               'phi'   : 'deg'
@@ -122,21 +133,136 @@ class _Data(object):
     self.theta  = np.degrees(np.arctan(self.py/self.px))
     self.phi    = np.degrees(np.arctan(self.pz/self.px)) # Geometrical effect ? change -> 0 pi
     mass = self._ps.mass
+    c = 2.99792458e8 * 1e6/1e15 # speed of light in um/fs
     if mass == 0:
-        self.ekin   = self.p
-        self.gamma  = self.ekin # FIXME : vérifier
+      self.ekin   = self.p
+      self.gamma  = np.array([np.inf]*len(w))
+      self.beta   = np.array([1.]*len(w))
+      self.v      = np.array([c]*len(w))
     else:
-        self.ekin   = (np.sqrt((self.p/mass)**2 + 1) - 1) * mass
-        self.gamma  = self.ekin/mass + 1.
+      self.ekin   = (np.sqrt((self.p/mass)**2 + 1) - 1) * mass
+      self.gamma  = self.ekin/mass + 1.
+      self.beta   = np.sqrt(1.-1/self.gamma**2)
+      self.v      = self.beta * c
     if verbose: print("Done !")
 
-  def generate(self,**kargs):
+  def generate(self,Nconf,Npart,ekin,theta,phi,pos=None,time=None,verbose=True):
       """
-      Generate a particle phase space from given laws
+      Generate a particle phase space from given laws.
 
-      TODO
+      Parameters
+      ----------
+      Nconf : int
+        total number of configurations
+      Npart : float
+        total number of particles
+      ekin : dict
+        parameters to generate kinetic energy
+      theta : dict
+        parameters to generate theta angle distribution
+      phi : dict
+        parameters to generate phi angle distribution
+      pos : dict, optional
+        parameters to generate position distribution. Default is 0 for x,y,z
+      time : dict
+        parameters to generate time distribution. Default is 0
+
+      Notes
+      -----
+      The dictionnaries must each time at least contain the key 'law' with a value
+      depending on which law are available for each physical quantity
+
+      For dict `ekin`, available laws are :
+      - 'mono', for a mono-energetic source. Energy must be given as a value of keyword 'energy'
+      - 'exp', for exponential energy. Temperature must be given as a value of keyword 'T'
+
+      For dict `theta` and `phi`, available laws are :
+      - 'mono', for a directional source. Angle must be given as a value of keyword 'angle'
+      - 'iso', for an isotropic source. An optional keyword 'max' can be given to specify a maximum angle
+      - 'gauss', for a gaussian spreading. Center of the distribution must be given with keyword 'mu', and standard deviantion with keyword 'sigma'
+
+      Details of the calculations :
+
+      Considering :math:`E_T = E_k + E_m` being the total energy, with
+      :math:`E_k` the kinetic energy and :math:`E_m` the rest mass energy, we have
+      :math:`E_T^2 = p^2 + E_m^2` and :math:`p^2=p_x^2 + p_y^2 + p_z^2` so
+      :math:`p_x^2+p_y^2+p_z^2=E_T^2 - E_m^2`.
+
+      Assuming :math:`\\tan{\\theta}=\\frac{p_y}{p_x}` and
+      :math:`\\tan{\\phi}=\\frac{p_z}{p_x}` we get
+
+      :math:`p_x = \sqrt{\\frac{E_T^2 - E_m^2}{1 + \\tan{\\theta}^2 + \\tan{\phi}^2}}`
+      :math:`p_y = p_x \\tan{\\theta}`
+      :math:`p_z = p_x \\tan{\phi}`
+
+
+      Examples
+      --------
+      Assuming a `PhaseSpace` object is instanciated as `eps`, you can generate
+      a mono-energetic source in isotropic direction for 1e12 particles represented
+      by 1e6 configurations as follows
+
+      >>> eps.data.generate(Nconf=1e6,Npart=1e12,ekin={"law":"mono","E":20.0},theta={"law":"iso"},phi={"law":"iso"})
       """
-      pass
+      # Print a starting message
+      if verbose:
+        print("Generate %s phase-space for \"%s\" ekin law, \"%s\" theta law, \"%s\" phi law ..."
+        %(self._ps.specie,ekin["law"],theta["law"],phi["law"]))
+
+      # Ensure that Nconf is of type int (for values such as 1e6)
+      Nconf = int(Nconf)
+      # Generate weights
+      weight = float(Npart)/Nconf
+      w = np.array([weight] * Nconf)
+
+      # Generate theta angle
+      if theta["law"]=="mono":
+        theta0 = np.array([theta["angle"]] * Nconf)
+      elif theta["law"]=="iso":
+        try:
+          mangle = theta["max"]*np.pi/180.
+        except KeyError:
+          mangle = np.pi
+        theta0 = np.random.uniform(0.,mangle,Nconf)
+      elif theta["law"]=="gauss":
+        theta0 = np.random.normal(theta["mu"],theta["sigma"],Nconf)
+      # Generate phi angle
+      if phi["law"]=="mono":
+        phi0 = np.array([phi["angle"]] * Nconf)
+      elif phi["law"]=="iso":
+        try:
+          mangle = phi["max"]*np.pi/180.
+        except KeyError:
+          mangle = np.pi
+        phi0 = np.random.uniform(0.,mangle,Nconf)
+      elif phi["law"]=="gauss":
+        phi0 = np.random.normal(phi["mu"],phi["sigma"],Nconf)
+      # Generate energy
+      if ekin["law"]=="mono":
+        ekin0 = np.array([ekin["E"]] * Nconf)
+      elif ekin["law"]=="exp":
+        ekin0 = np.random.exponential(ekin["T"],Nconf)
+
+      # Reconstruct momentum from energy and angle distributions
+      mass = self._ps.mass
+      etot = ekin0 + mass
+      px = np.sqrt((etot**2 - mass**2)/(1. + np.tan(theta0)**2 + np.tan(phi0)**2))
+      py = px * np.tan(theta0)
+      pz = px * np.tan(phi0)
+
+      # Generate position
+      if pos is None:
+        x = np.array([0.] * Nconf)
+        y = np.array([0.] * Nconf)
+        z = np.array([0.] * Nconf)
+
+      # Generate time
+      if time is None:
+        t = np.array([0.] * Nconf)
+
+      if verbose: print("Done !")
+      # Update current object
+      self.update(w,x,y,z,px,py,pz,t,verbose=verbose)
 
   def select(self,axis,faxis,frange,fpp=1e-7):
     """
@@ -211,13 +337,92 @@ class _Data(object):
     """
     pass
 
-  def propagate(self):
+  def propagate(self,x_pos=None,time=None,verbose=True):
     """
     Propagate the phase space to a given position or time.
 
-    TODO
+    Parameters
+    ----------
+    x_pos : float, optional
+      propagate the phase-space untill x = x_pos. Default is None (no propagation)
+    time : float, optional
+      propagate the phase-space untill t = time. Default is None (no propagation)
+
+    Notes
+    -----
+    x_pos and time can not be defined simultaneously.
     """
-    pass
+    if time is None and x_pos is None:
+      raise ValueError("You must define time or x_pos.")
+    if time is not None and x_pos is not None:
+      raise ValueError("time and x_pos can not be defined simultaneously.")
+
+    w = self.w
+    px = self.px
+    py = self.py
+    pz = self.pz
+
+    if time is not None:
+      if verbose: print("Propagate %s phase-space to time = %.4E fs."%(self._ps.specie,time))
+      t = np.array([time]*len(w))
+      Dt = t - self.t
+      x = self.x + (self.px/self.p)*self.v*Dt
+      y = self.y + (self.py/self.p)*self.v*Dt
+      z = self.z + (self.pz/self.p)*self.v*Dt
+
+    if x_pos is not None:
+      if verbose: print("Propagate %s phase-space to x = %.4E um."%(self._ps.specie,x_pos))
+      x = np.array([x_pos]*len(w))
+      Dt = (x - self.x)/self.v
+      t = self.t + Dt
+      y = self.y + (self.py/self.p)*self.v*Dt
+      z = self.z + (self.pz/self.p)*self.v*Dt
+
+    self.update(w,x,y,z,px,py,pz,t,verbose=verbose)
+
+  def lorentz(self,beta_CM,verbose=True):
+    """
+    Lorentz-transformate the particle phase-space with given speed of the center of mass.
+
+    Notes
+    -----
+    https://en.wikipedia.org/wiki/Lorentz_transformation#Transformation_of_other_quantities
+    """
+    if verbose: print("Lorentz-transform %s phase-space with center of mass frame moving at %s c."%(self._ps.specie,beta_CM))
+    # lowercase : scalar, caption : vector
+
+    B = -np.array(beta_CM)
+    b = np.dot(B,B)
+    N = B/b
+    c = 2.99792458e8 * 1e6/1e15 # speed of light in um/fs
+    v = b * c
+    g = 1./np.sqrt(1-b**2)
+
+    # Four position
+    a1 = c*self.t
+    Z1 = np.array([self.x,self.y,self.z]).T
+
+    a2,Z2 =[],[]
+    for i in range(len(a1)):
+        a2.append(g*(a1[i] - (v*np.dot(N,Z1[i]))/c))
+        Z2.append(Z1[i] + (g-1)*np.dot(Z1[i],N)*N - g*(a1[i]*v*N)/c)
+
+    t = np.array(a2)/c
+    x,y,z = np.array(Z2).T
+
+    # Four momentum
+    a1 = self.ekin/c
+    Z1 = np.array([self.px,self.py,self.pz]).T
+
+    a2,Z2 =[],[]
+    for i in range(len(a1)):
+        a2.append(g*(a1[i] - (v*np.dot(N,Z1[i]))/c))
+        Z2.append(Z1[i] + (g-1)*np.dot(Z1[i],N)*N - g*(a1[i]*v*N)/c)
+
+    px,py,pz = np.array(Z2).T
+
+    w = self.w
+    self.update(w,x,y,z,px,py,pz,t)
 
   def discretize(self,with_time=True,verbose=True,**kargs):
     """
@@ -244,12 +449,12 @@ class _Data(object):
     hn=self._ps.hist.hn
 
     if verbose : print('Data discretization ...')
-    #bi,hi=hn(['x','y','z','px','py','pz'],bwidth=bwidth,brange=brange,wnorm=[1.0]*6,select=select)
+
     if with_time:
-      bi,hi=hn([self.x,self.y,self.z,self.px,self.py,self.pz,self.t],wnorm=[1.0]*7,**kargs)
+      bi,hi=hn([self.x,self.y,self.z,self.px,self.py,self.pz,self.t],normed=False,**kargs)
       bx,by,bz,bpx,bpy,bpz,bt=bi
     else:
-      bi,hi=hn([self.x,self.y,self.z,self.px,self.py,self.pz],wnorm=[1.0]*6,**kargs)
+      bi,hi=hn([self.x,self.y,self.z,self.px,self.py,self.pz],normed=False,**kargs)
       bx,by,bz,bpx,bpy,bpz=bi
     if verbose : print('Done !')
     w       = []

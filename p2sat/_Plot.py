@@ -13,7 +13,7 @@ class _Plot(object):
     self.cmap="viridis"
     plt.ion()
 
-  def get_labels(self,axes,wnorm):
+  def get_labels(self,axes,normed):
     """
     Returns the labels of given axes.
 
@@ -21,7 +21,7 @@ class _Plot(object):
     ----------
     axes : list of str
       Names of the axes
-    wnorm : float or None
+    normed : float or None
       Weight normalization. If None, the last labels element is \"Number\", otherwise it is \"Number/unit1/unit2/...\"
 
     Returns
@@ -29,21 +29,43 @@ class _Plot(object):
     labels : list of str
       Labels of given axes and label of weight
     """
+    # Initialization
+    specie = self._ps.specie
     labels=[]
-    res=""
-    for ax in axes:
+    N_name=""
+    N_unit=""
+    if type(normed) is bool:
+      if normed:
+        normed=[True]*len(axes)
+      else:
+        normed=[False]*len(axes)
+    # Loop over all the axes
+    for i,ax in enumerate(axes):
+      # No label if ax is not a str
       if type(ax) is not str:
         labels.append("")
       else:
-        name = self._ps.data.labels[ax]
-        unit = self._ps.data.units[ax]
-        if unit is not None:
-          labels.append("{} ({})".format(name,unit))
-          if wnorm is None:res += "/{}".format(unit)
+        # Else get axis name and unit from dicts
+        ax_name = self._ps.data.labels[ax]
+        ax_unit = self._ps.data.units[ax]
+        # ekin is E_\gamma when specie is gamma
+        if ax=="ekin" and specie =="gamma":
+          ax_name = "$E_\gamma$"
+        # Format the label for axis and unit of N
+        if ax_unit is not None:
+          labels.append("{} ({})".format(ax_name,ax_unit))
+          if normed[i]: N_name += "d%s "%(ax_name[1:-1]) # LaTeX without '$'
+          if normed[i]: N_unit += "%s "%(ax_unit)
         else:
-          labels.append(name)
+          labels.append(ax_name)
 
-    labels.append("Number{}".format(res))
+    # Format number name
+    specie_name = self._ps.data.labels[specie]
+    if N_unit =="":
+      labels.append("$N_{%s}$"%(specie_name[1:-1]))
+    else:
+      labels.append("$\\frac{d N_{%s}}{%s}$ (%s)$^{-1}$"%(specie_name[1:-1],N_name[:-1],N_unit[:-1]))
+
     return labels
 
   def figure(self,number=None,clear=True):
@@ -112,7 +134,7 @@ class _Plot(object):
     else:
       a=plt.gca()
 
-    labels=self.get_labels([axis],kargs.get('wnorm',None))
+    labels=self.get_labels([axis],kargs.get('normed',True))
 
     b,h=self._h.h1(axis,**kargs)
 
@@ -147,6 +169,8 @@ class _Plot(object):
 
     a.grid(True)
 
+    plt.show()
+
     return a
 
   def f1(self,axis,func_name,log=False,polar=False,reverse=False,**kargs):
@@ -178,7 +202,7 @@ class _Plot(object):
     else:
       a=plt.gca()
 
-    labels=self.get_labels([axis],kargs.get('wnorm',None))
+    labels=self.get_labels([axis],kargs.get('normed',True))
 
     b,h=self._h.f1(axis,func_name,return_fit=True,**kargs)
 
@@ -204,6 +228,8 @@ class _Plot(object):
       if log:a.set_yscale('log')
 
     a.grid(True)
+
+    plt.show()
 
     return a
 
@@ -231,7 +257,7 @@ class _Plot(object):
       a=plt.gca(polar=True)
     else:
       a=plt.gca()
-    labels=self.get_labels([axis1,axis2],kargs.get('wnorm',None))
+    labels=self.get_labels([axis1,axis2],kargs.get('normed',True))
 
     b1,b2,h=self._h.h2(axis1,axis2,**kargs)
     g1,g2=np.meshgrid(b1,b2,indexing='ij')
@@ -252,6 +278,8 @@ class _Plot(object):
 
     a.grid(True)
     plt.colorbar(a2,label=labels[2])
+
+    plt.show()
 
     return a
 
@@ -281,7 +309,7 @@ class _Plot(object):
       a=plt.gca(polar=True)
     else:
       a=plt.gca()
-    labels=self.get_labels([axis1,axis2],kargs.get('wnorm',None))
+    labels=self.get_labels([axis1,axis2],kargs.get('normed',True))
 
     if log:
       from matplotlib.colors import LogNorm
@@ -309,6 +337,8 @@ class _Plot(object):
 
     plt.clabel(a2, inline=1, fontsize=10 ,fmt='%1.1e')
 
+    plt.show()
+
     return a
 
   def s2(self,axis1,axis2,log=False,polar=False,select=None):
@@ -331,7 +361,7 @@ class _Plot(object):
       a=plt.gca(polar=True)
     else:
       a=plt.gca()
-    labels=self.get_labels([axis1,axis2],wnorm=1)
+    labels=self.get_labels([axis1,axis2],normed=True)
 
     d = self._ps.data
 
@@ -361,6 +391,8 @@ class _Plot(object):
       a.set_ylabel(labels[1])
 
     plt.colorbar(a2,label=labels[2])
+
+    plt.show()
 
     return a
 
@@ -403,6 +435,8 @@ class _Plot(object):
 
     self.autoclear=tmp
 
+    plt.show()
+
   def s2h1(self,axis1,axis2,log=False):
     """
     """
@@ -441,3 +475,5 @@ class _Plot(object):
             tmp[i1][i2][i3]=e3
 
     a.scatter3D(g1,g2,g3,s=snorm*tmp,cmap='hot')
+
+    plt.show()
