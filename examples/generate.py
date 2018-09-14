@@ -19,9 +19,12 @@ export = False
 eps = p2sat.PhaseSpace(specie="electron")
 
 # Define energy and angle parameters
+# ekin_dict = {"law":"mono","E":1.0}
 ekin_dict = {"law":"exp","T":1.0}
-# theta_dict = {"law":"gauss","mu":0.,"sigma":5.}
-theta_dict = {"law":"iso","max":20.}
+theta_dict = {"law":"gauss","mu":0.,"sigma":5.}
+# theta_dict = {"law":"iso","max":20.}
+# theta_dict = {"law":"iso"}
+# phi_dict = {"law":"iso","mangle":45.}
 phi_dict = {"law":"iso"}
 
 # Generate particle phase space
