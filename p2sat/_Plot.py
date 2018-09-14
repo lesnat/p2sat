@@ -1,16 +1,28 @@
 #coding:utf8
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib import rcParams
 
 class _Plot(object):
   """
   Plots
+
+  Attributes
+  ----------
+  autoclear : bool
+    True to auto clear figure when calling a plot method. Default is false
+  cmap : str
+    color map to use in 2d plot. Default is viridris
+  rc : dict
+    shortcut to matplotlib.rcParams dictionnary (change plot appearence)
   """
   def __init__(self,PhaseSpace):
     self._ps=PhaseSpace
     self._h=self._ps.hist
     self.autoclear = False
     self.cmap="viridis"
+    self.rcParams = rcParams
+    plt.style.use('bmh')
     plt.ion()
 
   def get_labels(self,axes,normed):
@@ -64,7 +76,8 @@ class _Plot(object):
     if N_unit =="":
       labels.append("$N_{%s}$"%(specie_name[1:-1]))
     else:
-      labels.append("$\\frac{d N_{%s}}{%s}$ (%s)$^{-1}$"%(specie_name[1:-1],N_name[:-1],N_unit[:-1]))
+      # labels.append("$\\frac{d N_{%s}}{%s}$ (%s)$^{-1}$"%(specie_name[1:-1],N_name[:-1],N_unit[:-1]))
+      labels.append("$d N_{%s}/%s$ (%s)$^{-1}$"%(specie_name[1:-1],N_name[:-1],N_unit[:-1]))
 
     return labels
 
@@ -273,6 +286,7 @@ class _Plot(object):
     else:
       a2=a.pcolormesh(g1,g2,h,norm=norm,cmap=self.cmap)
       a.set_xlim(xmin=min(b1),xmax=max(b1))
+      a.set_ylim(ymin=min(b2),ymax=max(b2))
       a.set_xlabel(labels[0])
       a.set_ylabel(labels[1])
 

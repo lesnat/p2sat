@@ -8,23 +8,29 @@ class _Data(object):
   Attributes
   ----------
   w : numpy.ndarray
-    particle statistical weight
+    statistical weight
   x,y,z : numpy.ndarray
-    particle x,y,z position in um
+    x,y,z position in um
+  px,py,pz : numpy.ndarray
+    momentum in x,y,z direction in MeV/c
   t : numpy.ndarray
-    particle time in fs
+    time in fs
   r : numpy.ndarray
     absolute distance to the x axis in um
-  px,py,pz : numpy.ndarray
-    particle momentum in x,y,z direction in MeV/c
   p : numpy.ndarray
-    absolute particle momentum in MeV/c
+    absolute momentum in MeV/c
   ekin : numpy.ndarray
-    particle energy in MeV
+    energy in MeV
+  gamma : numpy.ndarray
+    gamma factor
+  beta : numpy.ndarray
+    normalized velocity
+  v : numpy.ndarray
+    velocity in um/fs
   theta : numpy.ndarray
-    angle between px and py in degree
+    polar angle (between px and the plane (py,pz)) in degree
   phi : numpy.ndarray
-    angle between ??? in degree
+    azimutal angle (between py and pz) in degree
 
   Notes
   -----
@@ -35,8 +41,8 @@ class _Data(object):
 
   - r is defined as :math:`\sqrt{y^2+z^2}`
   - p is defined as :math:`\sqrt{p_x^2+p_y^2+p_z^2}`
-  - theta is defined as :math:`\\arctan{p_y/p_x}`
-  - phi is defined (yet) as :math:`\\arctan{p_z/p_x}`
+  - theta is defined as :math:`\\arccos{p_x/p}`
+  - phi is defined as :math:`\\arctan{p_z/p_y}`
   - ekin is defined as
 
     - :math:`(\sqrt{(p/m_e c)^2+1}-1) \\times m_e c^2` for massive species
@@ -46,7 +52,15 @@ class _Data(object):
     - :math:`E_{kin}/m_e c^2 + 1` for massive species
     - :math:`+\infty` otherwise
 
-  Details of the calculations can be found at ... TODO
+  References
+  ----------
+  For ekin, gamma, beta, v :
+  https://en.wikipedia.org/wiki/Lorentz_factor
+
+  For theta, phi :
+  https://en.wikipedia.org/wiki/List_of_common_coordinate_transformations#To_spherical_coordinates
+  with switching (x->py, y->pz, z->px)
+  A figure can be found at https://en.wikipedia.org/wiki/Spherical_coordinate_system
   """
   def __init__(self,PhaseSpace):
     self._ps= PhaseSpace
@@ -109,8 +123,8 @@ class _Data(object):
 
     Parameters
     ----------
-    w,x,y,z,px,py,pz : list or numpy.ndarray
-      particle phase space. More information can be found in raw object documentation
+    w,x,y,z,px,py,pz,t : list or numpy.ndarray
+      particle phase space. More information can be found in data object documentation
     verbose : bool
       verbosity of the function. If True, a message is displayed when the attributes are loaded in memory
 
@@ -130,8 +144,8 @@ class _Data(object):
     # Calculate other parameters from it
     self.r      = np.sqrt(self.y**2+self.z**2)
     self.p      = np.sqrt(self.px**2+self.py**2+self.pz**2)
-    self.theta  = np.degrees(np.arctan(self.py/self.px))
-    self.phi    = np.degrees(np.arctan(self.pz/self.px)) # Geometrical effect ? change -> 0 pi
+    self.theta  = np.degrees(np.arccos(self.px/self.p))
+    self.phi    = np.degrees(np.arctan2(self.pz,self.py))
     mass = self._ps.mass
     c = 2.99792458e8 * 1e6/1e15 # speed of light in um/fs
     if mass == 0:
@@ -146,7 +160,7 @@ class _Data(object):
       self.v      = self.beta * c
     if verbose: print("Done !")
 
-  def generate(self,Nconf,Npart,ekin,theta,phi,pos=None,time=None,verbose=True):
+  def generate(self,Nconf,Npart,ekin,theta,phi,x=None,y=None,z=None,r=None,t=None,verbose=True):
       """
       Generate a particle phase space from given laws.
 
@@ -195,7 +209,6 @@ class _Data(object):
       :math:`p_y = p_x \\tan{\\theta}`
       :math:`p_z = p_x \\tan{\phi}`
 
-
       Examples
       --------
       Assuming a `PhaseSpace` object is instanciated as `eps`, you can generate
@@ -217,52 +230,102 @@ class _Data(object):
 
       # Generate theta angle
       if theta["law"]=="mono":
-        theta0 = np.array([theta["angle"]] * Nconf)
+        theta0 = np.array([theta["theta0"]] * Nconf)
       elif theta["law"]=="iso":
         try:
-          mangle = theta["max"]*np.pi/180.
+          mangle = np.radians(theta["max"])
         except KeyError:
           mangle = np.pi
         theta0 = np.random.uniform(0.,mangle,Nconf)
       elif theta["law"]=="gauss":
-        theta0 = np.random.normal(theta["mu"],theta["sigma"],Nconf)
+        mu = np.radians(theta["mu"])
+        sigma = np.radians(theta["sigma"])
+        theta0 = abs(np.random.normal(mu,sigma,Nconf))
       # Generate phi angle
       if phi["law"]=="mono":
-        phi0 = np.array([phi["angle"]] * Nconf)
+        phi0 = np.array([phi["theta0"]] * Nconf)
       elif phi["law"]=="iso":
         try:
-          mangle = phi["max"]*np.pi/180.
+          mangle = np.radians(phi["max"])
         except KeyError:
           mangle = np.pi
-        phi0 = np.random.uniform(0.,mangle,Nconf)
+        phi0 = np.random.uniform(-mangle,mangle,Nconf)
       elif phi["law"]=="gauss":
-        phi0 = np.random.normal(phi["mu"],phi["sigma"],Nconf)
+        mu = np.radians(phi["mu"])
+        sigma = np.radians(phi["sigma"])
+        phi0 = np.random.normal(mu,sigma,Nconf)
       # Generate energy
       if ekin["law"]=="mono":
-        ekin0 = np.array([ekin["E"]] * Nconf)
+        ekin0 = np.array([ekin["ekin0"]] * Nconf)
       elif ekin["law"]=="exp":
-        ekin0 = np.random.exponential(ekin["T"],Nconf)
+        ekin0 = np.random.exponential(ekin["ekin0"],Nconf)
 
       # Reconstruct momentum from energy and angle distributions
-      mass = self._ps.mass
-      etot = ekin0 + mass
-      px = np.sqrt((etot**2 - mass**2)/(1. + np.tan(theta0)**2 + np.tan(phi0)**2))
-      py = px * np.tan(theta0)
-      pz = px * np.tan(phi0)
+      mass  = self._ps.mass
+      p     = np.sqrt(ekin0**2 + 2*ekin0*mass)
+      px    = p * np.cos(theta0)
+      py    = np.sign(phi0)*np.sqrt((p**2 - px**2)/(1. + np.tan(phi0)**2))
+      pz    = py*np.tan(phi0)
 
       # Generate position
-      if pos is None:
-        x = np.array([0.] * Nconf)
-        y = np.array([0.] * Nconf)
-        z = np.array([0.] * Nconf)
+      if x is None:
+        x0 = np.array([0.] * Nconf)
+      elif x["law"]=="mono":
+        x0 = np.array([x["x0"]] * Nconf)
+      elif x["law"]=="exp":
+        x0 = np.random.exponential(x["x0"],Nconf)
+      elif x["law"]=="gauss":
+        mu = np.radians(x["mu"])
+        sigma = np.radians(x["sigma"])
+        x0 = np.random.normal(mu,sigma,Nconf)
+
+      if y is None:
+        y0 = np.array([0.] * Nconf)
+      elif y["law"]=="mono":
+        y0 = np.array([y["y0"]] * Nconf)
+      elif y["law"]=="exp":
+        y0 = np.random.exponential(y["y0"],Nconf)
+      elif y["law"]=="gauss":
+        mu = np.radians(y["mu"])
+        sigma = np.radians(y["sigma"])
+        y0 = np.random.normal(mu,sigma,Nconf)
+
+      if z is None:
+        z0 = np.array([0.] * Nconf)
+      elif z["law"]=="mono":
+        z0 = np.array([z["z0"]] * Nconf)
+      elif z["law"]=="exp":
+        z0 = np.random.exponential(z["z0"],Nconf)
+      elif z["law"]=="gauss":
+        mu = np.radians(z["mu"])
+        sigma = np.radians(z["sigma"])
+        z0 = np.random.normal(mu,sigma,Nconf)
+
+      if r is None:
+        r0 = np.array([0.] * Nconf)
+      elif r["law"]=="gauss":
+        mu = np.radians(r["mu"])
+        sigma = np.radians(r["sigma"])
+        r0 = np.random.normal(mu,sigma,Nconf)
+        angle = np.random.uniform(0.,2*np.pi,Nconf)
+        z0 = np.sign(r0) * r0**2/(1. + np.tan(angle)**2)
+        y0 = z0 * np.tan(angle)
 
       # Generate time
-      if time is None:
-        t = np.array([0.] * Nconf)
+      if t is None:
+        t0 = np.array([0.] * Nconf)
+      elif t["law"]=="mono":
+        t0 = np.array([t["t0"]] * Nconf)
+      elif t["law"]=="exp":
+        t0 = np.random.exponential(t["t0"],Nconf)
+      elif t["law"]=="gauss":
+        mu = np.radians(t["mu"])
+        sigma = np.radians(t["sigma"])
+        t0 = np.random.normal(mu,sigma,Nconf)
 
       if verbose: print("Done !")
       # Update current object
-      self.update(w,x,y,z,px,py,pz,t,verbose=verbose)
+      self.update(w,x0,y0,z0,px,py,pz,t0,verbose=verbose)
 
   def select(self,axis,faxis,frange,fpp=1e-7):
     """
