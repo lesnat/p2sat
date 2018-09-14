@@ -304,11 +304,11 @@ class _Data(object):
       if r is None:
         r0 = np.array([0.] * Nconf)
       elif r["law"]=="gauss":
-        mu = np.radians(r["mu"])
-        sigma = np.radians(r["sigma"])
+        mu = r["mu"]
+        sigma = r["sigma"]
         r0 = np.random.normal(mu,sigma,Nconf)
         angle = np.random.uniform(0.,2*np.pi,Nconf)
-        z0 = np.sign(r0) * r0**2/(1. + np.tan(angle)**2)
+        z0 = np.sign(r0) * np.sqrt(r0**2/(1. + np.tan(angle)**2))
         y0 = z0 * np.tan(angle)
 
       # Generate time
