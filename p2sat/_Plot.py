@@ -1,16 +1,28 @@
 #coding:utf8
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib import rcParams
 
 class _Plot(object):
   """
   Plots
+
+  Attributes
+  ----------
+  autoclear : bool
+    True to auto clear figure when calling a plot method. Default is false
+  cmap : str
+    color map to use in 2d plot. Default is viridris
+  rc : dict
+    shortcut to matplotlib.rcParams dictionnary (change plot appearence)
   """
   def __init__(self,PhaseSpace):
     self._ps=PhaseSpace
     self._h=self._ps.hist
     self.autoclear = False
     self.cmap="viridis"
+    self.rcParams = rcParams
+    plt.style.use('bmh')
     plt.ion()
 
   def get_labels(self,axes,normed):
