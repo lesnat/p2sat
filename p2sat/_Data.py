@@ -226,106 +226,106 @@ class _Data(object):
       Nconf = int(Nconf)
       # Generate weights
       weight = float(Npart)/Nconf
-      w = np.array([weight] * Nconf)
+      g_w = np.array([weight] * Nconf)
 
       # Generate theta angle
       if theta["law"]=="mono":
-        theta0 = np.array([theta["theta0"]] * Nconf)
+        g_theta = np.array([theta["theta0"]] * Nconf)
       elif theta["law"]=="iso":
         try:
           mangle = np.radians(theta["max"])
         except KeyError:
           mangle = np.pi
-        theta0 = np.random.uniform(0.,mangle,Nconf)
+        g_theta = np.random.uniform(0.,mangle,Nconf)
       elif theta["law"]=="gauss":
         mu = np.radians(theta["mu"])
         sigma = np.radians(theta["sigma"])
-        theta0 = abs(np.random.normal(mu,sigma,Nconf))
+        g_theta = abs(np.random.normal(mu,sigma,Nconf))
       # Generate phi angle
       if phi["law"]=="mono":
-        phi0 = np.array([phi["theta0"]] * Nconf)
+        g_phi = np.array([phi["phi0"]] * Nconf)
       elif phi["law"]=="iso":
         try:
           mangle = np.radians(phi["max"])
         except KeyError:
           mangle = np.pi
-        phi0 = np.random.uniform(-mangle,mangle,Nconf)
+        g_phi = np.random.uniform(-mangle,mangle,Nconf)
       elif phi["law"]=="gauss":
         mu = np.radians(phi["mu"])
         sigma = np.radians(phi["sigma"])
-        phi0 = np.random.normal(mu,sigma,Nconf)
+        g_phi = np.random.normal(mu,sigma,Nconf)
       # Generate energy
       if ekin["law"]=="mono":
-        ekin0 = np.array([ekin["ekin0"]] * Nconf)
+        g_ekin = np.array([ekin["ekin0"]] * Nconf)
       elif ekin["law"]=="exp":
-        ekin0 = np.random.exponential(ekin["ekin0"],Nconf)
+        g_ekin = np.random.exponential(ekin["ekin0"],Nconf)
 
       # Reconstruct momentum from energy and angle distributions
       mass  = self._ps.mass
-      p     = np.sqrt(ekin0**2 + 2*ekin0*mass)
-      px    = p * np.cos(theta0)
-      py    = np.sign(phi0)*np.sqrt((p**2 - px**2)/(1. + np.tan(phi0)**2))
-      pz    = py*np.tan(phi0)
+      g_p     = np.sqrt(g_ekin**2 + 2*g_ekin*mass)
+      g_px    = p * np.cos(g_theta)
+      g_py    = np.sign(g_phi)*np.sqrt((p**2 - px**2)/(1. + np.tan(g_phi)**2))
+      g_pz    = py*np.tan(g_phi)
 
       # Generate position
       if x is None:
-        x0 = np.array([0.] * Nconf)
+        g_x = np.array([0.] * Nconf)
       elif x["law"]=="mono":
-        x0 = np.array([x["x0"]] * Nconf)
+        g_x = np.array([x["x0"]] * Nconf)
       elif x["law"]=="exp":
-        x0 = np.random.exponential(x["x0"],Nconf)
+        g_x = np.random.exponential(x["x0"],Nconf)
       elif x["law"]=="gauss":
-        mu = np.radians(x["mu"])
-        sigma = np.radians(x["sigma"])
-        x0 = np.random.normal(mu,sigma,Nconf)
+        mu = x["mu"]
+        sigma = x["sigma"]
+        g_x = np.random.normal(mu,sigma,Nconf)
 
       if y is None:
-        y0 = np.array([0.] * Nconf)
+        g_y = np.array([0.] * Nconf)
       elif y["law"]=="mono":
-        y0 = np.array([y["y0"]] * Nconf)
+        g_y = np.array([y["y0"]] * Nconf)
       elif y["law"]=="exp":
-        y0 = np.random.exponential(y["y0"],Nconf)
+        g_y = np.random.exponential(y["y0"],Nconf)
       elif y["law"]=="gauss":
-        mu = np.radians(y["mu"])
-        sigma = np.radians(y["sigma"])
-        y0 = np.random.normal(mu,sigma,Nconf)
+        mu = y["mu"]
+        sigma = y["sigma"]
+        g_y = np.random.normal(mu,sigma,Nconf)
 
       if z is None:
-        z0 = np.array([0.] * Nconf)
+        g_z = np.array([0.] * Nconf)
       elif z["law"]=="mono":
-        z0 = np.array([z["z0"]] * Nconf)
+        g_z = np.array([z["z0"]] * Nconf)
       elif z["law"]=="exp":
-        z0 = np.random.exponential(z["z0"],Nconf)
+        g_z = np.random.exponential(z["z0"],Nconf)
       elif z["law"]=="gauss":
-        mu = np.radians(z["mu"])
-        sigma = np.radians(z["sigma"])
-        z0 = np.random.normal(mu,sigma,Nconf)
+        mu = z["mu"]
+        sigma = z["sigma"]
+        g_z = np.random.normal(mu,sigma,Nconf)
 
       if r is None:
-        r0 = np.array([0.] * Nconf)
+        g_r = np.array([0.] * Nconf)
       elif r["law"]=="gauss":
         mu = r["mu"]
         sigma = r["sigma"]
-        r0 = np.random.normal(mu,sigma,Nconf)
+        g_r = np.random.normal(mu,sigma,Nconf)
         angle = np.random.uniform(0.,2*np.pi,Nconf)
-        z0 = np.sign(r0) * np.sqrt(r0**2/(1. + np.tan(angle)**2))
-        y0 = z0 * np.tan(angle)
+        g_z = g_r * np.cos(angle)
+        g_y = g_r * np.sin(angle)
 
       # Generate time
       if t is None:
-        t0 = np.array([0.] * Nconf)
+        g_t = np.array([0.] * Nconf)
       elif t["law"]=="mono":
-        t0 = np.array([t["t0"]] * Nconf)
+        g_t = np.array([t["t0"]] * Nconf)
       elif t["law"]=="exp":
-        t0 = np.random.exponential(t["t0"],Nconf)
+        g_t = np.random.exponential(t["t0"],Nconf)
       elif t["law"]=="gauss":
-        mu = np.radians(t["mu"])
-        sigma = np.radians(t["sigma"])
-        t0 = np.random.normal(mu,sigma,Nconf)
+        mu = t["mu"]
+        sigma = t["sigma"]
+        g_t = np.random.normal(mu,sigma,Nconf)
 
       if verbose: print("Done !")
       # Update current object
-      self.update(w,x0,y0,z0,px,py,pz,t0,verbose=verbose)
+      self.update(g_w,g_x,g_y,g_z,g_px,g_py,g_pz,g_t,verbose=verbose)
 
   def select(self,axis,faxis,frange,fpp=1e-7):
     """
