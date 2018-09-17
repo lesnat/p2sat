@@ -256,26 +256,29 @@ class _Hist(object):
     if verbose:print("Processing 1D \"{}\" fit of \"{}\" ...".format(func_name,str(axis)))
     x,w = self._ps.hist.h1(axis,**kargs)
 
-    Ntot = np.trapz(w,x[:-1])
     # Define fit function and default values for fit parameters
     if func_name=="exp":
       f = lambda x,A,T: A*np.exp(-x/T)/T
       p0 = [Ntot,1]
+      param = ["N","T"]
     elif func_name=="gauss":
       f = lambda x,A,sigma,mu: A/(np.sqrt(2*np.pi) * sigma) * np.exp(-(x-mu)**2/(2*sigma**2))
       p0 = [Ntot,x.std(),0]
+      param = ["N","sigma","mu"]
     else:
       raise NameError("Unknown func_name.")
 
     # Fit the curve
     from scipy.optimize import curve_fit
     popt,pcov = curve_fit(f,x[:-1],w,p0=p0)
+    perr = np.sqrt(np.diag(pcov)) # Estimated error
+    perr_pc = (1. - (popt - perr)/popt) * 100
 
-    # Print error on number of particles
+    # Print estimated errors
     if verbose:
-      print('Parameters : {}'.format(popt))
-      diff = (popt[0]-Ntot)/Ntot * 100
-      print('Error on number of particles : {:.2F} %'.format(diff))
+      print('Fit parameters :')
+      for i,p in enumerate(param):
+        print(u"    {} = {: .4E} ± {:.4E} ({:.2F} %)".format(p.ljust(7),popt[i],perr[i], perr_pc[i]))
 
     # Choice of the return values
     if return_fit:
