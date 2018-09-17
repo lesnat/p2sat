@@ -23,7 +23,7 @@ ekin_dict = {"law":"exp","ekin0":1.0}
 theta_dict = {"law":"gauss","mu":0.,"sigma":5.}
 phi_dict = {"law":"iso"}
 x_dict = {"law":"mono","x0":1.5}
-r_dict = {"law":"gauss","mu":0.,"sigma":100.}
+r_dict = {"law":"gauss","mu":0.,"sigma":50.}
 t_dict = {"law":"exp","t0":150.}
 
 # Generate particle phase space
