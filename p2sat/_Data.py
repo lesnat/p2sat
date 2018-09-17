@@ -73,28 +73,23 @@ class _Data(object):
     self.pz = None
     self.t  = None
     self.labels = {
-              'x'     : '$x$',
-              'y'     : '$y$',
-              'z'     : '$z$',
-              'px'    : '$p_x$',
-              'py'    : '$p_y$',
-              'pz'    : '$p_z$',
-              't'     : '$t$',
+              'x'     : 'x',
+              'y'     : 'y',
+              'z'     : 'z',
+              'px'    : 'p_x',
+              'py'    : 'p_y',
+              'pz'    : 'p_z',
+              't'     : 't',
 
-              'r'     : '$r$',
-              'p'     : '$p$',
-              'ekin'  : '$E_{kin}$',
-              'gamma' : '$\gamma$',
-              'beta'  : '$\\beta$',
-              'v'     : '$v$',
+              'r'     : 'r',
+              'p'     : 'p',
+              'ekin'  : 'E_{kin}',
+              'gamma' : '\gamma',
+              'beta'  : '\\beta',
+              'v'     : 'v',
 
-              'theta' : '$\\theta$',
-              'phi'   : '$\\phi$',
-
-              'e-'    : '$e^-$',
-              'e+'    : '$e^+$',
-              'mu-'   : '$\mu^-$',
-              'mu+'   : '$\mu^+$'
+              'theta' : '\\theta',
+              'phi'   : '\\phi'
              }
 
     self.units = {
@@ -263,9 +258,9 @@ class _Data(object):
       # Reconstruct momentum from energy and angle distributions
       mass  = self._ps.specie["mass"]
       g_p     = np.sqrt(g_ekin**2 + 2*g_ekin*mass)
-      g_px    = p * np.cos(g_theta)
-      g_py    = np.sign(g_phi)*np.sqrt((p**2 - px**2)/(1. + np.tan(g_phi)**2))
-      g_pz    = py*np.tan(g_phi)
+      g_px    = g_p * np.cos(g_theta)
+      g_py    = np.sign(g_phi)*np.sqrt((g_p**2 - g_px**2)/(1. + np.tan(g_phi)**2))
+      g_pz    = g_py*np.tan(g_phi)
 
       # Generate position
       if x is None:
