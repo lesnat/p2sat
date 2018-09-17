@@ -158,6 +158,64 @@ class _Extract(object):
 
     self._ps.data.update(w,x,y,z,px,py,pz,t,verbose)
 
+  def gp3m2_csv(self,base_name,verbose=True):
+    """
+    Extract simulation results from a gp3m2 NTuple csv output file
+
+    Parameters
+    ----------
+    base_name : str
+      base file name
+    verbose : bool, optional
+      verbosity
+
+    Examples
+    --------
+    For the gp3m2 output file name `Al_target_nt_electron_t0.csv`, the base_name
+    is `Al_target`.
+    Assuming a `p2sat.PhaseSpace` object is instanciated for specie `e-` as eps,
+    you can import simulation results for all the threads as follows
+
+    >>> eps.extract.gp3m2_csv("Al_target")
+    """
+    part = self._ps.specie["name"]
+    if part=="e-":
+      part_name = "electron"
+    elif part=="e+":
+      part_name = "positron"
+    elif part=="gamma":
+      part_name = "gamma"
+
+    fbase = base_name+"_nt_"+part_name+"_t"
+    fext = ".csv"
+
+    data = []
+    i = 0
+    while True:
+      fname = fbase + str(i) + fext
+      i    += 1
+      try:
+        with open(fname,'r') as f:
+          if verbose:print("Extracting %s ..."%fname)
+          for line in f.readlines():
+            if line[0]!='#':
+              for e in line.split(','):
+                data.append(float(e))
+      except IOError:
+        break
+
+    w   = data[0::8]
+    x   = data[1::8]
+    y   = data[2::8]
+    z   = data[3::8]
+    px  = data[4::8]
+    py  = data[5::8]
+    pz  = data[6::8]
+    t   = data[7::8]
+    if verbose:print("Done !")
+
+    self._ps.data.update(w,x,y,z,px,py,pz,t,verbose)
+
   def TrILEns_output(self,path,specie,verbose=True):
     """
     Extract simulation results from a TrILEns output.txt file

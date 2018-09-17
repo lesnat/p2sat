@@ -67,6 +67,21 @@ class _Export(object):
 
     if verbose: print('Data succesfully exported')
 
+  def gp3m2_input(self,file_name,title="",verbose=True):
+    """
+    Export particle phase space in a gp3m2 input file
+
+    Parameters
+    ----------
+    file_name : str
+      name of the file
+    title : str, optional
+      short description of the file content
+    verbose : bool, optional
+      verbosity
+    """
+    self.txt(file_name,header=True,title=title,sep=" ",verbose=verbose)
+
   def TrILEns_input(self,path,with_time=True,verbose=True):
     """
     Export particle phase space in a TrILEns input file.
