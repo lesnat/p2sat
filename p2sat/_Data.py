@@ -146,7 +146,7 @@ class _Data(object):
     self.p      = np.sqrt(self.px**2+self.py**2+self.pz**2)
     self.theta  = np.degrees(np.arccos(self.px/self.p))
     self.phi    = np.degrees(np.arctan2(self.pz,self.py))
-    mass = self._ps.mass
+    mass = self._ps.specie["mass"]
     c = 2.99792458e8 * 1e6/1e15 # speed of light in um/fs
     if mass == 0:
       self.ekin   = self.p
@@ -261,7 +261,7 @@ class _Data(object):
         g_ekin = np.random.exponential(ekin["ekin0"],Nconf)
 
       # Reconstruct momentum from energy and angle distributions
-      mass  = self._ps.mass
+      mass  = self._ps.specie["mass"]
       g_p     = np.sqrt(g_ekin**2 + 2*g_ekin*mass)
       g_px    = p * np.cos(g_theta)
       g_py    = np.sign(g_phi)*np.sqrt((p**2 - px**2)/(1. + np.tan(g_phi)**2))
