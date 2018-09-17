@@ -215,7 +215,7 @@ class _Data(object):
       # Print a starting message
       if verbose:
         print("Generate %s phase-space for \"%s\" ekin law, \"%s\" theta law, \"%s\" phi law ..."
-        %(self._ps.specie,ekin["law"],theta["law"],phi["law"]))
+        %(self._ps.specie["name"],ekin["law"],theta["law"],phi["law"]))
 
       # Ensure that Nconf is of type int (for values such as 1e6)
       Nconf = int(Nconf)
@@ -421,7 +421,7 @@ class _Data(object):
     pz = self.pz
 
     if time is not None:
-      if verbose: print("Propagate %s phase-space to time = %.4E fs."%(self._ps.specie,time))
+      if verbose: print("Propagate %s phase-space to time = %.4E fs."%(self._ps.specie["name"],time))
       t = np.array([time]*len(w))
       Dt = t - self.t
       x = self.x + (self.px/self.p)*self.v*Dt
@@ -429,7 +429,7 @@ class _Data(object):
       z = self.z + (self.pz/self.p)*self.v*Dt
 
     if x_pos is not None:
-      if verbose: print("Propagate %s phase-space to x = %.4E um."%(self._ps.specie,x_pos))
+      if verbose: print("Propagate %s phase-space to x = %.4E um."%(self._ps.specie["name"],x_pos))
       x = np.array([x_pos]*len(w))
       Dt = (x - self.x)/self.v
       t = self.t + Dt

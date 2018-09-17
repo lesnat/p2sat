@@ -90,7 +90,7 @@ class PhaseSpace(object):
   def __str__(self):
     txt  = "\n"
     txt += "p2sat PhaseSpace instance located at %s\n\n"%hex(id(self))
-    txt += "Specie                      : %s\n"%self.specie
+    txt += "Specie                      : %s\n"%self.specie["name"]
     txt += "Number of configurations    : %i\n"%len(self)
     txt += "Total number of particles   : %.4E\n\n"%sum(self.data.w)
     txt += "Statistics  : ( min      ,  max      ,  mean     ,  std      ) unit\n"

@@ -42,8 +42,8 @@ eps.plot.h2('theta','phi',log=True,
             bwidth1=.5,bwidth2=1.)
 
 eps.plot.figure(2)
-eps.plot.h1('r',bwidth=.1)
-eps.plot.f1('r',func_name="gauss",bwidth=.1)
+eps.plot.h1('r',bwidth=1)
+eps.plot.f1('r',func_name="gauss",bwidth=1)
 
 # Export phase space if needed
 if export:

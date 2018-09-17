@@ -42,7 +42,6 @@ class _Plot(object):
       Labels of given axes and label of weight
     """
     # Initialization
-    specie = self._ps.specie
     labels=[]
     N_name=""
     N_unit=""
@@ -61,7 +60,7 @@ class _Plot(object):
         ax_name = self._ps.data.labels[ax]
         ax_unit = self._ps.data.units[ax]
         # ekin is E_\gamma when specie is gamma
-        if ax=="ekin" and specie =="gamma":
+        if ax=="ekin" and self._ps.specie["name"] =="gamma":
           ax_name = "$E_\gamma$"
         # Format the label for axis and unit of N
         if ax_unit is not None:
@@ -74,7 +73,7 @@ class _Plot(object):
     # Format number name
     specie_name = self._ps.specie["label"]
     if N_unit =="":
-      labels.append("$N_{%s}$"%(specie_name[1:-1]))
+      labels.append("$N_{%s}$"%(specie_name))
     else:
       # labels.append("$\\frac{d N_{%s}}{%s}$ (%s)$^{-1}$"%(specie_name[1:-1],N_name[:-1],N_unit[:-1]))
       labels.append("$d N_{%s}/%s$ (%s)$^{-1}$"%(specie_name,N_name[:-1],N_unit[:-1]))

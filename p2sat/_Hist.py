@@ -256,6 +256,8 @@ class _Hist(object):
     if verbose:print("Processing 1D \"{}\" fit of \"{}\" ...".format(func_name,str(axis)))
     x,w = self._ps.hist.h1(axis,**kargs)
 
+    bwidth = np.array([x[i+1]-x[i] for i in range(len(w))])
+    Ntot = sum(w*bwidth)
     # Define fit function and default values for fit parameters
     if func_name=="exp":
       f = lambda x,A,T: A*np.exp(-x/T)/T
@@ -278,7 +280,12 @@ class _Hist(object):
     if verbose:
       print('Fit parameters :')
       for i,p in enumerate(param):
-        print(u"    {} = {: .4E} ± {:.4E} ({:.2F} %)".format(p.ljust(7),popt[i],perr[i], perr_pc[i]))
+        try:
+          if p=="N": raise TypeError
+          unit = self._ps.data.units[axis]
+        except TypeError:
+          unit = ""
+        print(u"    {} = {: .4E} ± {:.4E} {:s} ({:.2F} %)".format(p.ljust(7),popt[i],perr[i], unit.ljust(5), perr_pc[i]))
 
     # Choice of the return values
     if return_fit:
