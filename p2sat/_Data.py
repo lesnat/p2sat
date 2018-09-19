@@ -20,9 +20,9 @@ class _Data(object):
   p : numpy.ndarray
     absolute momentum in MeV/c
   ekin : numpy.ndarray
-    energy in MeV
+    kinetic energy (for massive species) or total energy (for massless species) in MeV
   gamma : numpy.ndarray
-    gamma factor
+    Lorentz factor
   beta : numpy.ndarray
     normalized velocity
   v : numpy.ndarray
@@ -37,20 +37,30 @@ class _Data(object):
   As all the calculations are done with the previously defined units,
   the input data might be firstly converted to those units.
 
-  Calculations :
+  Definitions :
 
-  - r is defined as :math:`\sqrt{y^2+z^2}`
-  - p is defined as :math:`\sqrt{p_x^2+p_y^2+p_z^2}`
-  - theta is defined as :math:`\\arccos{p_x/p}`
-  - phi is defined as :math:`\\arctan{p_z/p_y}`
-  - ekin is defined as
+  - :math:`r = \sqrt{y^2+z^2}`
+  - :math:`p = \sqrt{p_x^2+p_y^2+p_z^2}`
+  - :math:`\\theta = \\arccos{p_x/p}`
+  - :math:`\phi = \\arctan{p_z/p_y}`
 
-    - :math:`(\sqrt{(p/m_e c)^2+1}-1) \\times m_e c^2` for massive species
-    - :math:`p` otherwise (here ekin is the total particle energy)
-  - gamma is defined as
+  - For massive species (with mass :math:`m`)
 
-    - :math:`E_{kin}/m_e c^2 + 1` for massive species
-    - :math:`+\infty` otherwise
+    - :math:`E_{kin} = (\sqrt{(p/m c)^2+1}-1) \\times m c^2`
+    - :math:`\gamma = E_{kin}/m c^2 + 1`
+    - :math:`\\beta = \sqrt{1 - \\frac{1}{\gamma^2}}`
+    - :math:`v = \\beta \\times c`
+
+  - For massless species
+
+    - :math:`E_{kin} = p`
+    - :math:`\gamma = +\infty`
+    - :math:`\\beta = 1`
+    - :math:`v = c`
+
+
+  All the attributes can not be overwriden as they are defined as properties.
+  Please call the `update` method to update particle phase-space data.
 
   References
   ----------
@@ -59,7 +69,7 @@ class _Data(object):
 
   For theta, phi :
   https://en.wikipedia.org/wiki/List_of_common_coordinate_transformations#To_spherical_coordinates
-  with switching (x->py, y->pz, z->px)
+  with switching (x->py, y->pz, z->px).
   A figure can be found at https://en.wikipedia.org/wiki/Spherical_coordinate_system
   """
   def __init__(self,PhaseSpace):
@@ -107,93 +117,54 @@ class _Data(object):
 
   @property
   def w(self):
-    """
-    Statistical weight
-    """
     return self._w
 
   @property
   def x(self):
-    """
-    Position in propagation axis x in um
-    """
     return self._x
 
   @property
   def y(self):
-    """
-    Position in transverse axis y in um
-    """
     return self._y
 
   @property
   def z(self):
-    """
-    Position in transverse axis z in um
-    """
     return self._z
 
   @property
   def px(self):
-    """
-    Momentum in propagation axis x in MeV/c
-    """
     return self._px
 
   @property
   def py(self):
-    """
-    Momentum in transverse axis y in MeV/c
-    """
     return self._py
 
   @property
   def pz(self):
-    """
-    Momentum in transverse axis z in MeV/c
-    """
     return self._pz
 
   @property
   def t(self):
-    """
-    Time in fs
-    """
     return self._t
 
   @property
   def r(self):
-    """
-    Absolute distance to the x axis in um
-    """
     return np.sqrt(self.y**2+self.z**2)
 
   @property
   def p(self):
-    """
-    Absolute momentum in MeV/c
-    """
     return np.sqrt(self.px**2+self.py**2+self.pz**2)
 
   @property
   def theta(self):
-    """
-    Polar angle (between px and the plane (py,pz)) in degree
-    """
     return np.degrees(np.arccos(self.px/self.p))
 
   @property
   def phi(self):
-    """
-    Azimutal angle (between py and pz) in degree
-    """
     return np.degrees(np.arctan2(self.pz,self.py))
 
   @property
   def ekin(self):
-    """
-    Kinetic energy in MeV
-    """
     mass = self._ps.specie["mass"]
     if mass == 0:
       return self.p
@@ -202,9 +173,6 @@ class _Data(object):
 
   @property
   def gamma(self):
-    """
-    Relativistic gamma factor
-    """
     mass = self._ps.specie["mass"]
     if mass == 0:
       return np.array([np.inf]*len(self.w))
@@ -213,9 +181,6 @@ class _Data(object):
 
   @property
   def beta(self):
-    """
-    Normalized velocity
-    """
     mass = self._ps.specie["mass"]
     if mass == 0:
       return np.array([1.]*len(w))
@@ -224,9 +189,6 @@ class _Data(object):
 
   @property
   def v(self):
-    """
-    Velocity in um/fs
-    """
     c = 2.99792458e8 * 1e6/1e15 # speed of light in um/fs
     return self.beta * c
 
@@ -291,24 +253,30 @@ class _Data(object):
       Details of the calculations :
 
       Considering :math:`E_T = E_k + E_m` being the total energy, with
-      :math:`E_k` the kinetic energy and :math:`E_m` the rest mass energy, we have
-      :math:`E_T^2 = p^2 + E_m^2` and :math:`p^2=p_x^2 + p_y^2 + p_z^2` so
-      :math:`p_x^2+p_y^2+p_z^2=E_T^2 - E_m^2`.
+      :math:`E_k` the kinetic energy and :math:`E_m` the rest mass energy.
 
-      Assuming :math:`\\tan{\\theta}=\\frac{p_y}{p_x}` and
-      :math:`\\tan{\\phi}=\\frac{p_z}{p_x}` we get
+      We also have :math:`E_T^2 = p^2 + E_m^2` and :math:`p^2=p_x^2 + p_y^2 + p_z^2`
+      with :math:`p` in MeV/c.
 
-      :math:`p_x = \sqrt{\\frac{E_T^2 - E_m^2}{1 + \\tan{\\theta}^2 + \\tan{\phi}^2}}`
-      :math:`p_y = p_x \\tan{\\theta}`
-      :math:`p_z = p_x \\tan{\phi}`
+      Assuming :math:`\cos{\\theta}=\\frac{p_x}{p}` and
+      :math:`\\tan{\\phi}=\\frac{p_z}{p_y}` we finaly get
+
+      - :math:`p = E_k^2 - 2 E_k E_m`
+      - :math:`p_x = p \cos{\\theta}`
+      - :math:`p_y = \\frac{\phi}{\mid \phi \mid} \\frac{p^2 - p_x^2}{1 + \\tan{\phi}^2}`
+      - :math:`p_z = p_y \\tan{\phi}`
 
       Examples
       --------
-      Assuming a `PhaseSpace` object is instanciated as `eps`, you can generate
+      With a `PhaseSpace` object instanciated as `eps`, you can generate
       a mono-energetic source in isotropic direction for 1e12 particles represented
       by 1e6 configurations as follows
 
-      >>> eps.data.generate(Nconf=1e6,Npart=1e12,ekin={"law":"mono","E":20.0},theta={"law":"iso"},phi={"law":"iso"})
+      >>> eps.data.generate(Nconf=1e6,Npart=1e12,
+      ...                  ekin={"law":"mono","ekin0":20.0},
+      ...                  theta={"law":"iso"},
+      ...                  phi={"law":"iso"})
+      ...
       """
       # Print a starting message
       if verbose:

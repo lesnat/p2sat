@@ -11,7 +11,7 @@ from ._Stat import _Stat
 
 class PhaseSpace(object):
   """
-  Base class for particle phase-space analysis.
+  Main class for particle phase-space analysis.
 
   Parameters
   ----------
@@ -20,6 +20,8 @@ class PhaseSpace(object):
 
   Attributes
   ----------
+  specie : dict
+    contains informations about particle specie, such as name, mass and label in TeX format
   data : sub-object
     contains raw data and methods to manipulate it, such as discretization or transformation.
   hist : sub-object
@@ -32,6 +34,27 @@ class PhaseSpace(object):
     export phase space into a file
   stat : sub-object
     make statistics on particle phase space
+
+  Examples
+  --------
+  Assuming you already imported p2sat, you can create a PhaseSpace object
+  for, let say, electrons, as follows
+
+  >>> eps = p2sat.PhaseSpace(specie="e-")
+
+  You can then import data from a file, using the `txt` method of sub-object `extract`
+
+  >>> eps.extract.txt("example.csv")
+
+  and look at the imported data
+
+  >>> print(eps.data.w)
+
+  or print general informations about your data set
+
+  >>> print(eps)
+
+  You can also make histograms, plots or statistics ...
 
   Notes
   -----
@@ -88,6 +111,9 @@ class PhaseSpace(object):
     return ps
 
   def __str__(self):
+    """
+    Returns informations about current `PhaseSpace` object.
+    """
     txt  = "\n"
     txt += "p2sat PhaseSpace instance located at %s\n\n"%hex(id(self))
     txt += "Specie                      : %s\n"%self.specie["name"]
