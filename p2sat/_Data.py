@@ -64,14 +64,7 @@ class _Data(object):
   """
   def __init__(self,PhaseSpace):
     self._ps= PhaseSpace
-    self.w  = None
-    self.x  = None
-    self.y  = None
-    self.z  = None
-    self.px = None
-    self.py = None
-    self.pz = None
-    self.t  = None
+    self.update(None,None,None,None,None,None,None,None,verbose=False)
     self.labels = {
               'x'     : 'x',
               'y'     : 'y',
@@ -112,6 +105,131 @@ class _Data(object):
               'phi'   : 'deg'
               }
 
+  @property
+  def w(self):
+    """
+    Statistical weight
+    """
+    return self._w
+
+  @property
+  def x(self):
+    """
+    Position in propagation axis x in um
+    """
+    return self._x
+
+  @property
+  def y(self):
+    """
+    Position in transverse axis y in um
+    """
+    return self._y
+
+  @property
+  def z(self):
+    """
+    Position in transverse axis z in um
+    """
+    return self._z
+
+  @property
+  def px(self):
+    """
+    Momentum in propagation axis x in MeV/c
+    """
+    return self._px
+
+  @property
+  def py(self):
+    """
+    Momentum in transverse axis y in MeV/c
+    """
+    return self._py
+
+  @property
+  def pz(self):
+    """
+    Momentum in transverse axis z in MeV/c
+    """
+    return self._pz
+
+  @property
+  def t(self):
+    """
+    Time in fs
+    """
+    return self._t
+
+  @property
+  def r(self):
+    """
+    Absolute distance to the x axis in um
+    """
+    return np.sqrt(self.y**2+self.z**2)
+
+  @property
+  def p(self):
+    """
+    Absolute momentum in MeV/c
+    """
+    return np.sqrt(self.px**2+self.py**2+self.pz**2)
+
+  @property
+  def theta(self):
+    """
+    Polar angle (between px and the plane (py,pz)) in degree
+    """
+    return np.degrees(np.arccos(self.px/self.p))
+
+  @property
+  def phi(self):
+    """
+    Azimutal angle (between py and pz) in degree
+    """
+    return np.degrees(np.arctan2(self.pz,self.py))
+
+  @property
+  def ekin(self):
+    """
+    Kinetic energy in MeV
+    """
+    mass = self._ps.specie["mass"]
+    if mass == 0:
+      return self.p
+    else:
+      return (np.sqrt((self.p/mass)**2 + 1) - 1) * mass
+
+  @property
+  def gamma(self):
+    """
+    Relativistic gamma factor
+    """
+    mass = self._ps.specie["mass"]
+    if mass == 0:
+      return np.array([np.inf]*len(self.w))
+    else:
+      return self.ekin/mass + 1.
+
+  @property
+  def beta(self):
+    """
+    Normalized velocity
+    """
+    mass = self._ps.specie["mass"]
+    if mass == 0:
+      return np.array([1.]*len(w))
+    else:
+      return np.sqrt(1.-1./self.gamma**2)
+
+  @property
+  def v(self):
+    """
+    Velocity in um/fs
+    """
+    c = 2.99792458e8 * 1e6/1e15 # speed of light in um/fs
+    return self.beta * c
+
   def update(self,w,x,y,z,px,py,pz,t,verbose=True):
     """
     Update class attributes with new values.
@@ -122,37 +240,17 @@ class _Data(object):
       particle phase space. More information can be found in data object documentation
     verbose : bool
       verbosity of the function. If True, a message is displayed when the attributes are loaded in memory
-
-    TODO: get np array to be immutable with x.writeable=False ?
     """
     if verbose: print("Updating raw values ...")
     # Save values into np.array objects
-    self.w  = np.array(w)
-    self.x  = np.array(x)
-    self.y  = np.array(y)
-    self.z  = np.array(z)
-    self.px = np.array(px)
-    self.py = np.array(py)
-    self.pz = np.array(pz)
-    self.t  = np.array(t)
-
-    # Calculate other parameters from it
-    self.r      = np.sqrt(self.y**2+self.z**2)
-    self.p      = np.sqrt(self.px**2+self.py**2+self.pz**2)
-    self.theta  = np.degrees(np.arccos(self.px/self.p))
-    self.phi    = np.degrees(np.arctan2(self.pz,self.py))
-    mass = self._ps.specie["mass"]
-    c = 2.99792458e8 * 1e6/1e15 # speed of light in um/fs
-    if mass == 0:
-      self.ekin   = self.p
-      self.gamma  = np.array([np.inf]*len(w))
-      self.beta   = np.array([1.]*len(w))
-      self.v      = np.array([c]*len(w))
-    else:
-      self.ekin   = (np.sqrt((self.p/mass)**2 + 1) - 1) * mass
-      self.gamma  = self.ekin/mass + 1.
-      self.beta   = np.sqrt(1.-1/self.gamma**2)
-      self.v      = self.beta * c
+    self._w  = np.array(w)
+    self._x  = np.array(x)
+    self._y  = np.array(y)
+    self._z  = np.array(z)
+    self._px = np.array(px)
+    self._py = np.array(py)
+    self._pz = np.array(pz)
+    self._t  = np.array(t)
     if verbose: print("Done !")
 
   def generate(self,Nconf,Npart,ekin,theta,phi,x=None,y=None,z=None,r=None,t=None,verbose=True):
