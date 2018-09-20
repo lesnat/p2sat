@@ -95,7 +95,12 @@ class PhaseSpace(object):
     """
     Return a new PhaseSpace object, combination of the 2 previous.
     """
-    ps = PhaseSpace()
+    spec1 = self.specie["name"]
+    spec2 = other.specie["name"]
+    if spec1 != spec2:
+      raise NameError("Can't combine phase space for different species")
+
+    ps = PhaseSpace(specie=spec1)
 
     w   = np.array([list(self.data.w) + list(other.data.w)])[0]
     x   = np.array([list(self.data.x) + list(other.data.x)])[0]
@@ -106,7 +111,7 @@ class PhaseSpace(object):
     pz  = np.array([list(self.data.pz) + list(other.data.pz)])[0]
     t   = np.array([list(self.data.t) + list(other.data.t)])[0]
 
-    ps.data.update(w,x,y,z,px,py,pz,t)
+    ps.data.update(w,x,y,z,px,py,pz,t,verbose=False)
 
     return ps
 
@@ -160,7 +165,7 @@ class PhaseSpace(object):
     verbose : bool
       verbosity of the function. If True, a message is displayed when the attributes are loaded in memory
     """
-    new = PhaseSpace()
+    new = PhaseSpace(specie=self.specie["name"])
     d=self.data
     new.data.update(d.w,d.x,d.y,d.z,d.px,d.py,d.pz,d.t,verbose=verbose)
 

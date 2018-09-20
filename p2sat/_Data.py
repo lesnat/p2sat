@@ -192,6 +192,12 @@ class _Data(object):
     c = 2.99792458e8 * 1e6/1e15 # speed of light in um/fs
     return self.beta * c
 
+  def get(self):
+    """
+    Return current phase space raw data.
+    """
+    return (self.w,self.x,self.y,self.z,self.px,self.py,self.pz,self.t)
+
   def update(self,w,x,y,z,px,py,pz,t,verbose=True):
     """
     Update class attributes with new values.
@@ -453,13 +459,82 @@ class _Data(object):
 
     return axis
 
-  def transformate(self,translation=(0.0,0.0,0.0),rotation=(0.0,0.0)):
+  def transformate(self,T=None,R=None,rotate_first=False,verbose=True):
     """
     Transformate the particle phase space with given translation and rotation.
 
-    TODO
+    Parameters
+    ----------
+    T : tuple of 3 float, optional
+      translate (x,y,z) position of T um. Default is (0,0,0)
+    R : tuple of 3 float, optional
+      rotate (x,y,z) and (px,py,pz) of R degree. Default is (0,0,0)
+    rotate_first : bool, optional
+      process rotation before translation. Default is false
+    verbose : bool, optional
+      verbosity
     """
-    pass
+    # Set defaults
+    if T is None: T = (0.,0.,0.)
+    if R is None: R = (0.,0.,0.)
+    if verbose:
+      print("Transformate %s phase space ..."%self._ps.specie["name"])
+      print("    translation : (%.2E,%.2E,%.2E)"%(T[0],T[1],T[2]))
+      print("    rotation    : (%.2E,%.2E,%.2E)"%(R[0],R[1],R[2]))
+
+    # Define translation matrix
+    Tx = T[0]
+    Ty = T[1]
+    Tz = T[2]
+
+    # Define rotation matrix
+    a = np.radians(R[0])
+    Rx = np.array([
+        [1              ,0              ,0              ],
+        [0              ,np.cos(a)      ,-np.sin(a)     ],
+        [0              ,np.sin(a)      ,np.cos(a)      ]])
+    a = np.radians(R[1])
+    Ry = np.array([
+        [np.cos(a)      ,0              ,np.sin(a)      ],
+        [0              ,1              ,0              ],
+        [-np.sin(a)     ,0              ,np.cos(a)      ]])
+    a = np.radians(R[2])
+    Rz = np.array([
+        [np.cos(a)      ,-np.sin(a)     ,0              ],
+        [np.sin(a)      ,np.cos(a)      ,0              ],
+        [0              ,0              ,1              ]])
+
+    # Get current phase space data
+    w,x,y,z,px,py,pz,t = self.get()
+
+    # Translate position
+    if not rotate_first:
+      x += Tx
+      y += Ty
+      z += Tz
+
+    X,Y,Z,Px,Py,Pz=[],[],[],[],[],[]
+    R = np.dot(np.dot(Rx,Ry),Rz)
+    # Loop over all configurations
+    for i,_ in enumerate(w):
+      # Rotate position
+      rX = np.dot([x[i],y[i],z[i]],R)
+      X.append(rX[0])
+      Y.append(rX[1])
+      Z.append(rX[2])
+      # Rotate momentum
+      rP = np.dot([px[i],py[i],pz[i]],R)
+      Px.append(rP[0])
+      Py.append(rP[1])
+      Pz.append(rP[2])
+
+    if rotate_first:
+      X = np.array(X) + Tx
+      Y = np.array(Y) + Ty
+      Z = np.array(Z) + Tz
+
+    # Update raw data
+    self.update(w,X,Y,Z,Px,Py,Pz,t,verbose=verbose)
 
   def propagate(self,x_pos=None,time=None,verbose=True):
     """
