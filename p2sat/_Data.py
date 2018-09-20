@@ -290,8 +290,15 @@ class _Data(object):
       """
       # Print a starting message
       if verbose:
-        print("Generate %s phase-space for \"%s\" ekin law, \"%s\" theta law, \"%s\" phi law ..."
-        %(self._ps.specie["name"],ekin["law"],theta["law"],phi["law"]))
+        print("Generate %s phase-space ..."%(self._ps.specie["name"]))
+        print("    ekin  : %s"%ekin)
+        print("    theta : %s"%theta)
+        print("    phi   : %s"%phi)
+        if x is not None: print("    x     : %s"%x)
+        if y is not None: print("    y     : %s"%y)
+        if z is not None: print("    z     : %s"%z)
+        if r is not None: print("    r     : %s"%r)
+        if t is not None: print("    t     : %s"%t)
 
       # Ensure that Nconf is of type int (for values such as 1e6)
       Nconf = int(Nconf)
@@ -627,7 +634,13 @@ class _Data(object):
     w = self.w
     self.update(w,x,y,z,px,py,pz,t)
 
-  def discretize(self,with_time=True,verbose=True,**kargs):
+  def _discretize(self,with_time=True,split=4,update=True,verbose=True,**kargs):
+    """
+    See discretize
+    """
+    pass
+
+  def discretize(self,with_time=True,split=4,update=True,verbose=True,**kargs):
     """
     Discretize the particles phase space in a 6 or 7 D histogram.
 
@@ -651,37 +664,121 @@ class _Data(object):
     """
     hn=self._ps.hist.hn
 
-    if verbose : print('Data discretization ...')
+    if verbose : print('Discretize %s phase space ...'%self._ps.specie["name"])
 
-    if with_time:
-      bi,hi=hn([self.x,self.y,self.z,self.px,self.py,self.pz,self.t],normed=False,**kargs)
-      bx,by,bz,bpx,bpy,bpz,bt=bi
-    else:
-      bi,hi=hn([self.x,self.y,self.z,self.px,self.py,self.pz],normed=False,**kargs)
-      bx,by,bz,bpx,bpy,bpz=bi
-    if verbose : print('Done !')
+    # Initialize
     w       = []
     x,y,z   = [],[],[]
     px,py,pz= [],[],[]
     t       = []
 
-    if verbose : print('Getting new configurations ...')
-    hb=hi.nonzero()
+    # Try to discretize with given parameters
+    try:
+        # Get histo and bins
+        if with_time:
+          bi,hi=hn([self.x,self.y,self.z,self.px,self.py,self.pz,self.t],normed=False,**kargs)
+          bx,by,bz,bpx,bpy,bpz,bt=bi
+        else:
+          bi,hi=hn([self.x,self.y,self.z,self.px,self.py,self.pz],normed=False,**kargs)
+          bx,by,bz,bpx,bpy,bpz=bi
 
-    print(bx,by,bz,bpx,bpy,bpz)
+        # Get configurations with non-zero weight
+        hb=hi.nonzero()
 
-    w   = hi[hb]
-    x   = bx[hb[0]]
-    y   = by[hb[1]]
-    z   = bz[hb[2]]
-    px  = bpx[hb[3]]
-    py  = bpy[hb[4]]
-    pz  = bpz[hb[5]]
-    if with_time:
-      t   = bt[hb[6]]
-    else:
-      t   = [0.0]*len(w)
+        # Get data with non-zero weight
+        w   = hi[hb]
+        x   = bx[hb[0]]
+        y   = by[hb[1]]
+        z   = bz[hb[2]]
+        px  = bpx[hb[3]]
+        py  = bpy[hb[4]]
+        pz  = bpz[hb[5]]
+        if with_time:
+          t   = bt[hb[6]]
+        else:
+          t   = [0.0]*len(w)
+    # If bin width is too small, split brange
+    except MemoryError:
+        print("Too high memory load ! Split bin range %i times per axis ..."%split)
+        # Get current brange or reconstruct the default one
+        brange = kargs.get('brange',None)
+        if brange is None:
+            if with_time:
+                brange = np.array([
+                    [min(self.x),max(self.x)],
+                    [min(self.y),max(self.y)],
+                    [min(self.z),max(self.z)],
+                    [min(self.px),max(self.px)],
+                    [min(self.py),max(self.py)],
+                    [min(self.pz),max(self.pz)],
+                    [min(self.t),max(self.t)]
+                ])
+            else:
+                brange = np.array([
+                    [min(self.x),max(self.x)],
+                    [min(self.y),max(self.y)],
+                    [min(self.z),max(self.z)],
+                    [min(self.px),max(self.px)],
+                    [min(self.py),max(self.py)],
+                    [min(self.pz),max(self.pz)]
+                ])
+        else:
+            del kargs['brange']
+        brange = np.array(brange)
+        # Calculate width
+        width = [(b[1]-b[0])/float(split) for b in brange]
+        # Create brange configurations
+        brconf=[]
+        for ix in range(split):
+            # x
+            for iy in range(split):
+                # y
+                for iz in range(split):
+                    # z
+                    for ipx in range(split):
+                        # px
+                        for ipy in range(split):
+                            # py
+                            for ipz in range(split):
+                                # pz
+                                if with_time:
+                                    for it in range(split):
+                                        # t
+                                        brconf.append([
+                                        [brange[0][0] + ix*width[0],brange[0][0] + (ix+1)*width[0]],
+                                        [brange[1][0] + iy*width[1],brange[1][0] + (iy+1)*width[1]],
+                                        [brange[2][0] + iz*width[2],brange[2][0] + (iz+1)*width[2]],
+                                        [brange[3][0] + ipx*width[3],brange[3][0] + (ipx+1)*width[3]],
+                                        [brange[4][0] + ipy*width[4],brange[4][0] + (ipy+1)*width[4]],
+                                        [brange[5][0] + ipz*width[5],brange[5][0] + (ipz+1)*width[5]],
+                                        [brange[6][0] + it*width[6],brange[6][0] + (it+1)*width[6]]
+                                        ])
+                                else:
+                                    brconf.append([
+                                    [brange[0][0] + ix*width[0],brange[0][0] + (ix+1)*width[0]],
+                                    [brange[1][0] + iy*width[1],brange[1][0] + (iy+1)*width[1]],
+                                    [brange[2][0] + iz*width[2],brange[2][0] + (iz+1)*width[2]],
+                                    [brange[3][0] + ipx*width[3],brange[3][0] + (ipx+1)*width[3]],
+                                    [brange[4][0] + ipy*width[4],brange[4][0] + (ipy+1)*width[4]],
+                                    [brange[5][0] + ipz*width[5],brange[5][0] + (ipz+1)*width[5]]
+                                    ])
+
+        print("Discretization under %i brange configurations ..."%len(brconf))
+        i = 0
+        for brc in brconf:
+            # Print advance approximately 50 times in all the process
+            if i%(len(brconf)/50)==0: print("%s/%i done ..."%(i,len(brconf)))
+            i+=1
+            W,X,Y,Z,Px,Py,Pz,T=self.discretize(with_time=with_time,split=split,update=False,verbose=False,brange=brc,**kargs)
+            # Append current phase space configurations to last ones
+            w += list(W)
+            x += list(X)        ; y += list(Y)      ; z += list(Z)
+            px += list(Px)      ; py += list(Py)    ; pz += list(Pz)
+            t += list(T)
 
     if verbose : print('Done !')
 
-    self.update(w,x,y,z,px,py,pz,t,verbose=verbose)
+    if update:
+        self.update(w,x,y,z,px,py,pz,t,verbose=verbose)
+    else:
+        return w,x,y,z,px,py,pz,t
