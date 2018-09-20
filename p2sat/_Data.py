@@ -20,9 +20,9 @@ class _Data(object):
   p : numpy.ndarray
     absolute momentum in MeV/c
   ekin : numpy.ndarray
-    energy in MeV
+    kinetic energy (for massive species) or total energy (for massless species) in MeV
   gamma : numpy.ndarray
-    gamma factor
+    Lorentz factor
   beta : numpy.ndarray
     normalized velocity
   v : numpy.ndarray
@@ -37,20 +37,30 @@ class _Data(object):
   As all the calculations are done with the previously defined units,
   the input data might be firstly converted to those units.
 
-  Calculations :
+  Definitions :
 
-  - r is defined as :math:`\sqrt{y^2+z^2}`
-  - p is defined as :math:`\sqrt{p_x^2+p_y^2+p_z^2}`
-  - theta is defined as :math:`\\arccos{p_x/p}`
-  - phi is defined as :math:`\\arctan{p_z/p_y}`
-  - ekin is defined as
+  - :math:`r = \sqrt{y^2+z^2}`
+  - :math:`p = \sqrt{p_x^2+p_y^2+p_z^2}`
+  - :math:`\\theta = \\arccos{p_x/p}`
+  - :math:`\phi = \\arctan{p_z/p_y}`
 
-    - :math:`(\sqrt{(p/m_e c)^2+1}-1) \\times m_e c^2` for massive species
-    - :math:`p` otherwise (here ekin is the total particle energy)
-  - gamma is defined as
+  - For massive species (with mass :math:`m`)
 
-    - :math:`E_{kin}/m_e c^2 + 1` for massive species
-    - :math:`+\infty` otherwise
+    - :math:`E_{kin} = (\sqrt{(p/m c)^2+1}-1) \\times m c^2`
+    - :math:`\gamma = E_{kin}/m c^2 + 1`
+    - :math:`\\beta = \sqrt{1 - \\frac{1}{\gamma^2}}`
+    - :math:`v = \\beta \\times c`
+
+  - For massless species
+
+    - :math:`E_{kin} = p`
+    - :math:`\gamma = +\infty`
+    - :math:`\\beta = 1`
+    - :math:`v = c`
+
+
+  All the attributes can not be overwriden as they are defined as properties.
+  Please call the `update` method to update particle phase-space data.
 
   References
   ----------
@@ -59,19 +69,12 @@ class _Data(object):
 
   For theta, phi :
   https://en.wikipedia.org/wiki/List_of_common_coordinate_transformations#To_spherical_coordinates
-  with switching (x->py, y->pz, z->px)
+  with switching (x->py, y->pz, z->px).
   A figure can be found at https://en.wikipedia.org/wiki/Spherical_coordinate_system
   """
   def __init__(self,PhaseSpace):
     self._ps= PhaseSpace
-    self.w  = None
-    self.x  = None
-    self.y  = None
-    self.z  = None
-    self.px = None
-    self.py = None
-    self.pz = None
-    self.t  = None
+    self.update(None,None,None,None,None,None,None,None,verbose=False)
     self.labels = {
               'x'     : 'x',
               'y'     : 'y',
@@ -112,6 +115,89 @@ class _Data(object):
               'phi'   : 'deg'
               }
 
+  @property
+  def w(self):
+    return self._w
+
+  @property
+  def x(self):
+    return self._x
+
+  @property
+  def y(self):
+    return self._y
+
+  @property
+  def z(self):
+    return self._z
+
+  @property
+  def px(self):
+    return self._px
+
+  @property
+  def py(self):
+    return self._py
+
+  @property
+  def pz(self):
+    return self._pz
+
+  @property
+  def t(self):
+    return self._t
+
+  @property
+  def r(self):
+    return np.sqrt(self.y**2+self.z**2)
+
+  @property
+  def p(self):
+    return np.sqrt(self.px**2+self.py**2+self.pz**2)
+
+  @property
+  def theta(self):
+    return np.degrees(np.arccos(self.px/self.p))
+
+  @property
+  def phi(self):
+    return np.degrees(np.arctan2(self.pz,self.py))
+
+  @property
+  def ekin(self):
+    mass = self._ps.specie["mass"]
+    if mass == 0:
+      return self.p
+    else:
+      return (np.sqrt((self.p/mass)**2 + 1) - 1) * mass
+
+  @property
+  def gamma(self):
+    mass = self._ps.specie["mass"]
+    if mass == 0:
+      return np.array([np.inf]*len(self.w))
+    else:
+      return self.ekin/mass + 1.
+
+  @property
+  def beta(self):
+    mass = self._ps.specie["mass"]
+    if mass == 0:
+      return np.array([1.]*len(self.w))
+    else:
+      return np.sqrt(1.-1./self.gamma**2)
+
+  @property
+  def v(self):
+    c = 2.99792458e8 * 1e6/1e15 # speed of light in um/fs
+    return self.beta * c
+
+  def get(self):
+    """
+    Return current phase space raw data.
+    """
+    return (self.w,self.x,self.y,self.z,self.px,self.py,self.pz,self.t)
+
   def update(self,w,x,y,z,px,py,pz,t,verbose=True):
     """
     Update class attributes with new values.
@@ -122,37 +208,17 @@ class _Data(object):
       particle phase space. More information can be found in data object documentation
     verbose : bool
       verbosity of the function. If True, a message is displayed when the attributes are loaded in memory
-
-    TODO: get np array to be immutable with x.writeable=False ?
     """
     if verbose: print("Updating raw values ...")
     # Save values into np.array objects
-    self.w  = np.array(w)
-    self.x  = np.array(x)
-    self.y  = np.array(y)
-    self.z  = np.array(z)
-    self.px = np.array(px)
-    self.py = np.array(py)
-    self.pz = np.array(pz)
-    self.t  = np.array(t)
-
-    # Calculate other parameters from it
-    self.r      = np.sqrt(self.y**2+self.z**2)
-    self.p      = np.sqrt(self.px**2+self.py**2+self.pz**2)
-    self.theta  = np.degrees(np.arccos(self.px/self.p))
-    self.phi    = np.degrees(np.arctan2(self.pz,self.py))
-    mass = self._ps.specie["mass"]
-    c = 2.99792458e8 * 1e6/1e15 # speed of light in um/fs
-    if mass == 0:
-      self.ekin   = self.p
-      self.gamma  = np.array([np.inf]*len(w))
-      self.beta   = np.array([1.]*len(w))
-      self.v      = np.array([c]*len(w))
-    else:
-      self.ekin   = (np.sqrt((self.p/mass)**2 + 1) - 1) * mass
-      self.gamma  = self.ekin/mass + 1.
-      self.beta   = np.sqrt(1.-1/self.gamma**2)
-      self.v      = self.beta * c
+    self._w  = np.array(w)
+    self._x  = np.array(x)
+    self._y  = np.array(y)
+    self._z  = np.array(z)
+    self._px = np.array(px)
+    self._py = np.array(py)
+    self._pz = np.array(pz)
+    self._t  = np.array(t)
     if verbose: print("Done !")
 
   def generate(self,Nconf,Npart,ekin,theta,phi,x=None,y=None,z=None,r=None,t=None,verbose=True):
@@ -171,9 +237,11 @@ class _Data(object):
         parameters to generate theta angle distribution
       phi : dict
         parameters to generate phi angle distribution
-      pos : dict, optional
+      x,y,z : dict, optional
         parameters to generate position distribution. Default is 0 for x,y,z
-      time : dict
+      r : dict,optional
+        parameters to generate transverse position distribution. Default is 0
+      t : dict, optional
         parameters to generate time distribution. Default is 0
 
       Notes
@@ -182,40 +250,48 @@ class _Data(object):
       depending on which law are available for each physical quantity
 
       For dict `ekin`, available laws are :
-      - 'mono', for a mono-energetic source. Energy must be given as a value of keyword 'energy'
-      - 'exp', for exponential energy. Temperature must be given as a value of keyword 'T'
+
+      - 'mono', for a mono-energetic source. Energy must be given as a value of keyword 'ekin0'
+      - 'exp', for exponential energy. Charasteristic energy must be given as a value of keyword 'ekin0'
 
       For dict `theta` and `phi`, available laws are :
-      - 'mono', for a directional source. Angle must be given as a value of keyword 'angle'
+
+      - 'mono', for a directional source. Angle must be given as a value of keyword 'theta0' or '/phi0'
       - 'iso', for an isotropic source. An optional keyword 'max' can be given to specify a maximum angle
       - 'gauss', for a gaussian spreading. Center of the distribution must be given with keyword 'mu', and standard deviantion with keyword 'sigma'
 
       Details of the calculations :
 
       Considering :math:`E_T = E_k + E_m` being the total energy, with
-      :math:`E_k` the kinetic energy and :math:`E_m` the rest mass energy, we have
-      :math:`E_T^2 = p^2 + E_m^2` and :math:`p^2=p_x^2 + p_y^2 + p_z^2` so
-      :math:`p_x^2+p_y^2+p_z^2=E_T^2 - E_m^2`.
+      :math:`E_k` the kinetic energy and :math:`E_m` the rest mass energy.
 
-      Assuming :math:`\\tan{\\theta}=\\frac{p_y}{p_x}` and
-      :math:`\\tan{\\phi}=\\frac{p_z}{p_x}` we get
+      We also have :math:`E_T^2 = p^2 + E_m^2` and :math:`p^2=p_x^2 + p_y^2 + p_z^2`
+      with :math:`p` in MeV/c.
 
-      :math:`p_x = \sqrt{\\frac{E_T^2 - E_m^2}{1 + \\tan{\\theta}^2 + \\tan{\phi}^2}}`
-      :math:`p_y = p_x \\tan{\\theta}`
-      :math:`p_z = p_x \\tan{\phi}`
+      Assuming :math:`\cos{\\theta}=\\frac{p_x}{p}` and
+      :math:`\\tan{\\phi}=\\frac{p_z}{p_y}` we finaly get
+
+      - :math:`p = E_k^2 - 2 E_k E_m`
+      - :math:`p_x = p \cos{\\theta}`
+      - :math:`p_y = \\frac{\phi}{\mid \phi \mid} \sqrt{\\frac{p^2 - p_x^2}{1 + \\tan^2{\phi}}}`
+      - :math:`p_z = p_y \\tan{\phi}`
 
       Examples
       --------
-      Assuming a `PhaseSpace` object is instanciated as `eps`, you can generate
+      With a `PhaseSpace` object instanciated as `eps`, you can generate
       a mono-energetic source in isotropic direction for 1e12 particles represented
       by 1e6 configurations as follows
 
-      >>> eps.data.generate(Nconf=1e6,Npart=1e12,ekin={"law":"mono","E":20.0},theta={"law":"iso"},phi={"law":"iso"})
+      >>> eps.data.generate(Nconf=1e6,Npart=1e12,
+      ...                  ekin={"law":"mono","ekin0":20.0},
+      ...                  theta={"law":"iso"},
+      ...                  phi={"law":"iso"})
+      ...
       """
       # Print a starting message
       if verbose:
         print("Generate %s phase-space for \"%s\" ekin law, \"%s\" theta law, \"%s\" phi law ..."
-        %(self._ps.specie,ekin["law"],theta["law"],phi["law"]))
+        %(self._ps.specie["name"],ekin["law"],theta["law"],phi["law"]))
 
       # Ensure that Nconf is of type int (for values such as 1e6)
       Nconf = int(Nconf)
@@ -344,18 +420,14 @@ class _Data(object):
 
     Examples
     --------
+    Given the `PhaseSpace` instance `eps`, it is possible to filter by an int value
+    (Select all the :math:`w` satisfying :math:`x=3`)
 
-    It is possible to filter by an int value
+    >>> w,x = eps.data.select('w','x',3)
 
-    >>> w = np.random.uniform(low=0.,high=10.,size=10)
-    >>> x = np.array([1,3,3,3,7,9,5,3,7,3])
-    >>> w = select(w,x,3) # Select all the w satisfying x==3
+    or filter by a range (Select all the :math:`\\theta` with :math:`E_{kin} \in [0.511,+\infty]` MeV)
 
-    or filter by a range
-
-    >>> w = np.random.uniform(low=0.,high=10.,size=1000)
-    >>> ekin = np.random.exponential(scale=3.0,size=1000)
-    >>> w = select(w,ekin,[0.511,None]) # Select all the w with :math:`ekin \in [0.511,+\infty] MeV`
+    >>> theta,ekin = eps.data.select('theta','ekin',[0.511,None])
 
     If frange is a list/tuple or a float, the filtering is done with a fpp precision
     """
@@ -387,13 +459,82 @@ class _Data(object):
 
     return axis
 
-  def transformate(self,translation=(0.0,0.0,0.0),rotation=(0.0,0.0)):
+  def transformate(self,T=None,R=None,rotate_first=False,verbose=True):
     """
     Transformate the particle phase space with given translation and rotation.
 
-    TODO
+    Parameters
+    ----------
+    T : tuple of 3 float, optional
+      translate (x,y,z) position of T um. Default is (0,0,0)
+    R : tuple of 3 float, optional
+      rotate (x,y,z) and (px,py,pz) of R degree. Default is (0,0,0)
+    rotate_first : bool, optional
+      process rotation before translation. Default is false
+    verbose : bool, optional
+      verbosity
     """
-    pass
+    # Set defaults
+    if T is None: T = (0.,0.,0.)
+    if R is None: R = (0.,0.,0.)
+    if verbose:
+      print("Transformate %s phase space ..."%self._ps.specie["name"])
+      print("    translation : (%.2E,%.2E,%.2E)"%(T[0],T[1],T[2]))
+      print("    rotation    : (%.2E,%.2E,%.2E)"%(R[0],R[1],R[2]))
+
+    # Define translation matrix
+    Tx = T[0]
+    Ty = T[1]
+    Tz = T[2]
+
+    # Define rotation matrix
+    a = np.radians(R[0])
+    Rx = np.array([
+        [1              ,0              ,0              ],
+        [0              ,np.cos(a)      ,-np.sin(a)     ],
+        [0              ,np.sin(a)      ,np.cos(a)      ]])
+    a = np.radians(R[1])
+    Ry = np.array([
+        [np.cos(a)      ,0              ,np.sin(a)      ],
+        [0              ,1              ,0              ],
+        [-np.sin(a)     ,0              ,np.cos(a)      ]])
+    a = np.radians(R[2])
+    Rz = np.array([
+        [np.cos(a)      ,-np.sin(a)     ,0              ],
+        [np.sin(a)      ,np.cos(a)      ,0              ],
+        [0              ,0              ,1              ]])
+
+    # Get current phase space data
+    w,x,y,z,px,py,pz,t = self.get()
+
+    # Translate position
+    if not rotate_first:
+      x += Tx
+      y += Ty
+      z += Tz
+
+    X,Y,Z,Px,Py,Pz=[],[],[],[],[],[]
+    R = np.dot(np.dot(Rx,Ry),Rz)
+    # Loop over all configurations
+    for i,_ in enumerate(w):
+      # Rotate position
+      rX = np.dot([x[i],y[i],z[i]],R)
+      X.append(rX[0])
+      Y.append(rX[1])
+      Z.append(rX[2])
+      # Rotate momentum
+      rP = np.dot([px[i],py[i],pz[i]],R)
+      Px.append(rP[0])
+      Py.append(rP[1])
+      Pz.append(rP[2])
+
+    if rotate_first:
+      X = np.array(X) + Tx
+      Y = np.array(Y) + Ty
+      Z = np.array(Z) + Tz
+
+    # Update raw data
+    self.update(w,X,Y,Z,Px,Py,Pz,t,verbose=verbose)
 
   def propagate(self,x_pos=None,time=None,verbose=True):
     """
@@ -405,6 +546,8 @@ class _Data(object):
       propagate the phase-space untill x = x_pos. Default is None (no propagation)
     time : float, optional
       propagate the phase-space untill t = time. Default is None (no propagation)
+    verbose : bool, optional
+      verbosity
 
     Notes
     -----
@@ -421,7 +564,7 @@ class _Data(object):
     pz = self.pz
 
     if time is not None:
-      if verbose: print("Propagate %s phase-space to time = %.4E fs."%(self._ps.specie,time))
+      if verbose: print("Propagate %s phase-space to time = %.4E fs."%(self._ps.specie["name"],time))
       t = np.array([time]*len(w))
       Dt = t - self.t
       x = self.x + (self.px/self.p)*self.v*Dt
@@ -429,7 +572,7 @@ class _Data(object):
       z = self.z + (self.pz/self.p)*self.v*Dt
 
     if x_pos is not None:
-      if verbose: print("Propagate %s phase-space to x = %.4E um."%(self._ps.specie,x_pos))
+      if verbose: print("Propagate %s phase-space to x = %.4E um."%(self._ps.specie["name"],x_pos))
       x = np.array([x_pos]*len(w))
       Dt = (x - self.x)/self.v
       t = self.t + Dt
@@ -442,8 +585,10 @@ class _Data(object):
     """
     Lorentz-transformate the particle phase-space with given speed of the center of mass.
 
-    Notes
-    -----
+    TODO
+
+    References
+    ----------
     https://en.wikipedia.org/wiki/Lorentz_transformation#Transformation_of_other_quantities
     """
     if verbose: print("Lorentz-transform %s phase-space with center of mass frame moving at %s c."%(self._ps.specie,beta_CM))
@@ -456,7 +601,7 @@ class _Data(object):
     v = b * c
     g = 1./np.sqrt(1-b**2)
 
-    # Four position
+    # 4 position
     a1 = c*self.t
     Z1 = np.array([self.x,self.y,self.z]).T
 
@@ -468,7 +613,7 @@ class _Data(object):
     t = np.array(a2)/c
     x,y,z = np.array(Z2).T
 
-    # Four momentum
+    # 4 momentum
     a1 = self.ekin/c
     Z1 = np.array([self.px,self.py,self.pz]).T
 
@@ -502,7 +647,7 @@ class _Data(object):
 
     See Also
     --------
-    hn
+    hist.hn
     """
     hn=self._ps.hist.hn
 

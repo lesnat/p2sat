@@ -17,7 +17,6 @@ PhaseSpace.data
 
 .. autoclass:: p2sat._Data._Data
   :members:
-  :undoc-members:
 
 ===============
 PhaseSpace.hist

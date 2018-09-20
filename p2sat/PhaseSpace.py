@@ -11,7 +11,7 @@ from ._Stat import _Stat
 
 class PhaseSpace(object):
   """
-  Base class for particle phase-space analysis.
+  Main class for particle phase-space analysis.
 
   Parameters
   ----------
@@ -20,6 +20,8 @@ class PhaseSpace(object):
 
   Attributes
   ----------
+  specie : dict
+    contains informations about particle specie, such as name, mass and label in TeX format
   data : sub-object
     contains raw data and methods to manipulate it, such as discretization or transformation.
   hist : sub-object
@@ -32,6 +34,27 @@ class PhaseSpace(object):
     export phase space into a file
   stat : sub-object
     make statistics on particle phase space
+
+  Examples
+  --------
+  Assuming you already imported p2sat, you can create a PhaseSpace object
+  for, let say, electrons, as follows
+
+  >>> eps = p2sat.PhaseSpace(specie="e-")
+
+  You can then import data from a file, using the `txt` method of sub-object `extract`
+
+  >>> eps.extract.txt("example.csv")
+
+  and look at the imported data
+
+  >>> print(eps.data.w)
+
+  or print general informations about your data set
+
+  >>> print(eps)
+
+  You can also make histograms, plots or statistics ...
 
   Notes
   -----
@@ -72,7 +95,12 @@ class PhaseSpace(object):
     """
     Return a new PhaseSpace object, combination of the 2 previous.
     """
-    ps = PhaseSpace()
+    spec1 = self.specie["name"]
+    spec2 = other.specie["name"]
+    if spec1 != spec2:
+      raise NameError("Can't combine phase space for different species")
+
+    ps = PhaseSpace(specie=spec1)
 
     w   = np.array([list(self.data.w) + list(other.data.w)])[0]
     x   = np.array([list(self.data.x) + list(other.data.x)])[0]
@@ -83,14 +111,17 @@ class PhaseSpace(object):
     pz  = np.array([list(self.data.pz) + list(other.data.pz)])[0]
     t   = np.array([list(self.data.t) + list(other.data.t)])[0]
 
-    ps.data.update(w,x,y,z,px,py,pz,t)
+    ps.data.update(w,x,y,z,px,py,pz,t,verbose=False)
 
     return ps
 
   def __str__(self):
+    """
+    Returns informations about current `PhaseSpace` object.
+    """
     txt  = "\n"
     txt += "p2sat PhaseSpace instance located at %s\n\n"%hex(id(self))
-    txt += "Specie                      : %s\n"%self.specie
+    txt += "Specie                      : %s\n"%self.specie["name"]
     txt += "Number of configurations    : %i\n"%len(self)
     txt += "Total number of particles   : %.4E\n\n"%sum(self.data.w)
     txt += "Statistics  : ( min      ,  max      ,  mean     ,  std      ) unit\n"
@@ -134,7 +165,7 @@ class PhaseSpace(object):
     verbose : bool
       verbosity of the function. If True, a message is displayed when the attributes are loaded in memory
     """
-    new = PhaseSpace()
+    new = PhaseSpace(specie=self.specie["name"])
     d=self.data
     new.data.update(d.w,d.x,d.y,d.z,d.px,d.py,d.pz,d.t,verbose=verbose)
 

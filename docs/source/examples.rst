@@ -20,3 +20,9 @@ Make statistics
 
 .. literalinclude:: ../../examples/stat.py
    :language: python
+
+Manipulate data
+===============
+
+.. literalinclude:: ../../examples/data.py
+  :language: python
