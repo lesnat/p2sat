@@ -1,9 +1,9 @@
 #coding:utf8
 
 """
-This is an example of how to use the `PhaseSpace.stat` object of p2sat.
+This is an example of how to use the `PhaseSpace.data` object of p2sat.
 
-It allows to make statistics on phase space data in a very simple way
+It allows to generate and manipulate phase space
 """
 
 # Import p2sat
