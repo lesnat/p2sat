@@ -5,7 +5,7 @@ Problematic
 
 When you deal with phase space analysis, the philosophy is often the same :
 
-- Import data from a file
+- Import data from a file or generate it with defined laws
 - Make calculations with this raw data (kinetic energy, divergence, ...)
 - Filter some of it (divergence with a condition on energy, ...)
 - Make histograms
@@ -63,7 +63,7 @@ let say, electrons, and import a simulation file containing the phase space
 informations.
 
 >>> eps = p2sat.PhaseSpace(specie="electron")
->>> eps.extract.txt("example.dat",sep=None)
+>>> eps.extract.txt("example.csv",sep=",")
 
 All the data in you simulation file can now be found at `eps.data`
 
@@ -102,8 +102,9 @@ It is also possible to make simple or complicated plot in a elegant way
 See folder `examples/` or documentation to a more complete set of p2sat capabilities.
 
 """
-from PhaseSpace import PhaseSpace
+__version__ = "1.1.2"
 
+from PhaseSpace import PhaseSpace
 
 def testing(name="all"):
   from ._tests import run

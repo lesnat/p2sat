@@ -5,7 +5,7 @@ from matplotlib import rcParams
 
 class _Plot(object):
   """
-  Plots
+  Plot raw data.
 
   Attributes
   ----------
@@ -33,7 +33,7 @@ class _Plot(object):
     ----------
     axes : list of str
       Names of the axes
-    normed : float or None
+    normed : list of bool or None
       Weight normalization. If None, the last labels element is \"Number\", otherwise it is \"Number/unit1/unit2/...\"
 
     Returns
@@ -93,7 +93,7 @@ class _Plot(object):
 
     See Also
     --------
-    clear
+    plot.clear
     """
     plt.figure(number)
     if clear: self.clear(number)
@@ -111,11 +111,13 @@ class _Plot(object):
       plt.figure(number)
     plt.clf()
 
-  def set_title(self,title):
+  def set_title(self,title,number=None):
     """
-
+    Set the title of the figure.
     """
-    pass
+    if number is not None:
+      self.figure(number,clear=False)
+    plt.title(title)
 
   def h1(self,axis,where='post',log=False,polar=False,reverse=False,**kargs):
     """
@@ -411,7 +413,7 @@ class _Plot(object):
 
   def h2h1(self,axis1,axis2,log=False,**kargs):
     """
-    TODO : doc + kargs + delete labels on h2
+    TODO
     """
     # https://matplotlib.org/examples/pylab_examples/scatter_hist.html
     # https://matplotlib.org/examples/axes_grid/demo_edge_colorbar.html
@@ -452,6 +454,7 @@ class _Plot(object):
 
   def s2h1(self,axis1,axis2,log=False):
     """
+    TODO
     """
     pass
 
@@ -460,6 +463,8 @@ class _Plot(object):
         **kargs):
     """
     Plot the 3d histogram of given axes.
+
+    TODO
 
     Parameters
     ----------

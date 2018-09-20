@@ -231,9 +231,11 @@ class _Data(object):
         parameters to generate theta angle distribution
       phi : dict
         parameters to generate phi angle distribution
-      pos : dict, optional
+      x,y,z : dict, optional
         parameters to generate position distribution. Default is 0 for x,y,z
-      time : dict
+      r : dict,optional
+        parameters to generate transverse position distribution. Default is 0
+      t : dict, optional
         parameters to generate time distribution. Default is 0
 
       Notes
@@ -242,11 +244,13 @@ class _Data(object):
       depending on which law are available for each physical quantity
 
       For dict `ekin`, available laws are :
-      - 'mono', for a mono-energetic source. Energy must be given as a value of keyword 'energy'
-      - 'exp', for exponential energy. Temperature must be given as a value of keyword 'T'
+
+      - 'mono', for a mono-energetic source. Energy must be given as a value of keyword 'ekin0'
+      - 'exp', for exponential energy. Charasteristic energy must be given as a value of keyword 'ekin0'
 
       For dict `theta` and `phi`, available laws are :
-      - 'mono', for a directional source. Angle must be given as a value of keyword 'angle'
+
+      - 'mono', for a directional source. Angle must be given as a value of keyword 'theta0' or '/phi0'
       - 'iso', for an isotropic source. An optional keyword 'max' can be given to specify a maximum angle
       - 'gauss', for a gaussian spreading. Center of the distribution must be given with keyword 'mu', and standard deviantion with keyword 'sigma'
 
@@ -263,7 +267,7 @@ class _Data(object):
 
       - :math:`p = E_k^2 - 2 E_k E_m`
       - :math:`p_x = p \cos{\\theta}`
-      - :math:`p_y = \\frac{\phi}{\mid \phi \mid} \\frac{p^2 - p_x^2}{1 + \\tan{\phi}^2}`
+      - :math:`p_y = \\frac{\phi}{\mid \phi \mid} \sqrt{\\frac{p^2 - p_x^2}{1 + \\tan^2{\phi}}}`
       - :math:`p_z = p_y \\tan{\phi}`
 
       Examples
@@ -410,18 +414,14 @@ class _Data(object):
 
     Examples
     --------
+    Given the `PhaseSpace` instance `eps`, it is possible to filter by an int value
+    (Select all the :math:`w` satisfying :math:`x=3`)
 
-    It is possible to filter by an int value
+    >>> w,x = eps.data.select('w','x',3)
 
-    >>> w = np.random.uniform(low=0.,high=10.,size=10)
-    >>> x = np.array([1,3,3,3,7,9,5,3,7,3])
-    >>> w = select(w,x,3) # Select all the w satisfying x==3
+    or filter by a range (Select all the :math:`\\theta` with :math:`E_{kin} \in [0.511,+\infty]` MeV)
 
-    or filter by a range
-
-    >>> w = np.random.uniform(low=0.,high=10.,size=1000)
-    >>> ekin = np.random.exponential(scale=3.0,size=1000)
-    >>> w = select(w,ekin,[0.511,None]) # Select all the w with :math:`ekin \in [0.511,+\infty] MeV`
+    >>> theta,ekin = eps.data.select('theta','ekin',[0.511,None])
 
     If frange is a list/tuple or a float, the filtering is done with a fpp precision
     """
@@ -471,6 +471,8 @@ class _Data(object):
       propagate the phase-space untill x = x_pos. Default is None (no propagation)
     time : float, optional
       propagate the phase-space untill t = time. Default is None (no propagation)
+    verbose : bool, optional
+      verbosity
 
     Notes
     -----
@@ -508,8 +510,10 @@ class _Data(object):
     """
     Lorentz-transformate the particle phase-space with given speed of the center of mass.
 
-    Notes
-    -----
+    TODO
+
+    References
+    ----------
     https://en.wikipedia.org/wiki/Lorentz_transformation#Transformation_of_other_quantities
     """
     if verbose: print("Lorentz-transform %s phase-space with center of mass frame moving at %s c."%(self._ps.specie,beta_CM))
@@ -522,7 +526,7 @@ class _Data(object):
     v = b * c
     g = 1./np.sqrt(1-b**2)
 
-    # Four position
+    # 4 position
     a1 = c*self.t
     Z1 = np.array([self.x,self.y,self.z]).T
 
@@ -534,7 +538,7 @@ class _Data(object):
     t = np.array(a2)/c
     x,y,z = np.array(Z2).T
 
-    # Four momentum
+    # 4 momentum
     a1 = self.ekin/c
     Z1 = np.array([self.px,self.py,self.pz]).T
 
@@ -568,7 +572,7 @@ class _Data(object):
 
     See Also
     --------
-    hn
+    hist.hn
     """
     hn=self._ps.hist.hn
 

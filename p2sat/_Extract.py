@@ -36,23 +36,35 @@ class _Extract(object):
     --------
     export.txt
     """
-    if verbose: print("Importing data ...")
+    if verbose: print("Extracting %s phase space from %s ..."%(self._ps.specie["name"],file_name))
+
+    # Initialize data lists
     w         = []
     x,y,z     = [],[],[]
     px,py,pz  = [],[],[]
     t         = []
+
+    # Open file
     with open(file_name,'r') as f:
+      # Loop over lines
       for line in f.readlines():
+        # If current line is not a comment, save data
         if line[0]!="#":
           data=line.split(sep)
           w.append(float(data[0]))
           x.append(float(data[1]))  ; y.append(float(data[2]))  ; z.append(float(data[3]))
           px.append(float(data[4])) ; py.append(float(data[5])) ; pz.append(float(data[6]))
           t.append(float(data[7]))
+
+    if verbose: print('Done !')
+
+    # Save data in PhaseSpace object
     self._ps.data.update(w,x,y,z,px,py,pz,t,verbose=verbose)
-    if verbose: print('Data succesfully imported')
 
   def Smilei_Screen_1d(self,Screen,xnorm,wnorm,tnorm,X=0):
+    """
+    TODO
+    """
     w         = []
     x,y,z     = [],[],[]
     px,py,pz  = [],[],[]
@@ -90,12 +102,14 @@ class _Extract(object):
     pz = [0.0] * len(w)
     x = [X] * len(w)
     z = [0.0] * len(w)
-    print("Data succesfully imported")
+    print("Done !")
     self._ps.data.update(w,x,y,z,px,py,pz,t)
 
   def Geant4_csv(self,file_name,nthreads=1,verbose=True):
     """
     Extract simulation results from a Geant4 NTuple csv output file
+
+    DEPRECATED
 
     Parameters
     ----------
@@ -105,25 +119,8 @@ class _Extract(object):
       total number of threads to consider
     verbose : bool, optional
       verbosity
-
-    Notes
-    -----
-    The Geant4 NTuple format should be
-    ::
-      w,x,y,z,px,py,pz,t
-      . . . . .  .  .  .
-      . . . . .  .  .  .
-      . . . . .  .  .  .
-
-    Examples
-    --------
-    >>> eg = p2sat.PhaseSpaceGeant4()
-    >>> eg.extract("../Geant4/testem_nt_electron_t*.csv",nthreads=10)
-
-    TODO
-    ----
-    - while True + try/except to loop over nthreads ?
     """
+    raise DeprecationWarning("Deprecated. Use extract.gp3m2_csv")
     data = []
     fext = file_name.split('.')[-1]   # File extension
     fbase= file_name[:-(len(fext)+1)] # File base name
@@ -178,6 +175,7 @@ class _Extract(object):
 
     >>> eps.extract.gp3m2_csv("Al_target")
     """
+    # Get gp3m2 specie name from p2sat specie name
     part = self._ps.specie["name"]
     if part=="e-":
       part_name = "electron"
@@ -186,24 +184,32 @@ class _Extract(object):
     elif part=="gamma":
       part_name = "gamma"
 
+    # Construct file base name
     fbase = base_name+"_nt_"+part_name+"_t"
     fext = ".csv"
 
+    # Initialize data list
     data = []
+    # Loop over threads
     i = 0
     while True:
       fname = fbase + str(i) + fext
       i    += 1
       try:
+        # Open file for thread i-1
         with open(fname,'r') as f:
           if verbose:print("Extracting %s ..."%fname)
+          # Loop over lines
           for line in f.readlines():
+            # Save data if current line is not a comment
             if line[0]!='#':
               for e in line.split(','):
                 data.append(float(e))
+      # If no more thread, break the loop
       except IOError:
         break
 
+    # Get phase space from data list
     w   = data[0::8]
     x   = data[1::8]
     y   = data[2::8]
@@ -214,6 +220,7 @@ class _Extract(object):
     t   = data[7::8]
     if verbose:print("Done !")
 
+    # Save phase space data in PhaseSpace object
     self._ps.data.update(w,x,y,z,px,py,pz,t,verbose)
 
   def TrILEns_output(self,path,specie,verbose=True):
@@ -224,51 +231,61 @@ class _Extract(object):
     ----------
     path : str
       simulation path
-    specie : str
-      specie to find in the output. The specie name must be in plural form (i.e 'electrons' or 'positrons')
     verbose : bool, optional
       verbosity
 
-    Notes
-    -----
-    ...
-
     Examples
     --------
-    >>> et = p2sat.PhaseSpaceTrILEns()
-    >>> et.extract("../TrILEns/",specie="positrons")
-
-    TODO
-    ----
-    - Check Interface.f90 at line ~ 120 -> condition for e-/e+ & not working with photons
+    >>> eps = p2sat.PhaseSpace(specie="e-")
+    >>> eps.extract.TrILEns_output("../TrILEns/")
     """
-    if verbose:print("Extracting {} data from {}output.txt ...".format(specie,path))
+    specie = self._ps.specie["name"]
+    if verbose:print("Extracting {} phase space from {}output.txt ...".format(specie,path))
 
+    # Get TrILEns specie label from p2sat specie name
+    if specie == "e-":
+      label = "electrons"
+    elif specie == "e+":
+      label = "positrons"
+    elif specie == "gamma":
+      label = "photons"
+
+    # Initialize phase space lists
     w         = []
     x,y,z     = [],[],[]
     px,py,pz  = [],[],[]
     t         = []
 
+    # Boolean to extract only the data of correct specie
     is_correct_specie=False
 
+    # Open output file
     with open(path+'output.txt','r') as f:
+      # 34 first lines are informations about the simulation
       for _ in range(34):
         f.readline()
-
+      # Loop over data
       for line in f.readlines():
         try:
-          W,X,Y,Z,Px,Py,Pz,Gamma,Chi=line.split()
+          # Photons do not have Chi value
+          if label == "photons":
+            W,X,Y,Z,Px,Py,Pz,Gamma=line.split()
+          else:
+            W,X,Y,Z,Px,Py,Pz,Gamma,Chi=line.split()
+          # If correct specie, save data
           if is_correct_specie:
             w.append(float(W))
             x.append(float(X))     ; y.append(float(Y))   ; z.append(float(Z))
             px.append(float(Px))   ; py.append(float(Py)) ; pz.append(float(Pz))
             t.append(0.)
+        # If current line is a string (not possible to read data), test if specie label in current line
         except ValueError:
-          if specie in line.split():
+          if label in line.split():
             is_correct_specie = True
           else:
             is_correct_specie = False
 
     if verbose:print("Done !")
 
+    # Save data in PhaseSpace object
     self._ps.data.update(w,x,y,z,px,py,pz,t,verbose=verbose)

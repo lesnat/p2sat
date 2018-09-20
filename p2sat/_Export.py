@@ -20,9 +20,9 @@ class _Export(object):
     header : bool, optional
       True to put informations at the beginning of the file. Default is True
     title : str, optional
-      title of the file
+      short description of the file content
     sep : str, optional
-      character to use to separate values. Default is ','
+      character to use to separate values. Default is ',' (csv file)
     verbose : bool, optional
       verbosity of the function. If True, a message is displayed when the data is exported
 
@@ -42,7 +42,7 @@ class _Export(object):
 
     Some text can be written if the first character of the line is a '#'.
     """
-    if verbose: print("Exporting data ...")
+    if verbose: print("Exporting %s phase space in %s ..."%(self._ps.specie["name"],file_name))
 
     d=self._ps.data
 
@@ -65,7 +65,7 @@ class _Export(object):
           f.write("%-16s"%tmp) # the chain is placed under 16 characters
         f.write("\n")
 
-    if verbose: print('Data succesfully exported')
+    if verbose: print('Done !')
 
   def gp3m2_input(self,file_name,title="",verbose=True):
     """
@@ -93,7 +93,7 @@ class _Export(object):
     verbose : bool, optional
       verbosity of the function. If True, a message is displayed when the data is exported
     """
-    if verbose: print("Exporting data ...")
+    if verbose: print("Exporting %s phase space in %s ..."%(self._ps.specie["name"],path+"prop_th.t"))
 
     d=self._ps.data
 
@@ -118,4 +118,4 @@ class _Export(object):
             f.write("%-16s"%tmp) # the chain is placed under 16 characters
         f.write("\n")
 
-    if verbose: print('Data succesfully exported')
+    if verbose: print('Done !')

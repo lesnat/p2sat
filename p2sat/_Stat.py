@@ -3,7 +3,7 @@ import numpy as np
 
 class _Stat(object):
   """
-  Allows to do statistics with p2sat data
+  Calculate statistics.
   """
   def __init__(self,PhaseSpace):
     self._ps = PhaseSpace
@@ -16,6 +16,8 @@ class _Stat(object):
     ----------
     axis : str or np.array
       axis to consider
+    p : float, optional
+      probability
     select : dict, optional
       filtering dictionary
 
@@ -27,7 +29,6 @@ class _Stat(object):
     Notes
     -----
     expected_value is defined as sum(p*axis) with p=w/sum(w)
-    with w being the statistical weight of the configuration
 
     """
     d=self._ps.data
@@ -62,7 +63,6 @@ class _Stat(object):
     Notes
     -----
     variance is defined as expected_value((axis - expected_value(axis))**2)
-
     """
     d=self._ps.data
     if type(axis) is str:axis=eval("d.%s"%axis)
@@ -98,7 +98,6 @@ class _Stat(object):
     Notes
     -----
     standard_deviation is defined as the square root of variance
-
     """
     return np.sqrt(self.variance(axis,select=select))
 
@@ -123,7 +122,6 @@ class _Stat(object):
     Notes
     -----
     covariance is defined as expected_value((axis1-expected_value(axis1)) * (axis2-expected_value(axis2)))
-
     """
     d=self._ps.data
     if type(axis1) is str:axis1=eval("d.%s"%axis1)
@@ -163,7 +161,6 @@ class _Stat(object):
     Notes
     -----
     correlation_coefficient is defined as covariance(axis1,axis2)/(standard_deviation(axis1)*standard_deviation(axis2))
-
     """
     std = self.standard_deviation
 
