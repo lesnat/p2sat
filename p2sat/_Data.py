@@ -183,7 +183,7 @@ class _Data(object):
   def beta(self):
     mass = self._ps.specie["mass"]
     if mass == 0:
-      return np.array([1.]*len(w))
+      return np.array([1.]*len(self.w))
     else:
       return np.sqrt(1.-1./self.gamma**2)
 
