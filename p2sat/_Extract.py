@@ -223,7 +223,7 @@ class _Extract(object):
     # Save phase space data in PhaseSpace object
     self._ps.data.update(w,x,y,z,px,py,pz,t,verbose)
 
-  def TrILEns_output(self,path,specie,verbose=True):
+  def TrILEns_output(self,path,verbose=True):
     """
     Extract simulation results from a TrILEns output.txt file
 
