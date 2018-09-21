@@ -13,7 +13,7 @@ if p2sat_path not in sys.path:sys.path.append(p2sat_path)
 import p2sat
 
 # Boolean to export or not the generated phase space
-export = False
+export = True
 check_input = False
 
 # Instanciate a PhaseSpace object for electron specie
@@ -68,4 +68,8 @@ gps.plot.h2('x','y',bwidth1=1.,bwidth2=1.,log=True)
 
 # Export phase space if needed
 if export:
+    # Discretize phase space, to limitate disk usage
+    bwidth=[1.,2.,2.,1.,1.,1.]
+    bwidth = None
+    gps.data.discretize(with_time=False,split=2,MP=True,bwidth=bwidth)
     gps.export.txt("test_gps.csv",sep=",")

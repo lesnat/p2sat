@@ -276,7 +276,7 @@ class _Extract(object):
           if is_correct_specie:
             w.append(float(W))
             x.append(float(X))     ; y.append(float(Y))   ; z.append(float(Z))
-            px.append(float(Px))   ; py.append(float(Py)) ; pz.append(float(Pz))
+            px.append(float(Px)*0.511)   ; py.append(float(Py)*0.511) ; pz.append(float(Pz)*0.511)
             t.append(0.)
         # If current line is a string (not possible to read data), test if specie label in current line
         except ValueError:

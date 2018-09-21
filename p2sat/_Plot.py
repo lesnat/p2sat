@@ -61,7 +61,7 @@ class _Plot(object):
         ax_unit = self._ps.data.units[ax]
         # ekin is E_\gamma when specie is gamma
         if ax=="ekin" and self._ps.specie["name"] =="gamma":
-          ax_name = "$E_\gamma$"
+          ax_name = "E_\gamma"
         # Format the label for axis and unit of N
         if ax_unit is not None:
           labels.append("${}$ ({})".format(ax_name,ax_unit))
