@@ -14,7 +14,7 @@ import p2sat
 
 # Boolean to export or not the generated phase space
 export = True
-check_input = False
+check_input = True
 
 # Instanciate a PhaseSpace object for electron specie
 gps1 = p2sat.PhaseSpace(specie="gamma")
@@ -71,5 +71,5 @@ if export:
     # Discretize phase space, to limitate disk usage
     bwidth=[1.,2.,2.,1.,1.,1.]
     bwidth = None
-    gps.data.discretize(with_time=False,split=2,MP=True,bwidth=bwidth)
+    gps.data.discretize(with_time=False,split=2,MP=False,bwidth=bwidth)
     gps.export.txt("test_gps.csv",sep=",")
