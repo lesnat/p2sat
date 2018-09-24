@@ -256,8 +256,20 @@ class _Data(object):
         For dict `theta` and `phi`, available laws are :
 
         - 'mono', for a directional source. Angle must be given as a value of keyword 'theta0' or '/phi0'
-        - 'iso', for an isotropic source. An optional keyword 'max' can be given to specify a maximum angle
+        - 'iso', for an isotropic source. Optional keywords 'min' and 'max' can be given to specify a minimum/maximum angle (centered on 0 deg)
         - 'gauss', for a gaussian spreading. Center of the distribution must be given with keyword 'mu', and standard deviantion with keyword 'sigma'
+
+        For dict `x`,`y`,`z`,`t`, available laws are :
+
+        - 'mono', for a unique position/time. This parameter must be given as a value of keyword `x0`/`y0`/`z0`/`t0`
+        - 'range', for a uniform law in a given range. Keywords 'min' and 'max' MUST be given to specify a minimum and maximum
+        - 'exp', for exponential distribution. Charasteristic length/time must be given as a value of keyword `x0`/`y0`/`z0`/`t0`
+        - 'gauss', for a gaussian distribution. Center of the distribution must be given with keyword 'mu', and standard deviantion with keyword 'sigma'
+
+        For dict `r`, available laws are :
+
+        - 'range', for a uniform law in a given range. Keywords 'min' and 'max' MUST be given to specify a minimum and maximum
+        - 'gauss', for a gaussian distribution. Center of the distribution must be given with keyword 'mu', and standard deviantion with keyword 'sigma'
 
         Details of the calculations :
 
@@ -310,10 +322,14 @@ class _Data(object):
             g_theta = np.array([theta["theta0"]] * Nconf)
         elif theta["law"]=="iso":
             try:
-                mangle = np.radians(theta["max"])
+                mini = np.radians(theta["min"])
             except KeyError:
-                mangle = np.pi
-            g_theta = np.random.uniform(0.,mangle,Nconf)
+                mini = 0.
+            try:
+                maxi = np.radians(theta["max"])
+            except KeyError:
+                maxi = np.pi
+            g_theta = np.random.uniform(0.,maxi,Nconf)
         elif theta["law"]=="gauss":
             mu = np.radians(theta["mu"])
             sigma = np.radians(theta["sigma"])
@@ -323,10 +339,14 @@ class _Data(object):
             g_phi = np.array([phi["phi0"]] * Nconf)
         elif phi["law"]=="iso":
             try:
-                mangle = np.radians(phi["max"])
+                mini = np.radians(phi["min"])
             except KeyError:
-                mangle = np.pi
-            g_phi = np.random.uniform(-mangle,mangle,Nconf)
+                mini = 0.
+            try:
+                maxi = np.radians(phi["max"])
+            except KeyError:
+                maxi = np.pi
+            g_phi = np.random.uniform(-maxi,maxi,Nconf)
         elif phi["law"]=="gauss":
             mu = np.radians(phi["mu"])
             sigma = np.radians(phi["sigma"])
@@ -349,6 +369,8 @@ class _Data(object):
             g_x = np.array([0.] * Nconf)
         elif x["law"]=="mono":
             g_x = np.array([x["x0"]] * Nconf)
+        elif x["law"]=="range":
+            g_x = np.random.uniform(x["min"],x["max"],Nconf)
         elif x["law"]=="exp":
             g_x = np.random.exponential(x["x0"],Nconf)
         elif x["law"]=="gauss":
@@ -360,6 +382,8 @@ class _Data(object):
             g_y = np.array([0.] * Nconf)
         elif y["law"]=="mono":
             g_y = np.array([y["y0"]] * Nconf)
+        elif y["law"]=="range":
+            g_y = np.random.uniform(y["min"],y["max"],Nconf)
         elif y["law"]=="exp":
             g_y = np.random.exponential(y["y0"],Nconf)
         elif y["law"]=="gauss":
@@ -371,6 +395,8 @@ class _Data(object):
             g_z = np.array([0.] * Nconf)
         elif z["law"]=="mono":
             g_z = np.array([z["z0"]] * Nconf)
+        elif z["law"]=="range":
+            g_z = np.random.uniform(z["min"],z["max"],Nconf)
         elif z["law"]=="exp":
             g_z = np.random.exponential(z["z0"],Nconf)
         elif z["law"]=="gauss":
@@ -380,6 +406,11 @@ class _Data(object):
 
         if r is None:
             g_r = np.array([0.] * Nconf)
+        elif r["law"]=="range":
+            g_r = np.random.uniform(r["min"],r["max"],Nconf)
+            angle = np.random.uniform(0.,2*np.pi,Nconf)
+            g_z = g_r * np.cos(angle)
+            g_y = g_r * np.sin(angle)
         elif r["law"]=="gauss":
             mu = r["mu"]
             sigma = r["sigma"]
@@ -393,6 +424,8 @@ class _Data(object):
             g_t = np.array([0.] * Nconf)
         elif t["law"]=="mono":
             g_t = np.array([t["t0"]] * Nconf)
+        elif t["law"]=="range":
+            g_t = np.random.uniform(t["min"],t["max"],Nconf)
         elif t["law"]=="exp":
             g_t = np.random.exponential(t["t0"],Nconf)
         elif t["law"]=="gauss":
