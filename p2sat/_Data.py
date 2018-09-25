@@ -191,11 +191,43 @@ class _Data(object):
         c = 2.99792458e8 * 1e6/1e15 # speed of light in um/fs
         return self.beta * c
 
-    def get(self):
+    def get_ps(self):
         """
         Return current phase space raw data.
         """
         return (self.w,self.x,self.y,self.z,self.px,self.py,self.pz,self.t)
+
+    def get_axis(self,calc):
+        """
+        Return the result of the calculation 'calc'
+
+        Parameters
+        ----------
+        calc : str
+            calculation to do with data axes
+
+        Examples
+        --------
+
+        >>> eps.data.get_axis("w * ekin / t")
+        """
+        if isinstance(calc,(list,type(np.array(0)))):
+            # Return a copy of given axis
+            return np.array(calc)
+        elif type(calc) is str:
+            X = calc.split(" ")
+            # Get the axis from given str
+            if len(X)==1:
+                return np.array(eval("self."+X[0]))
+            else:
+                axes = X[0::2] # axes
+                oper = X[1::2] # operations
+                res = "self."+axes[0]
+                for i,op in enumerate(oper):
+                    res = res + op +"self."+axes[i+1]
+                return np.array(eval(res))
+        else:
+            raise TypeError("Unknown axis %s"%calc)
 
     def update(self,w,x,y,z,px,py,pz,t,verbose=True):
         """
@@ -522,7 +554,7 @@ class _Data(object):
         """
         if verbose: print("Filtering %s phase space with axis %s ..."%(self._ps.specie["name"],faxis))
         data = []
-        for ax in self.get():
+        for ax in self.get_ps():
             data.append(self.select(ax,faxis,frange,fpp=fpp))
 
         w   = data[0::8]
@@ -587,7 +619,7 @@ class _Data(object):
             [0              ,0              ,1              ]])
 
         # Get current phase space data
-        w,x,y,z,px,py,pz,t = self.get()
+        w,x,y,z,px,py,pz,t = self.get_ps()
 
         # Translate position
         if not rotate_first:
