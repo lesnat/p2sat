@@ -498,6 +498,48 @@ class _Data(object):
 
         return axis
 
+    def full_select(self,faxis,frange,fpp=1e-7,update=False,verbose=True):
+        """
+        Select all the phase space with given condition
+
+        Parameters
+        ----------
+        faxis : list of str or list of numpy.ndarray
+            filtering axis
+        frange : list of int, float, list/tuple of 2 float
+            filtering value/range (value if int, range if float or list/tuple). If a frange element is None, the minimum/maximum value is taken
+        fpp : float, optional
+            relative floating point precision. Default is 1e-7
+        update : bool, optional
+            update or not the current `PhaseSpace` instance. Default is false
+        verbose : bool, optional
+            verbosity
+
+        See Also
+        --------
+        data.select
+        """
+        if verbose: print("Filtering %s phase space with axis %s ..."%(self._ps.specie["name"],faxis))
+        data = []
+        for ax in self.get():
+            data.append(self.select(ax,faxis,frange,fpp=fpp))
+
+        w   = data[0::8]
+        x   = data[1::8]
+        y   = data[2::8]
+        z   = data[3::8]
+        px  = data[4::8]
+        py  = data[5::8]
+        pz  = data[6::8]
+        t   = data[7::8]
+
+        if verbose: print("Done !")
+
+        if update:
+            self.update(w,x,y,z,px,py,pz,t,verbose=verbose)
+        else:
+            return w,x,y,z,px,py,pz,t
+
     def transformate(self,T=None,R=None,rotate_first=False,verbose=True):
         """
         Transformate the particle phase space with given translation and rotation.
