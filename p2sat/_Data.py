@@ -617,7 +617,7 @@ class _Data(object):
         # Update raw data
         self.update(w,X,Y,Z,Px,Py,Pz,t,verbose=verbose)
 
-    def propagate(self,x_pos=None,time=None,verbose=True):
+    def propagate(self,x_pos=None,time=None,update=True,verbose=True):
         """
         Propagate the phase space to a given position or time.
 
@@ -660,7 +660,10 @@ class _Data(object):
             y = self.y + (self.py/self.p)*self.v*Dt
             z = self.z + (self.pz/self.p)*self.v*Dt
 
-        self.update(w,x,y,z,px,py,pz,t,verbose=verbose)
+        if update:
+            self.update(w,x,y,z,px,py,pz,t,verbose=verbose)
+        else:
+            return w,x,y,z,px,py,pz,t
 
     def lorentz(self,beta_CM,verbose=True):
         """
