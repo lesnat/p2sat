@@ -23,6 +23,10 @@ class _Plot(object):
         self.cmap="viridis"
         self.rcParams = rcParams
         plt.style.use('bmh')
+        self.rcParams['figure.figsize'] = [9.5, 5.10]
+        self.rcParams['mathtext.default']='regular'
+        self.rcParams['font.size']=16.0
+        self.rcParams['figure.subplot.bottom'] = 0.15
         plt.ion()
 
     def get_labels(self,axes,normed):
@@ -75,8 +79,10 @@ class _Plot(object):
         if N_unit =="":
             labels.append("$N_{%s}$"%(specie_name))
         else:
-            # labels.append("$\\frac{d N_{%s}}{%s}$ (%s)$^{-1}$"%(specie_name[1:-1],N_name[:-1],N_unit[:-1]))
-            labels.append("$d N_{%s}/%s$ (%s)$^{-1}$"%(specie_name,N_name[:-1],N_unit[:-1]))
+            if self.rcParams['text.usetex']:
+                labels.append("$\\frac{\displaystyle d N_{%s}}{\displaystyle %s}$ (%s)$^{-1}$"%(specie_name,N_name[:-1],N_unit[:-1]))
+            else:
+                labels.append("$d N_{%s}/%s$ (%s)$^{-1}$"%(specie_name,N_name[:-1],N_unit[:-1]))
 
         return labels
 
