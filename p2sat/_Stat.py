@@ -166,3 +166,35 @@ class _Stat(object):
         cc = self.covariance(axis1,axis2,select=select)/(std(axis1,select=select)*std(axis2,select=select))
 
         return cc
+
+    def total_energy(self,unit="J",select=None):
+        """
+        Return total energy contained in the phase space
+
+        Parameters
+        ----------
+        unit : str, optional
+            unit of energy. Available are 'J' and 'MeV'. Default is 'J'
+        select : dict, optional
+            filtering dictionary
+
+        See Also
+        --------
+        data.select
+        """
+        d = self._ps.data
+        w = d.w
+        ekin = d.ekin
+        if select is not None:
+            w=d.select(w,faxis=select.keys(),frange=select.values)
+            ekin=d.select(ekin,faxis=select.keys(),frange=select.values)
+
+        E_MeV = w*ekin
+        E_J = E_MeV * 1e6 * 1.6e-19
+
+        if unit == "MeV":
+            return E_MeV
+        elif unit =="J":
+            return E_J
+        else:
+            raise NameError("Unknown unit name.")
