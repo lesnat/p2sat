@@ -8,7 +8,7 @@ class _Hist(object):
     def __init__(self,PhaseSpace):
         self._ps=PhaseSpace
 
-    def hn(self,axis,bwidth=None,brange=None,normed=True,select=None):
+    def hn(self,axis,weight="w",bwidth=None,brange=None,normed=True,select=None):
         """
         Create and return the n-dimensional histo of axis list.
 
@@ -71,13 +71,12 @@ class _Hist(object):
         # Get a shortcut to data object
         d=self._ps.data
 
-        # Get a copy of the axes
+        # # Get a copy of the axes
         for i,ax in enumerate(axis):
-            if type(ax) is str:ax = eval("d.%s"%ax)
-            axis[i]=np.array(ax)
+            axis[i] = d.get_axis(ax)
 
         # Get a copy of particle statistical weight
-        w   = np.array(d.w)
+        w   = d.get_axis(weight)
 
         # Filter the data if needed
         if select is not None:
@@ -124,7 +123,7 @@ class _Hist(object):
         # Return the bins and histo
         return b,h
 
-    def h1(self,axis,bwidth=None,brange=None,normed=True,select=None):
+    def h1(self,axis,weight="w",bwidth=None,brange=None,normed=True,select=None):
         """
         Create and return the 1 dimensional histogram of given axis.
 
@@ -158,11 +157,11 @@ class _Hist(object):
         """
         if not brange : brange = [None,None]
 
-        b,h=self.hn([axis],bwidth=[bwidth],brange=[brange],normed=normed,select=select)
+        b,h=self.hn([axis],weight=weight,bwidth=[bwidth],brange=[brange],normed=normed,select=select)
 
         return b[0],h
 
-    def h2(self,axis1,axis2,bwidth1=None,bwidth2=None,brange1=None,brange2=None,normed=True,select=None):
+    def h2(self,axis1,axis2,weight="w",bwidth1=None,bwidth2=None,brange1=None,brange2=None,normed=True,select=None):
         """
         Create and return the 2 dimensional histogram of given axis.
 
@@ -197,11 +196,11 @@ class _Hist(object):
         if not brange1 : brange1 = [None,None]
         if not brange2 : brange2 = [None,None]
 
-        b,h=self.hn([axis1,axis2],bwidth=[bwidth1,bwidth2],brange=[brange1,brange2],normed=normed,select=select)
+        b,h=self.hn([axis1,axis2],weight=weight,bwidth=[bwidth1,bwidth2],brange=[brange1,brange2],normed=normed,select=select)
 
         return b[0],b[1],h
 
-    def h3(self,axis1,axis2,axis3,bwidth1=None,bwidth2=None,bwidth3=None,brange1=None,brange2=None,brange3=None,normed=True,select=None):
+    def h3(self,axis1,axis2,axis3,weight="w",bwidth1=None,bwidth2=None,bwidth3=None,brange1=None,brange2=None,brange3=None,normed=True,select=None):
         """
         Create and return the 3 dimensional histogram of given axis.
 
@@ -239,11 +238,11 @@ class _Hist(object):
         if not brange2 : brange2 = [None,None]
         if not brange3 : brange3 = [None,None]
 
-        b,h=self.hn([axis1,axis2,axis3],bwidth=[bwidth1,bwidth2,bwidth3],brange=[brange1,brange2,brange3],normed=normed,select=select)
+        b,h=self.hn([axis1,axis2,axis3],weight="w",bwidth=[bwidth1,bwidth2,bwidth3],brange=[brange1,brange2,brange3],normed=normed,select=select)
 
         return b[0],b[1],b[2],h
 
-    def f1(self,axis,func_name,return_fit=False,verbose=True,**kargs):
+    def f1(self,axis,func_name,weight="w",return_fit=False,verbose=True,**kargs):
         """
         Fit a 1D histogram with given law.
 
