@@ -3,7 +3,7 @@ import numpy as np
 
 class _Stat(object):
     """
-    Calculate statistics.
+    Get global statistics from phase space data.
     """
     def __init__(self,PhaseSpace):
         self._ps = PhaseSpace
@@ -186,10 +186,10 @@ class _Stat(object):
         w = d.w
         ekin = d.ekin
         if select is not None:
-            w=d.select(w,faxis=select.keys(),frange=select.values)
-            ekin=d.select(ekin,faxis=select.keys(),frange=select.values)
+            w=d.select(w,faxis=select.keys(),frange=select.values())
+            ekin=d.select(ekin,faxis=select.keys(),frange=select.values())
 
-        E_MeV = w*ekin
+        E_MeV = sum(w*ekin)
         E_J = E_MeV * 1e6 * 1.6e-19
 
         if unit == "MeV":
