@@ -478,12 +478,13 @@ class _Data(object):
         for i,fax in enumerate(faxis):
             if type(fax) is str: faxis[i]=eval("self.%s"%faxis[i])
             faxis[i]=np.array(faxis[i])
+            frange[i]=np.array(frange[i])
 
         # Filtering ...
         for i,_ in enumerate(faxis):
-            if type(frange[i]) is list or type(frange[i]) is tuple:
-                if frange[i][0] is None: frange[i][0]=min(axis)
-                if frange[i][1] is None: frange[i][1]=max(axis)
+            if isinstance(frange[i],(list,tuple,type(np.array(0)))):
+                if frange[i][0] is None: frange[i][0]=min(faxis[i])
+                if frange[i][1] is None: frange[i][1]=max(faxis[i])
                 filtr=np.array([x>frange[i][0]*(1-fpp) and x<frange[i][1]*(1+fpp) for x in faxis[i]])
                 axis=axis[filtr]
             elif type(frange[i]) is int:
