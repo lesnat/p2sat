@@ -301,3 +301,44 @@ class _Extract(object):
 
         # Save data in PhaseSpace object
         self._ps.data.update(w,x,y,z,px,py,pz,t,verbose=verbose)
+
+    def TrILEns_prop_ph(self,path,verbose=True):
+        """
+        TODO
+        """
+        if self._ps.specie["name"]!="gamma":
+            raise NameError("prop_ph.t contains informations about gamma photons ! Current specie name is %s"%self._ps.specie["name"])
+        if verbose: print("Extracting %s phase space from %s ..."%(self._ps.specie["name"],path+"prop_ph.t"))
+
+        # Initialize data lists
+        w         = []
+        x,y,z     = [],[],[]
+        px,py,pz  = [],[],[]
+        t         = []
+
+        with open(path+"prop_ph.t",'r') as f:
+            # First line gives information about time
+            line = f.readline()
+            if line == "8 1.\n":
+                with_time = False
+            elif line == "9 1.\n":
+                with_time = True
+            else:
+                raise NameError("Unknown time identifier at line 1 : %s"%line)
+            # second line is a legend
+            _ = f.readline()
+            # Loop over data lines
+            for line in f.readlines():
+                # If current line is not a comment, save data
+                data=line.split()
+                w.append(float(data[0]))
+                x.append(float(data[1]))  ; y.append(float(data[2]))  ; z.append(float(data[3]))
+                px.append(float(data[4])) ; py.append(float(data[5])) ; pz.append(float(data[6]))
+                if with_time:
+                    t.append(float(data[8]))
+                else:
+                    t.append(0.)
+
+        if verbose: print('Done !')
+
+        self._ps.data.update(w,x,y,z,px,py,pz,t,verbose=verbose)
