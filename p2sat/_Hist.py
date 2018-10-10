@@ -73,7 +73,7 @@ class _Hist(object):
 
         # # Get a copy of the axes
         for i,ax in enumerate(axis):
-            axis[i] = d.get_axis(ax)
+            axis[i] = d.get_axis(ax,select=select)
 
         # Get weight array
         w   = d.get_axis(weight,select=select)

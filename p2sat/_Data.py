@@ -104,7 +104,7 @@ class _Data(object):
                         'omega' : '\Omega',
 
                         'w'     : 'N_{%s}'%(specie_label),
-                        'ekin_density' : '(N_{%s} %s)'%(specie,ekin_label)
+                        'ekin_density' : '(N_{%s} %s)'%(specie_label,ekin_label)
                         }
 
         self.units = {
@@ -214,7 +214,7 @@ class _Data(object):
 
     # @property
     # def brilliance(self):
-    #     return
+    #     return photons/s/mm2/mrad2/0.1%BW.
 
     def get_ps(self):
         """
@@ -247,7 +247,7 @@ class _Data(object):
             ax = eval("self.%s"%axis)
             # Filter the data if needed
             if select is not None:
-                ax = self.select(ax,faxis=select.keys(),frange=select.values())
+                ax = self.select(ax,faxes=select.keys(),frange=select.values())
             # return result
             return ax
 
@@ -492,7 +492,7 @@ class _Data(object):
         # Update current object
         self.update(g_w,g_x,g_y,g_z,g_px,g_py,g_pz,g_t,verbose=verbose)
 
-    def select(self,axis,faxis,frange,fpp=1e-7):
+    def select(self,axis,faxes,frange,fpp=1e-7):
         """
         Filter an axis with a value/range on another axis.
 
@@ -500,7 +500,7 @@ class _Data(object):
         ----------
         axis : str or numpy.ndarray
             axis to filter
-        faxis : list of str or list of numpy.ndarray
+        faxes : list of str or list of numpy.ndarray
             filtering axis
         frange : list of int, float, list/tuple of 2 float
             filtering value/range (value if int, range if float or list/tuple). If a frange element is None, the minimum/maximum value is taken
@@ -525,42 +525,42 @@ class _Data(object):
 
         If frange is a list/tuple or a float, the filtering is done with a fpp precision
         """
-        # if type(faxis) is not (list or tuple): faxis=[faxis]
+        # Get a copy of axis and faxes (from a str or not)
+        axis=self.get_axis(axis,select=None)
+        for i,fax in enumerate(faxes):
+            faxes[i] = self.get_axis(fax,select=None)
 
-        # Get a copy of axis and faxis (from a str or not)
-        if type(axis) is str: axis=eval("self.%s"%axis)
-        axis=np.array(axis)
-        for i,fax in enumerate(faxis):
-            if type(fax) is str: faxis[i]=eval("self.%s"%faxis[i])
-            faxis[i]=np.array(faxis[i])
-            frange[i]=np.array(frange[i])
-
-        # Filtering ...
-        for i,_ in enumerate(faxis):
+        # Loop over filtering axes
+        for i,_ in enumerate(faxes):
+            # Filter in a given range
             if isinstance(frange[i],(list,tuple,type(np.array(0)))):
-                if frange[i][0] is None: frange[i][0]=min(faxis[i])
-                if frange[i][1] is None: frange[i][1]=max(faxis[i])
-                filtr=np.array([x>frange[i][0]*(1-fpp) and x<frange[i][1]*(1+fpp) for x in faxis[i]])
+                # Default ranges are min and max of filtering axis
+                if frange[i][0] is None: frange[i][0]=min(faxes[i])
+                if frange[i][1] is None: frange[i][1]=max(faxes[i])
+                # The filtr array is an array of bool, whether the filtering condition is fullfiled or not
+                filtr=np.array([x>frange[i][0]*(1-fpp) and x<frange[i][1]*(1+fpp) for x in faxes[i]])
                 axis=axis[filtr]
+            # Filter for an int
             elif type(frange[i]) is int:
-                axis=axis[faxis[i]==frange[i]]
+                axis=axis[faxes[i]==frange[i]]
+            # Filter for a float
             elif type(frange[i]) is float:
-                axis=self.select(axis,faxis=[faxis[i]],frange=[[frange[i],frange[i]]])
+                axis=self.select(axis,faxes=[faxes[i]],frange=[[frange[i],frange[i]]])
             else:
                 raise TypeError('frange type must be int/float or list/tuple of 2 float.')
 
-            # filter next faxis with current faxis
-            if len(faxis)>i+1:faxis[i+1]=self.select(faxis[i+1],[faxis[i]],[frange[i]])
+            # filter next faxes with current faxes
+            if len(faxes)>i+1:faxes[i+1]=self.select(faxes[i+1],[faxes[i]],[frange[i]])
 
         return axis
 
-    def full_select(self,faxis,frange,fpp=1e-7,update=False,verbose=True):
+    def full_select(self,faxes,frange,fpp=1e-7,update=False,verbose=True):
         """
         Select all the phase space with given condition
 
         Parameters
         ----------
-        faxis : list of str or list of numpy.ndarray
+        faxes : list of str or list of numpy.ndarray
             filtering axis
         frange : list of int, float, list/tuple of 2 float
             filtering value/range (value if int, range if float or list/tuple). If a frange element is None, the minimum/maximum value is taken
@@ -575,10 +575,10 @@ class _Data(object):
         --------
         data.select
         """
-        if verbose: print("Filtering %s phase space with axis %s ..."%(self._ps.specie["name"],faxis))
+        if verbose: print("Filtering %s phase space with axis %s ..."%(self._ps.specie["name"],faxes))
         data = []
         for ax in self.get_ps():
-            data.append(self.select(ax,faxis,frange,fpp=fpp))
+            data.append(self.select(ax,faxes,frange,fpp=fpp))
 
         w   = data[0::8]
         x   = data[1::8]
