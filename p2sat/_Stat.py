@@ -8,7 +8,7 @@ class _Stat(object):
     def __init__(self,PhaseSpace):
         self._ps = PhaseSpace
 
-    def expected_value(self,axis,p=None,select=None):
+    def expected_value(self,axis,select=None):
         """
         Returns expected value of given axis.
 
@@ -16,8 +16,6 @@ class _Stat(object):
         ----------
         axis : str or np.array
             axis to consider
-        p : float, optional
-            probability
         select : dict, optional
             filtering dictionary
 
@@ -31,15 +29,10 @@ class _Stat(object):
         expected_value is defined as sum(p*axis) with p=w/sum(w)
         """
         d=self._ps.data
-        if type(axis) is str:axis=eval("d.%s"%axis)
+        axis = d.get_axis(axis,select=select)
+        w = d.get_axis('w',select=select)
 
-        w = np.array(d.w)
-        if select is not None:
-            w = d.select(w,faxis=select.keys(),frange=select.values())
-            axis = d.select(axis,faxis=select.keys(),frange=select.values())
-
-        if p is None:
-            p = w/sum(w)
+        p = w/sum(w)
 
         return sum(p*axis)
 
@@ -64,17 +57,12 @@ class _Stat(object):
         variance is defined as expected_value((axis - expected_value(axis))**2)
         """
         d=self._ps.data
-        if type(axis) is str:axis=eval("d.%s"%axis)
-
-        p=None
-        if select is not None:
-            axis = d.select(axis,faxis=select.keys(),frange=select.values())
-            w = d.select(d.w,faxis=select.keys(),frange=select.values())
-            p = w/sum(w)
+        axis = d.get_axis(axis,select=select)
+        w = d.get_axis("w",select=select)
 
         ev = self.expected_value
 
-        var = ev((axis - ev(axis,p=p))**2,p=p)
+        var = ev((axis - ev(axis))**2)
 
         return var
 
@@ -123,19 +111,12 @@ class _Stat(object):
         covariance is defined as expected_value((axis1-expected_value(axis1)) * (axis2-expected_value(axis2)))
         """
         d=self._ps.data
-        if type(axis1) is str:axis1=eval("d.%s"%axis1)
-        if type(axis2) is str:axis2=eval("d.%s"%axis2)
-
-        p = None
-        if select is not None:
-            axis1 = d.select(axis1,faxis=select.keys(),frange=select.values())
-            axis2 = d.select(axis2,faxis=select.keys(),frange=select.values())
-            w = d.select(d.w,faxis=select.keys(),frange=select.values())
-            p = w/sum(w)
+        axis1 = d.get_axis(axis1,select=select)
+        axis2 = d.get_axis(axis2,select=select)
 
         ev = self.expected_value
 
-        cov = ev((axis1-ev(axis1,p=p))*(axis2-ev(axis2,p=p)),p=p)
+        cov = ev((axis1-ev(axis1))*(axis2-ev(axis2)))
 
         return cov
 
@@ -183,11 +164,8 @@ class _Stat(object):
         data.select
         """
         d = self._ps.data
-        w = d.w
-        ekin = d.ekin
-        if select is not None:
-            w=d.select(w,faxis=select.keys(),frange=select.values())
-            ekin=d.select(ekin,faxis=select.keys(),frange=select.values())
+        w = d.get_axis('w',select=select)
+        ekin = d.get_axis('ekin',select=select)
 
         E_MeV = sum(w*ekin)
         E_J = E_MeV * 1e6 * 1.6e-19
