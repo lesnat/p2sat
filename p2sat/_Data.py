@@ -74,6 +74,14 @@ class _Data(object):
     def __init__(self,PhaseSpace):
         self._ps= PhaseSpace
         self.update(None,None,None,None,None,None,None,None,verbose=False)
+        specie_label = self._ps.specie['label']
+        if self._ps.specie['name']=="gamma":
+            etot_label = 'E_{\gamma}'
+            ekin_label = 'E_{\gamma}'
+        else:
+            etot_label = 'E_{Tot}'
+            ekin_label = 'E_{kin}'
+
         self.labels = {
                         'x'     : 'x',
                         'y'     : 'y',
@@ -85,13 +93,18 @@ class _Data(object):
 
                         'r'     : 'r',
                         'p'     : 'p',
-                        'ekin'  : 'E_{kin}',
+                        'etot'  : etot_label,
+                        'ekin'  : ekin_label,
                         'gamma' : '\gamma',
                         'beta'  : '\\beta',
                         'v'     : 'v',
 
                         'theta' : '\\theta',
-                        'phi'   : '\\phi'
+                        'phi'   : '\\phi',
+                        'omega' : '\Omega',
+
+                        'w'     : 'N_{%s}'%(specie_label),
+                        'ekin_density' : '(N_{%s} %s)'%(specie,ekin_label)
                         }
 
         self.units = {
@@ -105,13 +118,18 @@ class _Data(object):
 
                         'r'     : 'um',
                         'p'     : 'MeV/c',
+                        'etot'  : 'MeV',
                         'ekin'  : 'MeV',
                         'gamma' : None,
                         'beta'  : None,
                         'v'     : 'um/fs',
 
                         'theta' : 'deg',
-                        'phi'   : 'deg'
+                        'phi'   : 'deg',
+                        'omega' : 'sr',
+
+                        'w'     : None,
+                        'ekin_density' : 'MeV'
                         }
 
     @property
@@ -163,33 +181,40 @@ class _Data(object):
         return np.degrees(np.arctan2(self.pz,self.py))
 
     @property
+    def omega(self):
+        return np.pi*self.r**2/self.x**2
+
+    @property
+    def etot(self):
+        mass = self._ps.specie["mass"]
+        return np.sqrt(self.p**2 + mass**2)
+
+    @property
     def ekin(self):
         mass = self._ps.specie["mass"]
-        if mass == 0:
-            return self.p
-        else:
-            return (np.sqrt((self.p/mass)**2 + 1) - 1) * mass
+        return self.etot-mass
 
     @property
     def gamma(self):
         mass = self._ps.specie["mass"]
-        if mass == 0:
-            return np.array([np.inf]*len(self.w))
-        else:
-            return self.ekin/mass + 1.
+        return self.ekin/mass + 1.
 
     @property
     def beta(self):
-        mass = self._ps.specie["mass"]
-        if mass == 0:
-            return np.array([1.]*len(self.w))
-        else:
-            return np.sqrt(1.-1./self.gamma**2)
+        return np.sqrt(1.-1./self.gamma**2)
 
     @property
     def v(self):
         c = 2.99792458e8 * 1e6/1e15 # speed of light in um/fs
         return self.beta * c
+
+    @property
+    def ekin_density(self):
+        return self.ekin * self.w
+
+    # @property
+    # def brilliance(self):
+    #     return
 
     def get_ps(self):
         """
