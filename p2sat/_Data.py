@@ -197,37 +197,35 @@ class _Data(object):
         """
         return (self.w,self.x,self.y,self.z,self.px,self.py,self.pz,self.t)
 
-    def get_axis(self,calc):
+    def get_axis(self,axis,select=None):
         """
-        Return the result of the calculation 'calc'
+        Return given axis
 
         Parameters
         ----------
-        calc : str
-            calculation to do with data axes
+        axis : str
+            axis name
+        select : dict
+            filtering dictionnary
 
         Examples
         --------
 
-        >>> eps.data.get_axis("w * ekin / t")
+        >>> eps.data.get_axis("w")
+        >>> eps.data.get_axis("w",select={'x':150,'ekin':[0.511,None]})
         """
-        if isinstance(calc,(list,type(np.array(0)))):
-            # Return a copy of given axis
-            return np.array(calc)
-        elif type(calc) is str:
-            X = calc.split(" ")
-            # Get the axis from given str
-            if len(X)==1:
-                return np.array(eval("self."+X[0]))
-            else:
-                axes = X[0::2] # axes
-                oper = X[1::2] # operations
-                res = "self."+axes[0]
-                for i,op in enumerate(oper):
-                    res = res + op +"self."+axes[i+1]
-                return np.array(eval(res))
+        if type(axis) is not str:
+            # If not a str, return axis
+            return axis
         else:
-            raise TypeError("Unknown axis %s"%calc)
+            # Evaluate axis
+            ax = eval("self.%s"%axis)
+            # Filter the data if needed
+            if select is not None:
+                ax = self.select(ax,faxis=select.keys(),frange=select.values())
+            # return result
+            return ax
+
 
     def update(self,w,x,y,z,px,py,pz,t,verbose=True):
         """

@@ -75,14 +75,8 @@ class _Hist(object):
         for i,ax in enumerate(axis):
             axis[i] = d.get_axis(ax)
 
-        # Get a copy of particle statistical weight
-        w   = d.get_axis(weight)
-
-        # Filter the data if needed
-        if select is not None:
-            w = d.select(w,faxis=select.keys(),frange=select.values())
-            for i,ax in enumerate(axis):
-                axis[i]=d.select(ax,faxis=select.keys(),frange=select.values())
+        # Get weight array
+        w   = d.get_axis(weight,select=select)
 
         # Define bin range
         if brange is None   : brange=[[None,None]]*len(axis)
