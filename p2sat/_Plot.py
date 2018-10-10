@@ -29,7 +29,7 @@ class _Plot(object):
         self.rcParams['figure.subplot.bottom'] = 0.15
         plt.ion()
 
-    def get_labels(self,axes,normed):
+    def get_labels(self,axes,weight,normed):
         """
         Returns the labels of given axes.
 
@@ -45,44 +45,106 @@ class _Plot(object):
         labels : list of str
             Labels of given axes and label of weight
         """
+        # # Initialization
+        # labels=[]
+        # N_name=""
+        # N_unit=""
+        # if type(normed) is bool:
+        #     if normed:
+        #         normed=[True]*len(axes)
+        #     else:
+        #         normed=[False]*len(axes)
+        # # Loop over all the axes
+        # for i,ax in enumerate(axes):
+        #     # No label if ax is not a str
+        #     if type(ax) is not str:
+        #         labels.append("")
+        #     else:
+        #         # Else get axis name and unit from dicts
+        #         ax_name = self._ps.data.labels[ax]
+        #         ax_unit = self._ps.data.units[ax]
+        #     # ekin is E_\gamma when specie is gamma
+        #     if ax=="ekin" and self._ps.specie["name"] =="gamma":
+        #         ax_name = "E_\gamma"
+        #     # Format the label for axis and unit of N
+        #     if ax_unit is not None:
+        #         labels.append("${}$ ({})".format(ax_name,ax_unit))
+        #         if normed[i]: N_name += "d%s "%(ax_name)
+        #         if normed[i]: N_unit += "%s "%(ax_unit)
+        #     else:
+        #         labels.append(ax_name)
+        #
+        # # Format number name
+        # specie_name = self._ps.specie["label"]
+        # if N_unit =="":
+        #     labels.append("$N_{%s}$"%(specie_name))
+        # else:
+        #     if self.rcParams['text.usetex']:
+        #         labels.append("$\\frac{\displaystyle d N_{%s}}{\displaystyle %s}$ (%s)$^{-1}$"%(specie_name,N_name[:-1],N_unit[:-1]))
+        #     else:
+        #         labels.append("$d N_{%s}/%s$ (%s)$^{-1}$"%(specie_name,N_name[:-1],N_unit[:-1]))
+        #
+        # return labels
+
         # Initialization
-        labels=[]
-        N_name=""
-        N_unit=""
+        d = self._ps.data
+        labels  = []
+        ax_label=[]
+        ax_unit =[]
+        w_label =[]
+        w_unit  =[]
+
+        # Get axes labels and units
+        for ax in axes:
+            if type(ax) is not str:
+                ax_label.append("")
+                ax_unit.append("")
+            else:
+                ax_label.append(d.labels[ax])
+                ax_unit.append(d.units[ax])
+
+        # Get normalization bool list
         if type(normed) is bool:
             if normed:
                 normed=[True]*len(axes)
             else:
                 normed=[False]*len(axes)
-        # Loop over all the axes
-        for i,ax in enumerate(axes):
-            # No label if ax is not a str
-            if type(ax) is not str:
-                labels.append("")
-            else:
-                # Else get axis name and unit from dicts
-                ax_name = self._ps.data.labels[ax]
-                ax_unit = self._ps.data.units[ax]
-            # ekin is E_\gamma when specie is gamma
-            if ax=="ekin" and self._ps.specie["name"] =="gamma":
-                ax_name = "E_\gamma"
-            # Format the label for axis and unit of N
-            if ax_unit is not None:
-                labels.append("${}$ ({})".format(ax_name,ax_unit))
-                if normed[i]: N_name += "d%s "%(ax_name)
-                if normed[i]: N_unit += "%s "%(ax_unit)
-            else:
-                labels.append(ax_name)
 
-        # Format number name
-        specie_name = self._ps.specie["label"]
-        if N_unit =="":
-            labels.append("$N_{%s}$"%(specie_name))
+        # Construct denominator of weight label and unit
+        den_label = ""
+        den_unit = ""
+        for i,ax in enumerate(axes):
+            if normed[i]:
+                den_label += "d"+ax_label[i]+" \ "
+                den_unit += ax_unit[i]+" \ "
+        # Delete the last spaces if needed
+        if den_label !="":
+            den_unit = den_unit[:-3]
+            # den_label = den_label[:-3]
+
+        # Construct weight label
+        if den_label == "":
+            w_label = d.labels[weight]
         else:
-            if self.rcParams['text.usetex']:
-                labels.append("$\\frac{\displaystyle d N_{%s}}{\displaystyle %s}$ (%s)$^{-1}$"%(specie_name,N_name[:-1],N_unit[:-1]))
-            else:
-                labels.append("$d N_{%s}/%s$ (%s)$^{-1}$"%(specie_name,N_name[:-1],N_unit[:-1]))
+            w_label = "$d%s/%s$"%(d.labels[weight],den_label)
+
+        # Construct weight unit
+        if den_unit == "" and d.units[weight] is None:
+            w_unit  = ""
+
+        if den_unit == "" and d.units[weight] is not None:
+            w_unit = "$%s$"%d.units[weight]
+
+        if den_unit != "" and d.units[weight] is None:
+            w_unit  = "$(%s)^{-1}$"%(den_unit)
+
+        if den_unit != "" and d.units[weight] is not None:
+            w_unit  = "$(%s)/(%s)$"%(d.units[weight],den_unit)
+
+        # Construct and return labels list
+        for i,_ in enumerate(axes):
+            labels.append("$%s$ [$%s$]"%(ax_label[i],ax_unit[i]))
+        labels.append("%s [%s]"%(w_label,w_unit))
 
         return labels
 
@@ -154,7 +216,7 @@ class _Plot(object):
         else:
             a=plt.gca()
 
-        labels=self.get_labels([axis],kargs.get('normed',True))
+        labels=self.get_labels([axis],kargs.get('weight','w'),kargs.get('normed',True))
 
         b,h=self._h.h1(axis,**kargs)
 
@@ -222,7 +284,7 @@ class _Plot(object):
         else:
             a=plt.gca()
 
-        labels=self.get_labels([axis],kargs.get('normed',True))
+        labels=self.get_labels([axis],kargs.get('weight','w'),kargs.get('normed',True))
 
         b,h=self._h.f1(axis,func_name,return_fit=True,**kargs)
 
@@ -277,7 +339,7 @@ class _Plot(object):
             a=plt.gca(polar=True)
         else:
             a=plt.gca()
-        labels=self.get_labels([axis1,axis2],kargs.get('normed',True))
+        labels=self.get_labels([axis1,axis2],kargs.get('weight','w'),kargs.get('normed',True))
 
         b1,b2,h=self._h.h2(axis1,axis2,**kargs)
         g1,g2=np.meshgrid(b1,b2,indexing='ij')
@@ -330,7 +392,7 @@ class _Plot(object):
             a=plt.gca(polar=True)
         else:
             a=plt.gca()
-        labels=self.get_labels([axis1,axis2],kargs.get('normed',True))
+        labels=self.get_labels([axis1,axis2],kargs.get('weight','w'),kargs.get('normed',True))
 
         if log:
             from matplotlib.colors import LogNorm
@@ -382,7 +444,7 @@ class _Plot(object):
             a=plt.gca(polar=True)
         else:
             a=plt.gca()
-        labels=self.get_labels([axis1,axis2],normed=True)
+        labels=self.get_labels([axis1,axis2],kargs.get('weight','w'),normed=True)
 
         d = self._ps.data
 

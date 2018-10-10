@@ -74,6 +74,7 @@ class _Data(object):
     def __init__(self,PhaseSpace):
         self._ps= PhaseSpace
         self.update(None,None,None,None,None,None,None,None,verbose=False)
+
         specie_label = self._ps.specie['label']
         if self._ps.specie['name']=="gamma":
             etot_label = 'E_{\gamma}'
@@ -82,55 +83,33 @@ class _Data(object):
             etot_label = 'E_{Tot}'
             ekin_label = 'E_{kin}'
 
-        self.labels = {
-                        'x'     : 'x',
-                        'y'     : 'y',
-                        'z'     : 'z',
-                        'px'    : 'p_x',
-                        'py'    : 'p_y',
-                        'pz'    : 'p_z',
-                        't'     : 't',
+        self.labels = {}                ; self.units = {}
+        l = self.labels                 ; u = self.units
 
-                        'r'     : 'r',
-                        'p'     : 'p',
-                        'etot'  : etot_label,
-                        'ekin'  : ekin_label,
-                        'gamma' : '\gamma',
-                        'beta'  : '\\beta',
-                        'v'     : 'v',
+        l['w'] = 'N_{%s}'%specie_label  ; u['w'] = None
+        l['x'] = 'x'                    ; u['x'] = u'µm'
+        l['y'] = 'y'                    ; u['y'] = u'µm'
+        l['z'] = 'z'                    ; u['z'] = u'µm'
+        l['px'] = 'p_x'                 ; u['px'] = 'MeV/c'
+        l['py'] = 'p_y'                 ; u['py'] = 'MeV/c'
+        l['pz'] = 'p_z'                 ; u['pz'] = 'MeV/c'
+        l['t'] = 't'                    ; u['t'] = 'fs'
 
-                        'theta' : '\\theta',
-                        'phi'   : '\\phi',
-                        'omega' : '\Omega',
+        l['r'] = 'r'                    ; u['r'] = u'um'
+        l['p'] = 'p'                    ; u['p'] = 'MeV/c'
 
-                        'w'     : 'N_{%s}'%(specie_label),
-                        'ekin_density' : '(N_{%s} %s)'%(specie_label,ekin_label)
-                        }
+        l['etot'] = etot_label          ; u['etot'] = 'MeV'
+        l['ekin'] = ekin_label          ; u['ekin'] = 'MeV'
+        l['beta'] = '\\beta'            ; u['beta'] = None
+        l['gamma'] = '\gamma'           ; u['gamma'] = None
+        l['v'] = 'v'                    ; u['v'] = u'um/fs'
 
-        self.units = {
-                        'x'     : 'um',
-                        'y'     : 'um',
-                        'z'     : 'um',
-                        'px'    : 'MeV/c',
-                        'py'    : 'MeV/c',
-                        'pz'    : 'MeV/c',
-                        't'     : 'fs',
+        l['theta'] = '\\theta'          ; u['theta'] = 'deg'
+        l['phi'] = '\\phi'              ; u['phi'] = 'deg'
+        l['omega'] = '\Omega'           ; u['omega'] = 'sr'
 
-                        'r'     : 'um',
-                        'p'     : 'MeV/c',
-                        'etot'  : 'MeV',
-                        'ekin'  : 'MeV',
-                        'gamma' : None,
-                        'beta'  : None,
-                        'v'     : 'um/fs',
-
-                        'theta' : 'deg',
-                        'phi'   : 'deg',
-                        'omega' : 'sr',
-
-                        'w'     : None,
-                        'ekin_density' : 'MeV'
-                        }
+        l['ekin_density'] = '(N_{%s} %s)'%(specie_label,ekin_label)
+        u['ekin_density'] = 'MeV'
 
     @property
     def w(self):
