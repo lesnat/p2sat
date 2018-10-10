@@ -121,31 +121,16 @@ class PhaseSpace(object):
         """
         txt  = "\n"
         txt += "p2sat PhaseSpace instance located at %s\n\n"%hex(id(self))
-        txt += "Specie                      : %s\n"%self.specie["name"]
-        txt += "Number of configurations    : %i\n"%len(self)
-        txt += "Total number of particles   : %.4E\n\n"%sum(self.data.w)
-        txt += "Statistics  : ( min      ,  max      ,  mean     ,  std      ) unit\n"
-        txt += "    w       : (% .3E, % .3E, % .3E, % .3E) \n"%(min(self.data.w),max(self.data.w),self.data.w.mean(),self.data.w.std())
-        txt += "    t       : (% .3E, % .3E, % .3E, % .3E) fs\n\n"%(min(self.data.t),max(self.data.t),self.data.t.mean(),self.data.t.std())
+        txt += "Specie                    : %s\n"%self.specie["name"]
+        txt += "Number of configurations  : %i\n"%len(self)
+        txt += "Total number of particles : %.4E\n\n"%sum(self.data.w)
+        
+        txt += "Statistics                : ( min      ,  max      ,  mean     ,  std      ) unit\n"
 
-        txt += "    x       : (% .3E, % .3E, % .3E, % .3E) um\n"%(min(self.data.x),max(self.data.x),self.data.x.mean(),self.data.x.std())
-        txt += "    y       : (% .3E, % .3E, % .3E, % .3E) um\n"%(min(self.data.y),max(self.data.y),self.data.y.mean(),self.data.y.std())
-        txt += "    z       : (% .3E, % .3E, % .3E, % .3E) um\n"%(min(self.data.z),max(self.data.z),self.data.z.mean(),self.data.z.std())
-        txt += "    r       : (% .3E, % .3E, % .3E, % .3E) um\n\n"%(min(self.data.r),max(self.data.r),self.data.r.mean(),self.data.r.std())
-
-        txt += "    px      : (% .3E, % .3E, % .3E, % .3E) MeV/c\n"%(min(self.data.px),max(self.data.px),self.data.px.mean(),self.data.px.std())
-        txt += "    py      : (% .3E, % .3E, % .3E, % .3E) MeV/c\n"%(min(self.data.py),max(self.data.py),self.data.py.mean(),self.data.py.std())
-        txt += "    pz      : (% .3E, % .3E, % .3E, % .3E) MeV/c\n"%(min(self.data.pz),max(self.data.pz),self.data.pz.mean(),self.data.pz.std())
-        txt += "    p       : (% .3E, % .3E, % .3E, % .3E) MeV/c\n\n"%(min(self.data.p),max(self.data.p),self.data.p.mean(),self.data.p.std())
-
-        txt += "    ekin    : (% .3E, % .3E, % .3E, % .3E) MeV\n"%(min(self.data.ekin),max(self.data.ekin),self.data.ekin.mean(),self.data.ekin.std())
-        txt += "    gamma   : (% .3E, % .3E, % .3E, % .3E) \n"%(min(self.data.gamma),max(self.data.gamma),self.data.gamma.mean(),self.data.gamma.std())
-        txt += "    beta    : (% .3E, % .3E, % .3E, % .3E) \n"%(min(self.data.beta),max(self.data.beta),self.data.beta.mean(),self.data.beta.std())
-        txt += "    v       : (% .3E, % .3E, % .3E, % .3E) um/fs\n\n"%(min(self.data.v),max(self.data.v),self.data.v.mean(),self.data.v.std())
-
-        txt += "    theta   : (% .3E, % .3E, % .3E, % .3E) deg\n"%(min(self.data.theta),max(self.data.theta),self.data.theta.mean(),self.data.theta.std())
-        txt += "    phi     : (% .3E, % .3E, % .3E, % .3E) deg\n"%(min(self.data.phi),max(self.data.phi),self.data.phi.mean(),self.data.phi.std())
-        txt += ""
+        for axis,unit in sorted(self.data.units.items()):
+            ax = self.data.get_axis(axis)
+            txt += "    {ax} : ({mini: .3E}, {maxi: .3E}, {mean: .3E}, {std: .3E}) {unit}\n".format(
+                        ax=axis.ljust(21),mini=ax.min(),maxi=ax.max(),mean=ax.mean(),std=ax.std(),unit=unit)
 
         return txt
 
