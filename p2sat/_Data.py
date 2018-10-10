@@ -302,6 +302,7 @@ class _Data(object):
         - 'range', for a uniform law in a given range. Keywords 'min' and 'max' MUST be given to specify a minimum and maximum
         - 'exp', for exponential distribution. Charasteristic length/time must be given as a value of keyword `x0`/`y0`/`z0`/`t0`
         - 'gauss', for a gaussian distribution. Center of the distribution must be given with keyword 'mu', and standard deviantion with keyword 'sigma'
+        - 'grid', for uniformly placed on a given grid. Keywords 'bins' OR 'min' + 'max' + 'Nbins' MUST be given.
 
         For dict `r`, available laws are :
 
@@ -401,74 +402,53 @@ class _Data(object):
         g_py    = np.sign(g_phi)*np.sqrt((g_p**2 - g_px**2)/(1. + np.tan(g_phi)**2))
         g_pz    = g_py*np.tan(g_phi)
 
-        # Generate position
-        if x is None:
-            g_x = np.array([0.] * Nconf)
-        elif x["law"]=="mono":
-            g_x = np.array([x["x0"]] * Nconf)
-        elif x["law"]=="range":
-            g_x = np.random.uniform(x["min"],x["max"],Nconf)
-        elif x["law"]=="exp":
-            g_x = np.random.exponential(x["x0"],Nconf)
-        elif x["law"]=="gauss":
-            mu = x["mu"]
-            sigma = x["sigma"]
-            g_x = np.random.normal(mu,sigma,Nconf)
+        # Generate position and time
+        ax_dicts = [x,y,z,t]
+        ax_labels= ["x","y","z","t"]
+        for i,ax in enumerate(ax_dicts):
+            if ax is None:
+                g_ax = np.array([0.] * Nconf)
+            elif ax["law"]=="mono":
+                g_ax = np.array([ax[ax_labels[i]+"0"]] * Nconf)
+            elif ax["law"]=="range":
+                g_ax = np.random.uniform(ax["min"],ax["max"],Nconf)
+            elif ax["law"]=="exp":
+                g_ax = np.random.exponential(ax[ax_labels[i]+"0"],Nconf)
+            elif ax["law"]=="gauss":
+                mu = ax["mu"]
+                sigma = ax["sigma"]
+                g_ax = np.random.normal(mu,sigma,Nconf)
+            elif ax["law"]=="grid":
+                try:
+                    bins = ax["bins"]
+                except KeyError:
+                    mini = ax['min']
+                    maxi = ax['max']
+                    Nbins = ax['Nbins']
+                    bins = np.linspace(mini,maxi,Nbins)
+                index = np.random.randint(0,len(bins),Nconf)
+                g_ax = bins[index]
 
-        if y is None:
-            g_y = np.array([0.] * Nconf)
-        elif y["law"]=="mono":
-            g_y = np.array([y["y0"]] * Nconf)
-        elif y["law"]=="range":
-            g_y = np.random.uniform(y["min"],y["max"],Nconf)
-        elif y["law"]=="exp":
-            g_y = np.random.exponential(y["y0"],Nconf)
-        elif y["law"]=="gauss":
-            mu = y["mu"]
-            sigma = y["sigma"]
-            g_y = np.random.normal(mu,sigma,Nconf)
+            if ax_labels[i]=="x":
+                g_x = g_ax
+            if ax_labels[i]=="y":
+                g_y = g_ax
+            if ax_labels[i]=="z":
+                g_z = g_ax
+            if ax_labels[i]=="t":
+                g_t = g_ax
 
-        if z is None:
-            g_z = np.array([0.] * Nconf)
-        elif z["law"]=="mono":
-            g_z = np.array([z["z0"]] * Nconf)
-        elif z["law"]=="range":
-            g_z = np.random.uniform(z["min"],z["max"],Nconf)
-        elif z["law"]=="exp":
-            g_z = np.random.exponential(z["z0"],Nconf)
-        elif z["law"]=="gauss":
-            mu = z["mu"]
-            sigma = z["sigma"]
-            g_z = np.random.normal(mu,sigma,Nconf)
-
-        if r is None:
-            g_r = np.array([0.] * Nconf)
-        elif r["law"]=="range":
-            g_r = np.random.uniform(r["min"],r["max"],Nconf)
+        # Generate transverse position if defined
+        if r is not None:
+            if r["law"]=="range":
+                g_r = np.random.uniform(r["min"],r["max"],Nconf)
+            elif r["law"]=="gauss":
+                mu = r["mu"]
+                sigma = r["sigma"]
+                g_r = np.random.normal(mu,sigma,Nconf)
             angle = np.random.uniform(0.,2*np.pi,Nconf)
             g_z = g_r * np.cos(angle)
             g_y = g_r * np.sin(angle)
-        elif r["law"]=="gauss":
-            mu = r["mu"]
-            sigma = r["sigma"]
-            g_r = np.random.normal(mu,sigma,Nconf)
-            angle = np.random.uniform(0.,2*np.pi,Nconf)
-            g_z = g_r * np.cos(angle)
-            g_y = g_r * np.sin(angle)
-
-        # Generate time
-        if t is None:
-            g_t = np.array([0.] * Nconf)
-        elif t["law"]=="mono":
-            g_t = np.array([t["t0"]] * Nconf)
-        elif t["law"]=="range":
-            g_t = np.random.uniform(t["min"],t["max"],Nconf)
-        elif t["law"]=="exp":
-            g_t = np.random.exponential(t["t0"],Nconf)
-        elif t["law"]=="gauss":
-            mu = t["mu"]
-            sigma = t["sigma"]
-            g_t = np.random.normal(mu,sigma,Nconf)
 
         if verbose: print("Done !")
         # Update current object
