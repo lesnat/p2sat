@@ -104,7 +104,7 @@ See folder `examples/` or documentation to a more complete set of p2sat capabili
 """
 __version__ = "1.3.0"
 
-from PhaseSpace import PhaseSpace
+from .PhaseSpace import PhaseSpace
 
 def testing(name="all"):
     from ._tests import run

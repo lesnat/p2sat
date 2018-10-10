@@ -229,7 +229,7 @@ class _Data(object):
             ax = eval("self.%s"%axis)
             # Filter the data if needed
             if select is not None:
-                ax = self.select(ax,faxes=select.keys(),frange=select.values())
+                ax = self.select(ax,faxes=list(select.keys()),frange=list(select.values()))
             # return result
             return ax
 
