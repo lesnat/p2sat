@@ -161,7 +161,10 @@ class _Data(object):
 
     @property
     def omega(self):
-        return np.pi*self.r**2/self.x**2
+        # return np.pi*self.r**2/self.x**2
+        theta = np.radians(self.theta)
+        phi = np.pi + np.radians(self.phi)
+        return np.sin(theta) * theta * phi
 
     @property
     def etot(self):

@@ -17,7 +17,7 @@ class _Hist(object):
         axis : list of str/np.array
             list of axis to hist
         bwidth : list of float, optional
-            list of bin width. If a bwidth element is None, a calculation is done to have 10 bins in the correspondant axis
+            list of bin width. If a bwidth element is None, a calculation is done to have 100 bins in the correspondant axis
         brange : list of list of 2 float, optional
             list of bin minimum and maximum. If a brange element is None, the minimum/maximum of the axis is taken
         normed : bool or list of bool, optional
@@ -92,8 +92,8 @@ class _Hist(object):
                 # Bin width is over-estimated to fit with bin range
                 blen[i]   = int(np.ceil((brange[i][1] + bwidth[i] - brange[i][0])/bwidth[i]))
             else:
-                # Default is 10 bins
-                blen[i]   = 10
+                # Default is 100 bins
+                blen[i]   = 100
                 bwidth[i] = float(brange[i][1] - brange[i][0])/blen[i]
 
         # Calculate bins
