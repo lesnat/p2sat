@@ -124,7 +124,7 @@ class PhaseSpace(object):
         txt += "Specie                    : %s\n"%self.specie["name"]
         txt += "Number of configurations  : %i\n"%len(self)
         txt += "Total number of particles : %.4E\n\n"%sum(self.data.w)
-        
+
         txt += "Statistics                : ( min      ,  max      ,  mean     ,  std      ) unit\n"
 
         for axis,unit in sorted(self.data.units.items()):

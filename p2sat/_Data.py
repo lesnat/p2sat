@@ -87,22 +87,22 @@ class _Data(object):
         l = self.labels                 ; u = self.units
 
         l['w'] = 'N_{%s}'%specie_label  ; u['w'] = None
-        l['x'] = 'x'                    ; u['x'] = u'µm'
-        l['y'] = 'y'                    ; u['y'] = u'µm'
-        l['z'] = 'z'                    ; u['z'] = u'µm'
+        l['x'] = 'x'                    ; u['x'] = '\mu m'
+        l['y'] = 'y'                    ; u['y'] = '\mu m'
+        l['z'] = 'z'                    ; u['z'] = '\mu m'
         l['px'] = 'p_x'                 ; u['px'] = 'MeV/c'
         l['py'] = 'p_y'                 ; u['py'] = 'MeV/c'
         l['pz'] = 'p_z'                 ; u['pz'] = 'MeV/c'
         l['t'] = 't'                    ; u['t'] = 'fs'
 
-        l['r'] = 'r'                    ; u['r'] = u'um'
+        l['r'] = 'r'                    ; u['r'] = '\mu m'
         l['p'] = 'p'                    ; u['p'] = 'MeV/c'
 
         l['etot'] = etot_label          ; u['etot'] = 'MeV'
         l['ekin'] = ekin_label          ; u['ekin'] = 'MeV'
         l['beta'] = '\\beta'            ; u['beta'] = None
         l['gamma'] = '\gamma'           ; u['gamma'] = None
-        l['v'] = 'v'                    ; u['v'] = u'um/fs'
+        l['v'] = 'v'                    ; u['v'] = '\mu m/fs'
 
         l['theta'] = '\\theta'          ; u['theta'] = 'deg'
         l['phi'] = '\\phi'              ; u['phi'] = 'deg'
