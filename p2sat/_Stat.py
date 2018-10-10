@@ -2,168 +2,177 @@
 import numpy as np
 
 class _Stat(object):
-  """
-  Calculate statistics.
-  """
-  def __init__(self,PhaseSpace):
-    self._ps = PhaseSpace
-
-  def expected_value(self,axis,p=None,select=None):
     """
-    Returns expected value of given axis.
-
-    Parameters
-    ----------
-    axis : str or np.array
-      axis to consider
-    p : float, optional
-      probability
-    select : dict, optional
-      filtering dictionary
-
-    Returns
-    -------
-    E : float
-      expected value of given axis
-
-    Notes
-    -----
-    expected_value is defined as sum(p*axis) with p=w/sum(w)
-
+    Get global statistics from phase space data.
     """
-    d=self._ps.data
-    if type(axis) is str:axis=eval("d.%s"%axis)
+    def __init__(self,PhaseSpace):
+        self._ps = PhaseSpace
 
-    w = np.array(d.w)
-    if select is not None:
-      w = d.select(w,faxis=select.keys(),frange=select.values())
-      axis = d.select(axis,faxis=select.keys(),frange=select.values())
+    def expected_value(self,axis,select=None):
+        """
+        Returns expected value of given axis.
 
-    if p is None:
-      p = w/sum(w)
+        Parameters
+        ----------
+        axis : str or np.array
+            axis to consider
+        select : dict, optional
+            filtering dictionary
 
-    return sum(p*axis)
+        Returns
+        -------
+        E : float
+            expected value of given axis
 
-  def variance(self,axis,select=None):
-    """
-    Returns variance of given axis.
+        Notes
+        -----
+        expected_value is defined as sum(p*axis) with p=w/sum(w)
+        """
+        d=self._ps.data
+        axis = d.get_axis(axis,select=select)
+        w = d.get_axis('w',select=select)
 
-    Parameters
-    ----------
-    axis : str or np.array
-      axis to consider
-    select : dict, optional
-      filtering dictionary
+        p = w/sum(w)
 
-    Returns
-    -------
-    var : float
-      variance of given axis
+        return sum(p*axis)
 
-    Notes
-    -----
-    variance is defined as expected_value((axis - expected_value(axis))**2)
-    """
-    d=self._ps.data
-    if type(axis) is str:axis=eval("d.%s"%axis)
+    def variance(self,axis,select=None):
+        """
+        Returns variance of given axis.
 
-    p=None
-    if select is not None:
-      axis = d.select(axis,faxis=select.keys(),frange=select.values())
-      w = d.select(d.w,faxis=select.keys(),frange=select.values())
-      p = w/sum(w)
+        Parameters
+        ----------
+        axis : str or np.array
+            axis to consider
+        select : dict, optional
+            filtering dictionary
 
-    ev = self.expected_value
+        Returns
+        -------
+        var : float
+            variance of given axis
 
-    var = ev((axis - ev(axis,p=p))**2,p=p)
+        Notes
+        -----
+        variance is defined as expected_value((axis - expected_value(axis))**2)
+        """
+        d=self._ps.data
+        axis = d.get_axis(axis,select=select)
+        w = d.get_axis("w",select=select)
 
-    return var
+        ev = self.expected_value
 
-  def standard_deviation(self,axis,select=None):
-    """
-    Returns standard deviation of given axis.
+        var = ev((axis - ev(axis))**2)
 
-    Parameters
-    ----------
-    axis : str or np.array
-      axis to consider
-    select : dict, optional
-      filtering dictionary
+        return var
 
-    Returns
-    -------
-    std : float
-      standard deviation of given axis
+    def standard_deviation(self,axis,select=None):
+        """
+        Returns standard deviation of given axis.
 
-    Notes
-    -----
-    standard_deviation is defined as the square root of variance
-    """
-    return np.sqrt(self.variance(axis,select=select))
+        Parameters
+        ----------
+        axis : str or np.array
+            axis to consider
+        select : dict, optional
+            filtering dictionary
 
-  def covariance(self,axis1,axis2,select=None):
-    """
-    Returns covariance of given axes.
+        Returns
+        -------
+        std : float
+            standard deviation of given axis
 
-    Parameters
-    ----------
-    axis1 : str or np.array
-      axis to consider
-    axis2 : str or np.array
-      axis to consider
-    select : dict, optional
-      filtering dictionary
+        Notes
+        -----
+        standard_deviation is defined as the square root of variance
+        """
+        return np.sqrt(self.variance(axis,select=select))
 
-    Returns
-    -------
-    cov : float
-      covariance of given axes
+    def covariance(self,axis1,axis2,select=None):
+        """
+        Returns covariance of given axes.
 
-    Notes
-    -----
-    covariance is defined as expected_value((axis1-expected_value(axis1)) * (axis2-expected_value(axis2)))
-    """
-    d=self._ps.data
-    if type(axis1) is str:axis1=eval("d.%s"%axis1)
-    if type(axis2) is str:axis2=eval("d.%s"%axis2)
+        Parameters
+        ----------
+        axis1 : str or np.array
+            axis to consider
+        axis2 : str or np.array
+            axis to consider
+        select : dict, optional
+            filtering dictionary
 
-    p = None
-    if select is not None:
-      axis1 = d.select(axis1,faxis=select.keys(),frange=select.values())
-      axis2 = d.select(axis2,faxis=select.keys(),frange=select.values())
-      w = d.select(d.w,faxis=select.keys(),frange=select.values())
-      p = w/sum(w)
+        Returns
+        -------
+        cov : float
+            covariance of given axes
 
-    ev = self.expected_value
+        Notes
+        -----
+        covariance is defined as expected_value((axis1-expected_value(axis1)) * (axis2-expected_value(axis2)))
+        """
+        d=self._ps.data
+        axis1 = d.get_axis(axis1,select=select)
+        axis2 = d.get_axis(axis2,select=select)
 
-    cov = ev((axis1-ev(axis1,p=p))*(axis2-ev(axis2,p=p)),p=p)
+        ev = self.expected_value
 
-    return cov
+        cov = ev((axis1-ev(axis1))*(axis2-ev(axis2)))
 
-  def correlation_coefficient(self,axis1,axis2,select=None):
-    """
-    Returns correlation coefficient of given axes.
+        return cov
 
-    Parameters
-    ----------
-    axis1 : str or np.array
-      axis to consider
-    axis2 : str or np.array
-      axis to consider
-    select : dict, optional
-      filtering dictionary
+    def correlation_coefficient(self,axis1,axis2,select=None):
+        """
+        Returns correlation coefficient of given axes.
 
-    Returns
-    -------
-    cc : float
-      correlation coefficient of given axes
+        Parameters
+        ----------
+        axis1 : str or np.array
+            axis to consider
+        axis2 : str or np.array
+            axis to consider
+        select : dict, optional
+            filtering dictionary
 
-    Notes
-    -----
-    correlation_coefficient is defined as covariance(axis1,axis2)/(standard_deviation(axis1)*standard_deviation(axis2))
-    """
-    std = self.standard_deviation
+        Returns
+        -------
+        cc : float
+            correlation coefficient of given axes
 
-    cc = self.covariance(axis1,axis2,select=select)/(std(axis1,select=select)*std(axis2,select=select))
+        Notes
+        -----
+        correlation_coefficient is defined as covariance(axis1,axis2)/(standard_deviation(axis1)*standard_deviation(axis2))
+        """
+        std = self.standard_deviation
 
-    return cc
+        cc = self.covariance(axis1,axis2,select=select)/(std(axis1,select=select)*std(axis2,select=select))
+
+        return cc
+
+    def total_energy(self,unit="J",select=None):
+        """
+        Return total energy contained in the phase space
+
+        Parameters
+        ----------
+        unit : str, optional
+            unit of energy. Available are 'J' and 'MeV'. Default is 'J'
+        select : dict, optional
+            filtering dictionary
+
+        See Also
+        --------
+        data.select
+        """
+        d = self._ps.data
+        w = d.get_axis('w',select=select)
+        ekin = d.get_axis('ekin',select=select)
+
+        E_MeV = sum(w*ekin)
+        E_J = E_MeV * 1e6 * 1.6e-19
+
+        if unit == "MeV":
+            return E_MeV
+        elif unit =="J":
+            return E_J
+        else:
+            raise NameError("Unknown unit name.")

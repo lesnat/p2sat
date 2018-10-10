@@ -107,11 +107,11 @@ __version__ = "1.1.2"
 from PhaseSpace import PhaseSpace
 
 def testing(name="all"):
-  from ._tests import run
-  if name=="all":
-    run(name="raw")
-    run(name="hist")
-    run(name="plot")
-    run(name="heritage")
-  else:
-    run(name=name)
+    from ._tests import run
+    if name=="all":
+        run(name="raw")
+        run(name="hist")
+        run(name="plot")
+        run(name="heritage")
+    else:
+        run(name=name)
