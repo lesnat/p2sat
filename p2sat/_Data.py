@@ -27,10 +27,6 @@ class _Data(object):
         normalized velocity
     v : numpy.ndarray
         velocity in um/fs
-    theta : numpy.ndarray
-        polar angle (between px and the plane (py,pz)) in degree
-    phi : numpy.ndarray
-        azimutal angle (between py and pz) in degree
 
     Notes
     -----
@@ -113,85 +109,329 @@ class _Data(object):
 
     @property
     def w(self):
+        """
+        Particle statistical weight
+        """
         return self._w
 
     @property
     def x(self):
+        """
+        Particle position in propagation direction x (in um)
+        """
         return self._x
 
     @property
     def y(self):
+        """
+        Particle position in transverse direction y (in um)
+        """
         return self._y
 
     @property
     def z(self):
+        """
+        Particle position in transverse direction z (in um)
+        """
         return self._z
 
     @property
     def px(self):
+        """
+        Particle momentum in propagation direction x (in MeV/c)
+        """
         return self._px
 
     @property
     def py(self):
+        """
+        Particle momentum in transverse direction y (in MeV/c)
+        """
         return self._py
 
     @property
     def pz(self):
+        """
+        Particle momentum in transverse direction z (in MeV/c)
+        """
         return self._pz
 
     @property
     def t(self):
+        """
+        Particle time (in fs)
+        """
         return self._t
 
     @property
     def r(self):
+        """
+        Particle distance to the propagation direction x (in um)
+
+        Notes
+        -----
+        r is calculated as follow :
+
+        .. math::
+            r = \sqrt{y^2+z^2}
+        """
         return np.sqrt(self.y**2+self.z**2)
 
     @property
     def p(self):
+        """
+        Particle absolute momentum (in MeV/c)
+
+        Notes
+        -----
+        p is calculated as follow :
+
+        .. math::
+            p = \sqrt{p_x^2+p_y^2+p_z^2}
+        """
         return np.sqrt(self.px**2+self.py**2+self.pz**2)
 
     @property
     def theta(self):
+        """
+        Particle polar angle (between px and the plane (py,pz)) (in deg)
+
+        Notes
+        -----
+        theta is calculated as follow :
+
+        .. math::
+            \\theta = \\arccos{p_x/p}
+
+        References
+        ----------
+        https://en.wikipedia.org/wiki/List_of_common_coordinate_transformations#To_spherical_coordinates
+        with switching (x->py, y->pz, z->px).
+        A figure can be found at https://en.wikipedia.org/wiki/Spherical_coordinate_system
+        """
         return np.degrees(np.arccos(self.px/self.p))
 
     @property
     def phi(self):
+        """
+        Particle azimutal angle (between py and pz) (in deg)
+
+        Notes
+        -----
+        phi is calculated as follow :
+
+        .. math::
+            \phi = \\arctan{p_z/p_y}
+
+        with using the arctan2 function to have a result between -180 and 180 deg
+
+        References
+        ----------
+        https://en.wikipedia.org/wiki/List_of_common_coordinate_transformations#To_spherical_coordinates
+        with switching (x->py, y->pz, z->px).
+        A figure can be found at https://en.wikipedia.org/wiki/Spherical_coordinate_system
+
+        https://en.wikipedia.org/wiki/Atan2
+        """
         return np.degrees(np.arctan2(self.pz,self.py))
 
-    @property
-    def omega(self):
-        # return np.pi*self.r**2/self.x**2
-        theta = np.radians(self.theta)
-        phi = np.pi + np.radians(self.phi)
-        return np.sin(theta) * theta * phi
+    # @property
+    # def omega(self):
+    #     """
+    #     Particle solid angle (in sr) ????
+    #
+    #     Notes
+    #     -----
+    #     omega is calculated as follow :
+    #
+    #     .. math::
+    #         ???
+    #
+    #     References
+    #     ----------
+    #     https://en.wikipedia.org/wiki/Solid_angle
+    #     """
+    #     # return np.pi*self.r**2/self.x**2
+    #     theta = np.radians(self.theta)
+    #     phi = np.pi + np.radians(self.phi)
+    #     return np.sin(theta) * theta * phi
 
     @property
     def etot(self):
+        """
+        Particle total energy (in MeV)
+
+        Notes
+        -----
+        etot is calculated as follow :
+
+        .. math::
+            E_{tot} = \sqrt{p^2+m_0^2}
+
+        with :math:`m_0` being the rest mass energy
+
+        References
+        ----------
+        https://en.wikipedia.org/wiki/Energy-momentum_relation
+        """
         mass = self._ps.specie["mass"]
         return np.sqrt(self.p**2 + mass**2)
 
     @property
     def ekin(self):
+        """
+        Particle kinetic energy (in MeV)
+
+        Notes
+        -----
+        ekin is calculated as follow :
+
+        .. math::
+            E_{kin} = E_{tot} - m_0
+
+        with :math:`m_0` being the rest mass energy
+
+        References
+        ----------
+        https://en.wikipedia.org/wiki/Energy-momentum_relation
+        """
         mass = self._ps.specie["mass"]
         return self.etot-mass
 
     @property
     def gamma(self):
+        """
+        Particle Lorentz factor
+
+        Notes
+        -----
+        gamma is calculated as follow :
+
+        .. math::
+            \gamma = E_{tot}/m_0
+
+        with :math:`m_0` being the rest mass energy
+
+        References
+        ----------
+        https://en.wikipedia.org/wiki/Lorentz_factor
+        """
         mass = self._ps.specie["mass"]
-        return self.ekin/mass + 1.
+        return self.etot/mass
 
     @property
     def beta(self):
+        """
+        Particle normalized velocity
+
+        Notes
+        -----
+        beta is calculated as follow :
+
+        .. math::
+            \\beta = \sqrt{1 - \\frac{1}{\gamma^2}}
+
+        References
+        ----------
+        https://en.wikipedia.org/wiki/Lorentz_factor
+        """
         return np.sqrt(1.-1./self.gamma**2)
 
     @property
     def v(self):
+        """
+        Particle absolute velocity (in um/fs)
+
+        Notes
+        -----
+        v is calculated as follow :
+
+        .. math::
+            v = \\beta \times c
+
+        with :math:`c` being the speed of light
+
+        References
+        ----------
+        https://en.wikipedia.org/wiki/Lorentz_factor
+        """
         c = 2.99792458e8 * 1e6/1e15 # speed of light in um/fs
         return self.beta * c
 
     @property
+    def ux(self):
+        """
+        Particle direction on x axis
+
+        Notes
+        -----
+        ux is calculated as follow :
+
+        .. math::
+            u_x = \\frac{p_x}{p}
+        """
+        return self.px/self.p
+
+    @property
+    def uy(self):
+        """
+        Particle direction on y axis
+
+        Notes
+        -----
+        uy is calculated as follow :
+
+        .. math::
+            u_y = \\frac{p_y}{p}
+        """
+        return self.py/self.p
+
+    @property
+    def uz(self):
+        """
+        Particle direction on z axis
+
+        Notes
+        -----
+        uz is calculated as follow :
+
+        .. math::
+            u_z = \\frac{p_z}{p}
+        """
+        return self.pz/self.p
+
+    @property
+    def m(self):
+        """
+        Particle relativistic mass (in MeV)
+
+        Notes
+        -----
+        m is calculated as follow :
+
+        .. math::
+            m = \gamma m_0
+
+        with :math:`m_0` being the rest mass energy
+
+        References
+        ----------
+        https://en.wikipedia.org/wiki/Lorentz_factor
+        """
+        pass
+
+    @property
     def ekin_density(self):
+        """
+        Particle energy density (in MeV)
+
+        Notes
+        -----
+        ekin_density is calculated as follow :
+
+        .. math::
+            E_{kin} \times w
+        """
         return self.ekin * self.w
 
     # @property
@@ -311,16 +551,16 @@ class _Data(object):
 
         Details of the calculations :
 
-        Considering :math:`E_T = E_k + E_m` being the total energy, with
-        :math:`E_k` the kinetic energy and :math:`E_m` the rest mass energy.
+        Considering :math:`E_T = E_k + m_0` being the total energy, with
+        :math:`E_k` the kinetic energy and :math:`m_0` the rest mass energy.
 
-        We also have :math:`E_T^2 = p^2 + E_m^2` and :math:`p^2=p_x^2 + p_y^2 + p_z^2`
+        We also have :math:`E_T^2 = p^2 + m_0^2` and :math:`p^2=p_x^2 + p_y^2 + p_z^2`
         with :math:`p` in MeV/c.
 
         Assuming :math:`\cos{\\theta}=\\frac{p_x}{p}` and
         :math:`\\tan{\\phi}=\\frac{p_z}{p_y}` we finaly get
 
-        - :math:`p = E_k^2 - 2 E_k E_m`
+        - :math:`p = E_k^2 - 2 E_k m_0`
         - :math:`p_x = p \cos{\\theta}`
         - :math:`p_y = \\frac{\phi}{\mid \phi \mid} \sqrt{\\frac{p^2 - p_x^2}{1 + \\tan^2{\phi}}}`
         - :math:`p_z = p_y \\tan{\phi}`
