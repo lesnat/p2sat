@@ -302,7 +302,7 @@ class _Hist(object):
             for i,p in enumerate(param):
                 try:
                     if p=="N": raise TypeError
-                    unit = self._ps.data.units[axis]
+                    unit = self._ps.data.raw.units[axis]
                 except TypeError:
                     unit = ""
                 print(u"    {} = {: .4E} ± {:.4E} {:s} ({:.2F} %)".format(p.ljust(7),popt[i],perr[i], unit.ljust(5), perr_pc[i]))

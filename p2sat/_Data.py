@@ -1,5 +1,6 @@
 #coding:utf8
 import numpy as np
+from ._Raw import _Raw
 
 class _Data(object):
     """
@@ -15,434 +16,33 @@ class _Data(object):
         momentum in x,y,z direction in MeV/c
     t : numpy.ndarray
         time in fs
-    r : numpy.ndarray
-        absolute distance to the x axis in um
-    p : numpy.ndarray
-        absolute momentum in MeV/c
-    ekin : numpy.ndarray
-        kinetic energy (for massive species) or total energy (for massless species) in MeV
-    gamma : numpy.ndarray
-        Lorentz factor
-    beta : numpy.ndarray
-        normalized velocity
-    v : numpy.ndarray
-        velocity in um/fs
+
+    Also see documentation to look at all the quantities calculated from these
+    basic phase-space data.
 
     Notes
     -----
     As all the calculations are done with the previously defined units,
     the input data might be firstly converted to those units.
 
-    Definitions :
-
-    - :math:`r = \sqrt{y^2+z^2}`
-    - :math:`p = \sqrt{p_x^2+p_y^2+p_z^2}`
-    - :math:`\\theta = \\arccos{p_x/p}`
-    - :math:`\phi = \\arctan{p_z/p_y}`
-
-    - For massive species (with mass :math:`m`)
-
-        - :math:`E_{kin} = (\sqrt{(p/m c)^2+1}-1) \\times m c^2`
-        - :math:`\gamma = E_{kin}/m c^2 + 1`
-        - :math:`\\beta = \sqrt{1 - \\frac{1}{\gamma^2}}`
-        - :math:`v = \\beta \\times c`
-
-    - For massless species
-
-        - :math:`E_{kin} = p`
-        - :math:`\gamma = +\infty`
-        - :math:`\\beta = 1`
-        - :math:`v = c`
-
     All the attributes can not be overwriden as they are defined as properties.
     Please call the `update` method to update particle phase-space data.
 
-    References
-    ----------
-    For ekin, gamma, beta, v :
-    https://en.wikipedia.org/wiki/Lorentz_factor
-
-    For theta, phi :
-    https://en.wikipedia.org/wiki/List_of_common_coordinate_transformations#To_spherical_coordinates
-    with switching (x->py, y->pz, z->px).
-    A figure can be found at https://en.wikipedia.org/wiki/Spherical_coordinate_system
+    To add a new quantity, please add a new function to this file with the name
+    of the quantity, only the `self` parameter and with the decorator `@property`.
+    Please also add label and unit definition of this new quantity in `__init__`.
     """
     def __init__(self,PhaseSpace):
         self._ps= PhaseSpace
+        self.raw = _Raw(PhaseSpace)
         self.update(None,None,None,None,None,None,None,None,verbose=False)
-
-        specie_label = self._ps.specie['label']
-        if self._ps.specie['name']=="gamma":
-            etot_label = 'E_{\gamma}'
-            ekin_label = 'E_{\gamma}'
-        else:
-            etot_label = 'E_{Tot}'
-            ekin_label = 'E_{kin}'
-
-        self.labels = {}                ; self.units = {}
-        l = self.labels                 ; u = self.units
-
-        l['w'] = 'N_{%s}'%specie_label  ; u['w'] = None
-        l['x'] = 'x'                    ; u['x'] = '\mu m'
-        l['y'] = 'y'                    ; u['y'] = '\mu m'
-        l['z'] = 'z'                    ; u['z'] = '\mu m'
-        l['px'] = 'p_x'                 ; u['px'] = 'MeV/c'
-        l['py'] = 'p_y'                 ; u['py'] = 'MeV/c'
-        l['pz'] = 'p_z'                 ; u['pz'] = 'MeV/c'
-        l['t'] = 't'                    ; u['t'] = 'fs'
-
-        l['r'] = 'r'                    ; u['r'] = '\mu m'
-        l['p'] = 'p'                    ; u['p'] = 'MeV/c'
-
-        l['etot'] = etot_label          ; u['etot'] = 'MeV'
-        l['ekin'] = ekin_label          ; u['ekin'] = 'MeV'
-        l['beta'] = '\\beta'            ; u['beta'] = None
-        l['gamma'] = '\gamma'           ; u['gamma'] = None
-        l['v'] = 'v'                    ; u['v'] = '\mu m/fs'
-
-        l['theta'] = '\\theta'          ; u['theta'] = 'deg'
-        l['phi'] = '\\phi'              ; u['phi'] = 'deg'
-        l['omega'] = '\Omega'           ; u['omega'] = 'sr'
-
-        l['ekin_density'] = '(N_{%s} %s)'%(specie_label,ekin_label)
-        u['ekin_density'] = 'MeV'
-
-    @property
-    def w(self):
-        """
-        Particle statistical weight
-        """
-        return self._w
-
-    @property
-    def x(self):
-        """
-        Particle position in propagation direction x (in um)
-        """
-        return self._x
-
-    @property
-    def y(self):
-        """
-        Particle position in transverse direction y (in um)
-        """
-        return self._y
-
-    @property
-    def z(self):
-        """
-        Particle position in transverse direction z (in um)
-        """
-        return self._z
-
-    @property
-    def px(self):
-        """
-        Particle momentum in propagation direction x (in MeV/c)
-        """
-        return self._px
-
-    @property
-    def py(self):
-        """
-        Particle momentum in transverse direction y (in MeV/c)
-        """
-        return self._py
-
-    @property
-    def pz(self):
-        """
-        Particle momentum in transverse direction z (in MeV/c)
-        """
-        return self._pz
-
-    @property
-    def t(self):
-        """
-        Particle time (in fs)
-        """
-        return self._t
-
-    @property
-    def r(self):
-        """
-        Particle distance to the propagation direction x (in um)
-
-        Notes
-        -----
-        r is calculated as follow :
-
-        .. math::
-            r = \sqrt{y^2+z^2}
-        """
-        return np.sqrt(self.y**2+self.z**2)
-
-    @property
-    def p(self):
-        """
-        Particle absolute momentum (in MeV/c)
-
-        Notes
-        -----
-        p is calculated as follow :
-
-        .. math::
-            p = \sqrt{p_x^2+p_y^2+p_z^2}
-        """
-        return np.sqrt(self.px**2+self.py**2+self.pz**2)
-
-    @property
-    def theta(self):
-        """
-        Particle polar angle (between px and the plane (py,pz)) (in deg)
-
-        Notes
-        -----
-        theta is calculated as follow :
-
-        .. math::
-            \\theta = \\arccos{p_x/p}
-
-        References
-        ----------
-        https://en.wikipedia.org/wiki/List_of_common_coordinate_transformations#To_spherical_coordinates
-        with switching (x->py, y->pz, z->px).
-        A figure can be found at https://en.wikipedia.org/wiki/Spherical_coordinate_system
-        """
-        return np.degrees(np.arccos(self.px/self.p))
-
-    @property
-    def phi(self):
-        """
-        Particle azimutal angle (between py and pz) (in deg)
-
-        Notes
-        -----
-        phi is calculated as follow :
-
-        .. math::
-            \phi = \\arctan{p_z/p_y}
-
-        with using the arctan2 function to have a result between -180 and 180 deg
-
-        References
-        ----------
-        https://en.wikipedia.org/wiki/List_of_common_coordinate_transformations#To_spherical_coordinates
-        with switching (x->py, y->pz, z->px).
-        A figure can be found at https://en.wikipedia.org/wiki/Spherical_coordinate_system
-
-        https://en.wikipedia.org/wiki/Atan2
-        """
-        return np.degrees(np.arctan2(self.pz,self.py))
-
-    # @property
-    # def omega(self):
-    #     """
-    #     Particle solid angle (in sr) ????
-    #
-    #     Notes
-    #     -----
-    #     omega is calculated as follow :
-    #
-    #     .. math::
-    #         ???
-    #
-    #     References
-    #     ----------
-    #     https://en.wikipedia.org/wiki/Solid_angle
-    #     """
-    #     # return np.pi*self.r**2/self.x**2
-    #     theta = np.radians(self.theta)
-    #     phi = np.pi + np.radians(self.phi)
-    #     return np.sin(theta) * theta * phi
-
-    @property
-    def etot(self):
-        """
-        Particle total energy (in MeV)
-
-        Notes
-        -----
-        etot is calculated as follow :
-
-        .. math::
-            E_{tot} = \sqrt{p^2+m_0^2}
-
-        with :math:`m_0` being the rest mass energy
-
-        References
-        ----------
-        https://en.wikipedia.org/wiki/Energy-momentum_relation
-        """
-        mass = self._ps.specie["mass"]
-        return np.sqrt(self.p**2 + mass**2)
-
-    @property
-    def ekin(self):
-        """
-        Particle kinetic energy (in MeV)
-
-        Notes
-        -----
-        ekin is calculated as follow :
-
-        .. math::
-            E_{kin} = E_{tot} - m_0
-
-        with :math:`m_0` being the rest mass energy
-
-        References
-        ----------
-        https://en.wikipedia.org/wiki/Energy-momentum_relation
-        """
-        mass = self._ps.specie["mass"]
-        return self.etot-mass
-
-    @property
-    def gamma(self):
-        """
-        Particle Lorentz factor
-
-        Notes
-        -----
-        gamma is calculated as follow :
-
-        .. math::
-            \gamma = E_{tot}/m_0
-
-        with :math:`m_0` being the rest mass energy
-
-        References
-        ----------
-        https://en.wikipedia.org/wiki/Lorentz_factor
-        """
-        mass = self._ps.specie["mass"]
-        return self.etot/mass
-
-    @property
-    def beta(self):
-        """
-        Particle normalized velocity
-
-        Notes
-        -----
-        beta is calculated as follow :
-
-        .. math::
-            \\beta = \sqrt{1 - \\frac{1}{\gamma^2}}
-
-        References
-        ----------
-        https://en.wikipedia.org/wiki/Lorentz_factor
-        """
-        return np.sqrt(1.-1./self.gamma**2)
-
-    @property
-    def v(self):
-        """
-        Particle absolute velocity (in um/fs)
-
-        Notes
-        -----
-        v is calculated as follow :
-
-        .. math::
-            v = \\beta \times c
-
-        with :math:`c` being the speed of light
-
-        References
-        ----------
-        https://en.wikipedia.org/wiki/Lorentz_factor
-        """
-        c = 2.99792458e8 * 1e6/1e15 # speed of light in um/fs
-        return self.beta * c
-
-    @property
-    def ux(self):
-        """
-        Particle direction on x axis
-
-        Notes
-        -----
-        ux is calculated as follow :
-
-        .. math::
-            u_x = \\frac{p_x}{p}
-        """
-        return self.px/self.p
-
-    @property
-    def uy(self):
-        """
-        Particle direction on y axis
-
-        Notes
-        -----
-        uy is calculated as follow :
-
-        .. math::
-            u_y = \\frac{p_y}{p}
-        """
-        return self.py/self.p
-
-    @property
-    def uz(self):
-        """
-        Particle direction on z axis
-
-        Notes
-        -----
-        uz is calculated as follow :
-
-        .. math::
-            u_z = \\frac{p_z}{p}
-        """
-        return self.pz/self.p
-
-    @property
-    def m(self):
-        """
-        Particle relativistic mass (in MeV)
-
-        Notes
-        -----
-        m is calculated as follow :
-
-        .. math::
-            m = \gamma m_0
-
-        with :math:`m_0` being the rest mass energy
-
-        References
-        ----------
-        https://en.wikipedia.org/wiki/Lorentz_factor
-        """
-        pass
-
-    @property
-    def ekin_density(self):
-        """
-        Particle energy density (in MeV)
-
-        Notes
-        -----
-        ekin_density is calculated as follow :
-
-        .. math::
-            E_{kin} \times w
-        """
-        return self.ekin * self.w
-
-    # @property
-    # def brilliance(self):
-    #     return photons/s/mm2/mrad2/0.1%BW.
 
     def get_ps(self):
         """
         Return current phase space raw data.
         """
-        return (self.w,self.x,self.y,self.z,self.px,self.py,self.pz,self.t)
+        r = self.raw
+        return (r.w,r.x,r.y,r.z,r.px,r.py,r.pz,r.t)
 
     def get_axis(self,axis,select=None):
         """
@@ -466,7 +66,7 @@ class _Data(object):
             return axis
         else:
             # Evaluate axis
-            ax = eval("self.%s"%axis)
+            ax = eval("self.raw.%s"%axis)
             # Filter the data if needed
             if select is not None:
                 ax = self.select(ax,faxes=list(select.keys()),frange=list(select.values()))
@@ -487,14 +87,14 @@ class _Data(object):
         """
         if verbose: print("Updating raw values ...")
         # Save values into np.array objects
-        self._w  = np.array(w)
-        self._x  = np.array(x)
-        self._y  = np.array(y)
-        self._z  = np.array(z)
-        self._px = np.array(px)
-        self._py = np.array(py)
-        self._pz = np.array(pz)
-        self._t  = np.array(t)
+        self.raw._w  = np.array(w)
+        self.raw._x  = np.array(x)
+        self.raw._y  = np.array(y)
+        self.raw._z  = np.array(z)
+        self.raw._px = np.array(px)
+        self.raw._py = np.array(py)
+        self.raw._pz = np.array(pz)
+        self.raw._t  = np.array(t)
         if verbose: print("Done !")
 
     def generate(self,Nconf,Npart,ekin,theta,phi,x=None,y=None,z=None,r=None,t=None,verbose=True):
@@ -719,11 +319,11 @@ class _Data(object):
         Given the `PhaseSpace` instance `eps`, it is possible to filter by an int value
         (Select all the :math:`w` satisfying :math:`x=3`)
 
-        >>> w,x = eps.data.select('w','x',3)
+        >>> w,x = eps.data.select('w',['x'],[3])
 
         or filter by a range (Select all the :math:`\\theta` with :math:`E_{kin} \in [0.511,+\infty]` MeV)
 
-        >>> theta,ekin = eps.data.select('theta','ekin',[0.511,None])
+        >>> theta,ekin = eps.data.select('theta',['ekin'],[[0.511,None]])
 
         If frange is a list/tuple or a float, the filtering is done with a fpp precision
         """
@@ -897,77 +497,79 @@ class _Data(object):
         if time is not None and x_pos is not None:
             raise ValueError("time and x_pos can not be defined simultaneously.")
 
-        w = self.w
-        px = self.px
-        py = self.py
-        pz = self.pz
+        r = self.raw
+
+        w = r.w
+        px = r.px
+        py = r.py
+        pz = r.pz
 
         if time is not None:
             if verbose: print("Propagate %s phase-space to time = %.4E fs."%(self._ps.specie["name"],time))
             t = np.array([time]*len(w))
-            Dt = t - self.t
-            x = self.x + (self.px/self.p)*self.v*Dt
-            y = self.y + (self.py/self.p)*self.v*Dt
-            z = self.z + (self.pz/self.p)*self.v*Dt
+            Dt = t - r.t
+            x = r.x + (r.px/r.p)*r.v*Dt
+            y = r.y + (r.py/r.p)*r.v*Dt
+            z = r.z + (r.pz/r.p)*r.v*Dt
 
         if x_pos is not None:
             if verbose: print("Propagate %s phase-space to x = %.4E um."%(self._ps.specie["name"],x_pos))
             x = np.array([x_pos]*len(w))
-            Dt = (x - self.x)/self.v
-            t = self.t + Dt
-            y = self.y + (self.py/self.p)*self.v*Dt
-            z = self.z + (self.pz/self.p)*self.v*Dt
+            Dt = (x - r.x)/r.v
+            t = r.t + Dt
+            y = r.y + (r.py/r.p)*r.v*Dt
+            z = r.z + (r.pz/r.p)*r.v*Dt
 
         if update:
             self.update(w,x,y,z,px,py,pz,t,verbose=verbose)
         else:
             return w,x,y,z,px,py,pz,t
 
-    def lorentz(self,beta_CM,verbose=True):
-        """
-        Lorentz-transformate the particle phase-space with given speed of the center of mass.
-
-        TODO
-
-        References
-        ----------
-        https://en.wikipedia.org/wiki/Lorentz_transformation#Transformation_of_other_quantities
-        """
-        if verbose: print("Lorentz-transform %s phase-space with center of mass frame moving at %s c."%(self._ps.specie,beta_CM))
-        # lowercase : scalar, caption : vector
-
-        B = -np.array(beta_CM)
-        b = np.dot(B,B)
-        N = B/b
-        c = 2.99792458e8 * 1e6/1e15 # speed of light in um/fs
-        v = b * c
-        g = 1./np.sqrt(1-b**2)
-
-        # 4 position
-        a1 = c*self.t
-        Z1 = np.array([self.x,self.y,self.z]).T
-
-        a2,Z2 =[],[]
-        for i in range(len(a1)):
-            a2.append(g*(a1[i] - (v*np.dot(N,Z1[i]))/c))
-            Z2.append(Z1[i] + (g-1)*np.dot(Z1[i],N)*N - g*(a1[i]*v*N)/c)
-
-        t = np.array(a2)/c
-        x,y,z = np.array(Z2).T
-
-        # 4 momentum
-        a1 = self.ekin/c
-        Z1 = np.array([self.px,self.py,self.pz]).T
-
-        a2,Z2 =[],[]
-        for i in range(len(a1)):
-            a2.append(g*(a1[i] - (v*np.dot(N,Z1[i]))/c))
-            Z2.append(Z1[i] + (g-1)*np.dot(Z1[i],N)*N - g*(a1[i]*v*N)/c)
-
-        px,py,pz = np.array(Z2).T
-
-        w = self.w
-        self.update(w,x,y,z,px,py,pz,t)
+    # def lorentz(self,beta_CM,verbose=True):
+    #     """
+    #     Lorentz-transformate the particle phase-space with given speed of the center of mass.
+    #
+    #     TODO
+    #
+    #     References
+    #     ----------
+    #     https://en.wikipedia.org/wiki/Lorentz_transformation#Transformation_of_other_quantities
+    #     """
+    #     if verbose: print("Lorentz-transform %s phase-space with center of mass frame moving at %s c."%(self._ps.specie,beta_CM))
+    #     # lowercase : scalar, caption : vector
+    #
+    #     B = -np.array(beta_CM)
+    #     b = np.dot(B,B)
+    #     N = B/b
+    #     c = 2.99792458e8 * 1e6/1e15 # speed of light in um/fs
+    #     v = b * c
+    #     g = 1./np.sqrt(1-b**2)
+    #
+    #     # 4 position
+    #     a1 = c*self.t
+    #     Z1 = np.array([self.x,self.y,self.z]).T
+    #
+    #     a2,Z2 =[],[]
+    #     for i in range(len(a1)):
+    #         a2.append(g*(a1[i] - (v*np.dot(N,Z1[i]))/c))
+    #         Z2.append(Z1[i] + (g-1)*np.dot(Z1[i],N)*N - g*(a1[i]*v*N)/c)
+    #
+    #     t = np.array(a2)/c
+    #     x,y,z = np.array(Z2).T
+    #
+    #     # 4 momentum
+    #     a1 = self.ekin/c
+    #     Z1 = np.array([self.px,self.py,self.pz]).T
+    #
+    #     a2,Z2 =[],[]
+    #     for i in range(len(a1)):
+    #         a2.append(g*(a1[i] - (v*np.dot(N,Z1[i]))/c))
+    #         Z2.append(Z1[i] + (g-1)*np.dot(Z1[i],N)*N - g*(a1[i]*v*N)/c)
+    #
+    #     px,py,pz = np.array(Z2).T
+    #
+    #     w = self.raw.w
+    #     self.update(w,x,y,z,px,py,pz,t)
 
     def _discretize(self,with_time,queue=None,**kargs):
         """

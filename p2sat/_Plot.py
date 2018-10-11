@@ -45,49 +45,8 @@ class _Plot(object):
         labels : list of str
             Labels of given axes and label of weight
         """
-        # # Initialization
-        # labels=[]
-        # N_name=""
-        # N_unit=""
-        # if type(normed) is bool:
-        #     if normed:
-        #         normed=[True]*len(axes)
-        #     else:
-        #         normed=[False]*len(axes)
-        # # Loop over all the axes
-        # for i,ax in enumerate(axes):
-        #     # No label if ax is not a str
-        #     if type(ax) is not str:
-        #         labels.append("")
-        #     else:
-        #         # Else get axis name and unit from dicts
-        #         ax_name = self._ps.data.labels[ax]
-        #         ax_unit = self._ps.data.units[ax]
-        #     # ekin is E_\gamma when specie is gamma
-        #     if ax=="ekin" and self._ps.specie["name"] =="gamma":
-        #         ax_name = "E_\gamma"
-        #     # Format the label for axis and unit of N
-        #     if ax_unit is not None:
-        #         labels.append("${}$ ({})".format(ax_name,ax_unit))
-        #         if normed[i]: N_name += "d%s "%(ax_name)
-        #         if normed[i]: N_unit += "%s "%(ax_unit)
-        #     else:
-        #         labels.append(ax_name)
-        #
-        # # Format number name
-        # specie_name = self._ps.specie["label"]
-        # if N_unit =="":
-        #     labels.append("$N_{%s}$"%(specie_name))
-        # else:
-        #     if self.rcParams['text.usetex']:
-        #         labels.append("$\\frac{\displaystyle d N_{%s}}{\displaystyle %s}$ (%s)$^{-1}$"%(specie_name,N_name[:-1],N_unit[:-1]))
-        #     else:
-        #         labels.append("$d N_{%s}/%s$ (%s)$^{-1}$"%(specie_name,N_name[:-1],N_unit[:-1]))
-        #
-        # return labels
-
         # Initialization
-        d = self._ps.data
+        r = self._ps.data.raw
         labels  = []
         ax_label=[]
         ax_unit =[]
@@ -100,8 +59,8 @@ class _Plot(object):
                 ax_label.append("")
                 ax_unit.append("")
             else:
-                ax_label.append(d.labels[ax])
-                ax_unit.append(d.units[ax])
+                ax_label.append(r.labels[ax])
+                ax_unit.append(r.units[ax])
 
         # Get normalization bool list
         if type(normed) is bool:
@@ -124,22 +83,22 @@ class _Plot(object):
 
         # Construct weight label
         if den_label == "":
-            w_label = d.labels[weight]
+            w_label = r.labels[weight]
         else:
-            w_label = "$d%s/%s$"%(d.labels[weight],den_label)
+            w_label = "$d%s/%s$"%(r.labels[weight],den_label)
 
         # Construct weight unit
-        if den_unit == "" and d.units[weight] is None:
+        if den_unit == "" and r.units[weight] is None:
             w_unit  = ""
 
-        if den_unit == "" and d.units[weight] is not None:
-            w_unit = "$%s$"%d.units[weight]
+        if den_unit == "" and r.units[weight] is not None:
+            w_unit = "$%s$"%r.units[weight]
 
-        if den_unit != "" and d.units[weight] is None:
+        if den_unit != "" and r.units[weight] is None:
             w_unit  = "$(%s)^{-1}$"%(den_unit)
 
-        if den_unit != "" and d.units[weight] is not None:
-            w_unit  = "$(%s)/(%s)$"%(d.units[weight],den_unit)
+        if den_unit != "" and r.units[weight] is not None:
+            w_unit  = "$(%s)/(%s)$"%(r.units[weight],den_unit)
 
         # Construct and return labels list
         for i,_ in enumerate(axes):

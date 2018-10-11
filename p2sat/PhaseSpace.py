@@ -102,14 +102,17 @@ class PhaseSpace(object):
 
         ps = PhaseSpace(specie=spec1)
 
-        w   = np.array([list(self.data.w) + list(other.data.w)])[0]
-        x   = np.array([list(self.data.x) + list(other.data.x)])[0]
-        y   = np.array([list(self.data.y) + list(other.data.y)])[0]
-        z   = np.array([list(self.data.z) + list(other.data.z)])[0]
-        px  = np.array([list(self.data.px) + list(other.data.px)])[0]
-        py  = np.array([list(self.data.py) + list(other.data.py)])[0]
-        pz  = np.array([list(self.data.pz) + list(other.data.pz)])[0]
-        t   = np.array([list(self.data.t) + list(other.data.t)])[0]
+        rs = self.data.raw
+        ro = other.data.raw
+
+        w   = np.array([list(rs.w) + list(ro.w)])[0]
+        x   = np.array([list(rs.x) + list(ro.x)])[0]
+        y   = np.array([list(rs.y) + list(ro.y)])[0]
+        z   = np.array([list(rs.z) + list(ro.z)])[0]
+        px  = np.array([list(rs.px) + list(ro.px)])[0]
+        py  = np.array([list(rs.py) + list(ro.py)])[0]
+        pz  = np.array([list(rs.pz) + list(ro.pz)])[0]
+        t   = np.array([list(rs.t) + list(ro.t)])[0]
 
         ps.data.update(w,x,y,z,px,py,pz,t,verbose=False)
 
@@ -123,11 +126,11 @@ class PhaseSpace(object):
         txt += "p2sat PhaseSpace instance located at %s\n\n"%hex(id(self))
         txt += "Specie                    : %s\n"%self.specie["name"]
         txt += "Number of configurations  : %i\n"%len(self)
-        txt += "Total number of particles : %.4E\n\n"%sum(self.data.w)
+        txt += "Total number of particles : %.4E\n\n"%sum(self.data.raw.w)
 
         txt += "Statistics                : ( min      ,  max      ,  mean     ,  std      ) unit\n"
 
-        for axis,unit in sorted(self.data.units.items()):
+        for axis,unit in sorted(self.data.raw.units.items()):
             ax = self.data.get_axis(axis)
             txt += "    {ax} : ({mini: .3E}, {maxi: .3E}, {mean: .3E}, {std: .3E}) {unit}\n".format(
                         ax=axis.ljust(21),mini=ax.min(),maxi=ax.max(),mean=ax.mean(),std=ax.std(),unit=unit)
@@ -138,8 +141,7 @@ class PhaseSpace(object):
         """
         Return the total number of configurations.
         """
-        return len(self.data.w)
-
+        return len(self.data.raw.w)
 
     def copy(self,verbose=False):
         """
@@ -151,7 +153,7 @@ class PhaseSpace(object):
           verbosity of the function. If True, a message is displayed when the attributes are loaded in memory
         """
         new = PhaseSpace(specie=self.specie["name"])
-        d=self.data
-        new.data.update(d.w,d.x,d.y,d.z,d.px,d.py,d.pz,d.t,verbose=verbose)
+        r=self.data.raw
+        new.data.update(r.w,r.x,r.y,r.z,r.px,r.py,r.pz,r.t,verbose=verbose)
 
         return new
