@@ -8,29 +8,23 @@ class _Data(object):
 
     Attributes
     ----------
-    w : numpy.ndarray
-        statistical weight
-    x,y,z : numpy.ndarray
-        x,y,z position in um
-    px,py,pz : numpy.ndarray
-        momentum in x,y,z direction in MeV/c
-    t : numpy.ndarray
-        time in fs
-
-    Also see documentation to look at all the quantities calculated from these
-    basic phase-space data.
+    raw : sub-object
+        class containing raw data and physical quantities calculations
 
     Notes
     -----
+    Units :
+    - lengths are defined in :math:`10^{-6}` meters (um)
+    - momentums are defined in :math:`10^{6}` electron-volt/speed of light (MeV/c)
+    - times are defined in :math:`10^{-15}` seconds (fs)
+    - energies are defined in :math:`10^{6}` electron-volt (MeV)
+    - angles are defined in degrees (deg)
+
     As all the calculations are done with the previously defined units,
     the input data might be firstly converted to those units.
 
     All the attributes can not be overwriden as they are defined as properties.
     Please call the `update` method to update particle phase-space data.
-
-    To add a new quantity, please add a new function to this file with the name
-    of the quantity, only the `self` parameter and with the decorator `@property`.
-    Please also add label and unit definition of this new quantity in `__init__`.
     """
     def __init__(self,PhaseSpace):
         self._ps= PhaseSpace

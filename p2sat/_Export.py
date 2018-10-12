@@ -44,7 +44,7 @@ class _Export(object):
         """
         if verbose: print("Exporting %s phase space in %s ..."%(self._ps.specie["name"],file_name))
 
-        d=self._ps.data
+        d=self._ps.data.raw
 
         # Opening the output file
         with open(file_name,'w') as f:

@@ -18,6 +18,13 @@ PhaseSpace.data
 .. autoclass:: p2sat._Data._Data
   :members:
 
+===================
+PhaseSpace.data.raw
+===================
+
+.. autoclass:: p2sat._Data._Raw
+  :members:
+
 ===============
 PhaseSpace.hist
 ===============

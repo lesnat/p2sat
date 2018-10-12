@@ -15,18 +15,11 @@ class _Raw(object):
         momentum in x,y,z direction in MeV/c
     t : numpy.ndarray
         time in fs
-
-    Also see documentation to look at all the quantities calculated from these
-    basic phase-space data.
+    others : numpy.ndarray
+        see also documentation to look at all the quantities calculated from phase-space data
 
     Notes
     -----
-    As all the calculations are done with the previously defined units,
-    the input data might be firstly converted to those units.
-
-    All the attributes can not be overwriden as they are defined as properties.
-    Please call the `update` method to update particle phase-space data.
-
     To add a new quantity, please add a new function to this file with the name
     of the quantity, only the `self` parameter and with the decorator `@property`.
     Please also add label and unit definition of this new quantity in `__init__`.
@@ -313,7 +306,7 @@ class _Raw(object):
         v is calculated as follow :
 
         .. math::
-            v = \\beta \times c
+            v = \\beta \\times c
 
         with :math:`c` being the speed of light
 
@@ -397,7 +390,7 @@ class _Raw(object):
         ekin_density is calculated as follow :
 
         .. math::
-            E_{kin} \times w
+            E_{kin} \\times w
         """
         return self.ekin * self.w
 
