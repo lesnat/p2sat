@@ -36,7 +36,7 @@ class _Extract(object):
         --------
         export.txt
         """
-        if verbose: print("Extracting %s phase space from %s ..."%(self._ps.specie["name"],file_name))
+        if verbose: print("Extracting %s phase space from %s ..."%(self._ps.particle["name"],file_name))
 
         # Initialize data lists
         w         = []
@@ -170,13 +170,13 @@ class _Extract(object):
         --------
         For the gp3m2 output file name `Al_target_nt_electron_t0.csv`, the base_name
         is `Al_target`.
-        Assuming a `p2sat.PhaseSpace` object is instanciated for specie `e-` as eps,
+        Assuming a `p2sat.PhaseSpace` object is instanciated for particle `e-` as eps,
         you can import simulation results for all the threads as follows
 
         >>> eps.extract.gp3m2_csv("Al_target")
         """
-        # Get gp3m2 specie name from p2sat specie name
-        part = self._ps.specie["name"]
+        # Get gp3m2 particle name from p2sat particle name
+        part = self._ps.particle["name"]
         if part=="e-":
             part_name = "electron"
         elif part=="e+":
@@ -236,18 +236,18 @@ class _Extract(object):
 
         Examples
         --------
-        >>> eps = p2sat.PhaseSpace(specie="e-")
+        >>> eps = p2sat.PhaseSpace(particle="e-")
         >>> eps.extract.TrILEns_output("../TrILEns/")
         """
-        specie = self._ps.specie["name"]
-        if verbose:print("Extracting {} phase space from {}output.txt ...".format(specie,path))
+        particle = self._ps.particle["name"]
+        if verbose:print("Extracting {} phase space from {}output.txt ...".format(particle,path))
 
-        # Get TrILEns specie label from p2sat specie name
-        if specie == "e-":
+        # Get TrILEns particle label from p2sat particle name
+        if particle == "e-":
             label = "electrons"
-        elif specie == "e+":
+        elif particle == "e+":
             label = "positrons"
-        elif specie == "gamma":
+        elif particle == "gamma":
             label = "photons"
 
         # Initialize phase space lists
@@ -256,8 +256,8 @@ class _Extract(object):
         px,py,pz  = [],[],[]
         t         = []
 
-        # Boolean to extract only the data of correct specie
-        is_correct_specie=False
+        # Boolean to extract only the data of correct particle
+        is_correct_species=False
 
         # Open output file
         with open(path+'output.txt','r') as f:
@@ -280,8 +280,8 @@ class _Extract(object):
                         chi_to_t = False
                     else:
                         W,X,Y,Z,Px,Py,Pz,Gamma,Chi=line.split()
-                    # If correct specie, save data
-                    if is_correct_specie:
+                    # If correct particle, save data
+                    if is_correct_species:
                         w.append(float(W))
                         x.append(float(X))     ; y.append(float(Y))   ; z.append(float(Z))
                         px.append(float(Px)*0.511)   ; py.append(float(Py)*0.511) ; pz.append(float(Pz)*0.511)
@@ -290,12 +290,12 @@ class _Extract(object):
                         else:
                             t.append(0.)
 
-                # If current line is a string (not possible to read data), test if specie label in current line
+                # If current line is a string (not possible to read data), test if particle label in current line
                 except ValueError:
                     if label in line.split():
-                        is_correct_specie = True
+                        is_correct_species = True
                     else:
-                        is_correct_specie = False
+                        is_correct_species = False
 
         if verbose:print("Done !")
 
@@ -306,9 +306,9 @@ class _Extract(object):
         """
         TODO
         """
-        if self._ps.specie["name"]!="gamma":
-            raise NameError("prop_ph.t contains informations about gamma photons ! Current specie name is %s"%self._ps.specie["name"])
-        if verbose: print("Extracting %s phase space from %s ..."%(self._ps.specie["name"],path+"prop_ph.t"))
+        if self._ps.particle["name"]!="gamma":
+            raise NameError("prop_ph.t contains informations about gamma photons ! Current particle name is %s"%self._ps.particle["name"])
+        if verbose: print("Extracting %s phase space from %s ..."%(self._ps.particle["name"],path+"prop_ph.t"))
 
         # Initialize data lists
         w         = []

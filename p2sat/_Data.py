@@ -173,7 +173,7 @@ class _Data(object):
         """
         # Print a starting message
         if verbose:
-            print("Generate %s phase-space ..."%(self._ps.specie["name"]))
+            print("Generate %s phase-space ..."%(self._ps.particle["name"]))
             print("    ekin  : %s"%ekin)
             print("    theta : %s"%theta)
             print("    phi   : %s"%phi)
@@ -230,7 +230,7 @@ class _Data(object):
             g_ekin = np.random.exponential(ekin["ekin0"],Nconf)
 
         # Reconstruct momentum from energy and angle distributions
-        mass  = self._ps.specie["mass"]
+        mass  = self._ps.particle["mass"]
         g_p     = np.sqrt(g_ekin**2 + 2*g_ekin*mass)
         g_px    = g_p * np.cos(g_theta)
         g_py    = np.sign(g_phi)*np.sqrt((g_p**2 - g_px**2)/(1. + np.tan(g_phi)**2))
@@ -371,7 +371,7 @@ class _Data(object):
         --------
         data.select
         """
-        if verbose: print("Filtering %s phase space with axis %s ..."%(self._ps.specie["name"],faxes))
+        if verbose: print("Filtering %s phase space with axis %s ..."%(self._ps.particle["name"],faxes))
         data = []
         for ax in self.get_ps():
             data.append(self.select(ax,faxes,frange,fpp=fpp))
@@ -411,7 +411,7 @@ class _Data(object):
         if T is None: T = (0.,0.,0.)
         if R is None: R = (0.,0.,0.)
         if verbose:
-            print("Transformate %s phase space ..."%self._ps.specie["name"])
+            print("Transformate %s phase space ..."%self._ps.particle["name"])
             print("    translation : (%.2E,%.2E,%.2E)"%(T[0],T[1],T[2]))
             print("    rotation    : (%.2E,%.2E,%.2E)"%(R[0],R[1],R[2]))
 
@@ -499,7 +499,7 @@ class _Data(object):
         pz = r.pz
 
         if time is not None:
-            if verbose: print("Propagate %s phase-space to time = %.4E fs."%(self._ps.specie["name"],time))
+            if verbose: print("Propagate %s phase-space to time = %.4E fs."%(self._ps.particle["name"],time))
             t = np.array([time]*len(w))
             Dt = t - r.t
             x = r.x + (r.px/r.p)*r.v*Dt
@@ -507,7 +507,7 @@ class _Data(object):
             z = r.z + (r.pz/r.p)*r.v*Dt
 
         if x_pos is not None:
-            if verbose: print("Propagate %s phase-space to x = %.4E um."%(self._ps.specie["name"],x_pos))
+            if verbose: print("Propagate %s phase-space to x = %.4E um."%(self._ps.particle["name"],x_pos))
             x = np.array([x_pos]*len(w))
             Dt = (x - r.x)/r.v
             t = r.t + Dt
@@ -529,7 +529,7 @@ class _Data(object):
     #     ----------
     #     https://en.wikipedia.org/wiki/Lorentz_transformation#Transformation_of_other_quantities
     #     """
-    #     if verbose: print("Lorentz-transform %s phase-space with center of mass frame moving at %s c."%(self._ps.specie,beta_CM))
+    #     if verbose: print("Lorentz-transform %s phase-space with center of mass frame moving at %s c."%(self._ps.particle,beta_CM))
     #     # lowercase : scalar, caption : vector
     #
     #     B = -np.array(beta_CM)
@@ -637,7 +637,7 @@ class _Data(object):
         """
         hn=self._ps.hist.hn
 
-        if verbose : print('Discretize %s phase space with a bin range splited %i times per axis ...'%(self._ps.specie["name"],split))
+        if verbose : print('Discretize %s phase space with a bin range splited %i times per axis ...'%(self._ps.particle["name"],split))
         if MP:
             import time
             import multiprocessing as mp

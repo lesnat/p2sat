@@ -42,7 +42,7 @@ class _Export(object):
 
         Some text can be written if the first character of the line is a '#'.
         """
-        if verbose: print("Exporting %s phase space in %s ..."%(self._ps.specie["name"],file_name))
+        if verbose: print("Exporting %s phase space in %s ..."%(self._ps.particle["name"],file_name))
 
         d=self._ps.data.raw
 
@@ -93,7 +93,7 @@ class _Export(object):
         verbose : bool, optional
             verbosity of the function. If True, a message is displayed when the data is exported
         """
-        if verbose: print("Exporting %s phase space in %s ..."%(self._ps.specie["name"],path+"prop_th.t"))
+        if verbose: print("Exporting %s phase space in %s ..."%(self._ps.particle["name"],path+"prop_th.t"))
 
         d=self._ps.data
 

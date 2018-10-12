@@ -26,8 +26,8 @@ class _Raw(object):
     """
     def __init__(self,PhaseSpace):
         self._ps= PhaseSpace
-        specie_label = self._ps.specie['label']
-        if self._ps.specie['name']=="gamma":
+        part_label = self._ps.particle['label']
+        if self._ps.particle['name']=="gamma":
             etot_label = 'E_{\gamma}'
             ekin_label = 'E_{\gamma}'
         else:
@@ -37,7 +37,7 @@ class _Raw(object):
         self.labels = {}                ; self.units = {}
         l = self.labels                 ; u = self.units
 
-        l['w'] = 'N_{%s}'%specie_label  ; u['w'] = None
+        l['w'] = 'N_{%s}'%part_label    ; u['w'] = None
         l['x'] = 'x'                    ; u['x'] = '\mu m'
         l['y'] = 'y'                    ; u['y'] = '\mu m'
         l['z'] = 'z'                    ; u['z'] = '\mu m'
@@ -63,7 +63,7 @@ class _Raw(object):
         l['phi'] = '\\phi'              ; u['phi'] = 'deg'
         # l['omega'] = '\Omega'           ; u['omega'] = 'sr'
 
-        l['ekin_density'] = '(N_{%s} %s)'%(specie_label,ekin_label)
+        l['ekin_density'] = '(N_{%s} %s)'%(part_label,ekin_label)
         u['ekin_density'] = 'MeV'
 
     @property
@@ -233,7 +233,7 @@ class _Raw(object):
         ----------
         https://en.wikipedia.org/wiki/Energy-momentum_relation
         """
-        mass = self._ps.specie["mass"]
+        mass = self._ps.particle["mass"]
         return np.sqrt(self.p**2 + mass**2)
 
     @property
@@ -254,7 +254,7 @@ class _Raw(object):
         ----------
         https://en.wikipedia.org/wiki/Energy-momentum_relation
         """
-        mass = self._ps.specie["mass"]
+        mass = self._ps.particle["mass"]
         return self.etot-mass
 
     @property
@@ -275,7 +275,7 @@ class _Raw(object):
         ----------
         https://en.wikipedia.org/wiki/Lorentz_factor
         """
-        mass = self._ps.specie["mass"]
+        mass = self._ps.particle["mass"]
         return self.etot/mass
 
     @property
@@ -377,7 +377,7 @@ class _Raw(object):
         ----------
         https://en.wikipedia.org/wiki/Lorentz_factor
         """
-        mass = self._ps.specie["mass"]
+        mass = self._ps.particle["mass"]
         return self.gamma * mass
 
     @property

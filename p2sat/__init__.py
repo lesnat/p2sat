@@ -62,7 +62,7 @@ Assuming `p2sat` is imported, you can instanciate a `PhaseSpace` object for,
 let say, electrons, and import a simulation file containing the phase space
 informations.
 
->>> eps = p2sat.PhaseSpace(specie="electron")
+>>> eps = p2sat.PhaseSpace(particle="electron")
 >>> eps.extract.txt("example.csv",sep=",")
 
 All the data in you simulation file can now be found at `eps.data`
