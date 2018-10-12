@@ -15,13 +15,13 @@ class PhaseSpace(object):
 
     Parameters
     ----------
-    specie : str
-        Name of the particle specie. Availables are gamma,e-,e+,mu-,mu+.
+    particle : str
+        Name of the particle. Availables are gamma,e-,e+,mu-,mu+.
 
     Attributes
     ----------
-    specie : dict
-        contains informations about particle specie, such as name, mass and label in TeX format
+    particle : dict
+        contains informations about particle particle, such as name, mass and label in TeX format
     data : sub-object
         contains raw data and methods to manipulate it, such as discretization or transformation.
     hist : sub-object
@@ -40,7 +40,7 @@ class PhaseSpace(object):
     Assuming you already imported p2sat, you can create a PhaseSpace object
     for, let say, electrons, as follows
 
-    >>> eps = p2sat.PhaseSpace(specie="e-")
+    >>> eps = p2sat.PhaseSpace(particle="e-")
 
     You can then import data from a file, using the `txt` method of sub-object `extract`
 
@@ -60,30 +60,30 @@ class PhaseSpace(object):
     -----
     See sub-objects documentation for more informations
     """
-    def __init__(self,specie):
-        self.specie = {}
-        if specie in ("gamma","g"):
-            self.specie["name"] = "gamma"
-            self.specie["mass"] = 0
-            self.specie["label"]= "\gamma"
-        elif specie in ("positron","e+"):
-            self.specie["name"] = "e+"
-            self.specie["mass"] = 0.511
-            self.specie["label"]= "e^+"
-        elif specie in ("electron","e-"):
-            self.specie["name"] = "e-"
-            self.specie["mass"] = 0.511
-            self.specie["label"]= "e^-"
-        elif specie in ("muon+","mu+"):
-            self.specie["name"] = "mu+"
-            self.specie["mass"] = 105.6
-            self.specie["label"]= "\mu^+"
-        elif specie in ("muon-","mu-"):
-            self.specie["name"] = "mu-"
-            self.specie["mass"] = 105.6
-            self.specie["label"]= "\mu^-"
+    def __init__(self,particle):
+        self.particle = {}
+        if particle in ("gamma","g"):
+            self.particle["name"] = "gamma"
+            self.particle["mass"] = 0
+            self.particle["label"]= "\gamma"
+        elif particle in ("positron","e+"):
+            self.particle["name"] = "e+"
+            self.particle["mass"] = 0.511
+            self.particle["label"]= "e^+"
+        elif particle in ("electron","e-"):
+            self.particle["name"] = "e-"
+            self.particle["mass"] = 0.511
+            self.particle["label"]= "e^-"
+        elif particle in ("muon+","mu+"):
+            self.particle["name"] = "mu+"
+            self.particle["mass"] = 105.6
+            self.particle["label"]= "\mu^+"
+        elif particle in ("muon-","mu-"):
+            self.particle["name"] = "mu-"
+            self.particle["mass"] = 105.6
+            self.particle["label"]= "\mu^-"
         else:
-            raise NameError("Unknown particle specie.")
+            raise NameError("Unknown particle particle.")
         self.data     = _Data(self)
         self.hist     = _Hist(self)
         self.plot     = _Plot(self)
@@ -95,21 +95,24 @@ class PhaseSpace(object):
         """
         Return a new PhaseSpace object, combination of the 2 previous.
         """
-        spec1 = self.specie["name"]
-        spec2 = other.specie["name"]
+        spec1 = self.particle["name"]
+        spec2 = other.particle["name"]
         if spec1 != spec2:
             raise NameError("Can't combine phase space for different species")
 
-        ps = PhaseSpace(specie=spec1)
+        ps = PhaseSpace(particle=spec1)
 
-        w   = np.array([list(self.data.w) + list(other.data.w)])[0]
-        x   = np.array([list(self.data.x) + list(other.data.x)])[0]
-        y   = np.array([list(self.data.y) + list(other.data.y)])[0]
-        z   = np.array([list(self.data.z) + list(other.data.z)])[0]
-        px  = np.array([list(self.data.px) + list(other.data.px)])[0]
-        py  = np.array([list(self.data.py) + list(other.data.py)])[0]
-        pz  = np.array([list(self.data.pz) + list(other.data.pz)])[0]
-        t   = np.array([list(self.data.t) + list(other.data.t)])[0]
+        rs = self.data.raw
+        ro = other.data.raw
+
+        w   = np.array([list(rs.w) + list(ro.w)])[0]
+        x   = np.array([list(rs.x) + list(ro.x)])[0]
+        y   = np.array([list(rs.y) + list(ro.y)])[0]
+        z   = np.array([list(rs.z) + list(ro.z)])[0]
+        px  = np.array([list(rs.px) + list(ro.px)])[0]
+        py  = np.array([list(rs.py) + list(ro.py)])[0]
+        pz  = np.array([list(rs.pz) + list(ro.pz)])[0]
+        t   = np.array([list(rs.t) + list(ro.t)])[0]
 
         ps.data.update(w,x,y,z,px,py,pz,t,verbose=False)
 
@@ -121,13 +124,13 @@ class PhaseSpace(object):
         """
         txt  = "\n"
         txt += "p2sat PhaseSpace instance located at %s\n\n"%hex(id(self))
-        txt += "Specie                    : %s\n"%self.specie["name"]
+        txt += "Specie                    : %s\n"%self.particle["name"]
         txt += "Number of configurations  : %i\n"%len(self)
-        txt += "Total number of particles : %.4E\n\n"%sum(self.data.w)
+        txt += "Total number of particles : %.4E\n\n"%sum(self.data.raw.w)
 
         txt += "Statistics                : ( min      ,  max      ,  mean     ,  std      ) unit\n"
 
-        for axis,unit in sorted(self.data.units.items()):
+        for axis,unit in sorted(self.data.raw.units.items()):
             ax = self.data.get_axis(axis)
             txt += "    {ax} : ({mini: .3E}, {maxi: .3E}, {mean: .3E}, {std: .3E}) {unit}\n".format(
                         ax=axis.ljust(21),mini=ax.min(),maxi=ax.max(),mean=ax.mean(),std=ax.std(),unit=unit)
@@ -138,8 +141,7 @@ class PhaseSpace(object):
         """
         Return the total number of configurations.
         """
-        return len(self.data.w)
-
+        return len(self.data.raw.w)
 
     def copy(self,verbose=False):
         """
@@ -150,8 +152,8 @@ class PhaseSpace(object):
         verbose : bool
           verbosity of the function. If True, a message is displayed when the attributes are loaded in memory
         """
-        new = PhaseSpace(specie=self.specie["name"])
-        d=self.data
-        new.data.update(d.w,d.x,d.y,d.z,d.px,d.py,d.pz,d.t,verbose=verbose)
+        new = PhaseSpace(particle=self.particle["name"])
+        r=self.data.raw
+        new.data.update(r.w,r.x,r.y,r.z,r.px,r.py,r.pz,r.t,verbose=verbose)
 
         return new

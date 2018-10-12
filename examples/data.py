@@ -13,7 +13,7 @@ if p2sat_path not in sys.path:sys.path.append(p2sat_path)
 import p2sat
 
 # Boolean to export or not the generated phase space
-export = True
+export = False
 check_input = True
 
 # Instanciate a PhaseSpace object for electron specie
