@@ -102,7 +102,7 @@ It is also possible to make simple or complicated plot in a elegant way
 See folder `examples/` or documentation to a more complete set of p2sat capabilities.
 
 """
-__version__ = "1.3.0"
+__version__ = "1.4.0"
 
 from .PhaseSpace import PhaseSpace
 
