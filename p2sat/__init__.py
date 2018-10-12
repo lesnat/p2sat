@@ -99,10 +99,11 @@ It is also possible to make simple or complicated plot in a elegant way
 ...             bwidth1=1.0,bwidth2=0.1,
 ...             select={'x':10.0,'t':[0.0,100.0]})
 
-See folder `examples/` or documentation to a more complete set of p2sat capabilities.
+Other examples and a more complete documentation can be found at :
+https://github.com/lesnat/p2sat
 
 """
-__version__ = "1.4.0"
+__version__ = "1.4.1"
 
 from .PhaseSpace import PhaseSpace
 
