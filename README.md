@@ -21,7 +21,20 @@ See objects documentation for more informations.
 
 ## Installation
 
-Download the source code from github and add the following lines at the beginning of your script
+The most simple way to install p2sat is to use pip (https://pypi.org/project/p2sat/)
+
+```bash
+pip install p2sat
+```
+
+Otherwise, you can also download the source code from github and type the following commands
+
+```bash
+cd p2sat
+python setup.py install
+```
+
+If it is not working, you can add the following lines at the beginning of your script
 
 ```python
 p2sat_path="/path/to/p2sat/"
@@ -38,7 +51,7 @@ Here is one quick example of p2sat usage, with my Geant4 app results (see ``exam
 ### Import results from a simulation file
 
 ```python
-eps = p2sat.PhaseSpace(specie="electron")
+eps = p2sat.PhaseSpace(particle="electron")
 eps.extract.txt("example.csv", sep=",")
 ```
 
@@ -70,4 +83,3 @@ eps.plot.h2('y','z',log=True,
 ```
 
 ![](Figure_1.png)
-
