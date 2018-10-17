@@ -469,16 +469,16 @@ class _Data(object):
         # Update raw data
         self.update(w,X,Y,Z,Px,Py,Pz,t,verbose=verbose)
 
-    def propagate(self,x=None,time=None,update=True,verbose=True):
+    def propagate(self,x=None,t=None,update=True,verbose=True):
         """
         Propagate the phase space to a given position or time.
 
         Parameters
         ----------
         x : float, optional
-            propagate the phase-space to x = x. Default is None (no propagation)
+            propagate the phase-space to position x. Default is None (no propagation)
         t : float, optional
-            propagate the phase-space to t = t. Default is None (no propagation)
+            propagate the phase-space to time t. Default is None (no propagation)
         verbose : bool, optional
             verbosity
 
@@ -500,8 +500,8 @@ class _Data(object):
 
         if t is not None:
             if verbose: print("Propagate %s phase-space to t = %.4E fs."%(self._ps.particle["name"],t))
-            T = np.array([t]*len(w))
-            Dt = T - r.t
+            T = np.array([t]*len(W))
+            DT = T - r.t
             X = r.x + (r.px/r.p)*r.v*DT
             Y = r.y + (r.py/r.p)*r.v*DT
             Z = r.z + (r.pz/r.p)*r.v*DT
