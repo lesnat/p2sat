@@ -9,7 +9,7 @@ It allows to make histogram from phase space data in a very simple way
 # Import p2sat
 p2sat_path="../"
 import sys
-if p2sat_path not in sys.path:sys.path.append(p2sat_path)
+if p2sat_path not in sys.path:sys.path.insert(0,p2sat_path)
 import p2sat
 
 # Instanciate a PhaseSpace object for electron specie

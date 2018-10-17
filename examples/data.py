@@ -9,7 +9,7 @@ It allows to generate and manipulate phase space
 # Import p2sat
 p2sat_path="../"
 import sys
-if p2sat_path not in sys.path:sys.path.append(p2sat_path)
+if p2sat_path not in sys.path:sys.path.insert(0,p2sat_path)
 import p2sat
 
 # Boolean to export or not the generated phase space
