@@ -274,6 +274,51 @@ class _Plot(object):
 
         return a
 
+    def a1(self,axis,t=None,pause=.5,where='post',log=False,polar=False,reverse=False,**kargs):
+        """
+        Plot the animation of 1d histogram of given axis.
+
+        Parameters
+        ----------
+        axis : str
+            Name of the axis to plot
+        t : dict
+            ...
+        where : str, optional
+            ...
+        log : bool, optional
+            True to set log scale on y axis
+        polar : bool, optional
+            True to use a polar plot. axis must be an angle
+        reverse : bool, optional
+            True to plot axis against number instead of number against axis
+        kargs : dict, optional
+            Dictionnary to pass to the hist.h1 method
+
+        Notes
+        -----
+
+        See Also
+        --------
+        plot.h1
+        """
+        copy = self._ps.copy()
+        a = plt.gca()
+
+        if t is not None:raise
+
+        T = np.linspace(t["min"],t["max"],t["Nbins"])
+
+        for tt in T:
+            copy.data.propagate(t=tt,verbose=True)
+            if self.autoclear:a.clear()
+            a=copy.plot.h1(axis,where=where,log=log,polar=polar,reverse=reverse,**kargs)
+            a.set_label('t = %.3E fs'%tt)
+            plt.pause(pause)
+        plt.legend()
+
+        return a
+
     def h2(self,axis1,axis2,log=False,polar=False,**kargs):
         """
         Plot the 2d histogram of given axes.
@@ -322,6 +367,41 @@ class _Plot(object):
         plt.colorbar(a2,label=labels[2])
 
         plt.show()
+
+        return a
+
+    def a2(self,axis1,axis2,t=None,pause=.5,log=False,polar=False,**kargs):
+        """
+        Plot the animation of 2d histogram of given axes.
+
+        Parameters
+        ----------
+        axis1,axis2 : str
+            Name of the axes to plot
+        log : bool, optional
+            True to set log scale on y axis
+        polar : bool, optional
+            True to use a polar plot. axis1 must be an angle
+        kargs : dict, optional
+            Dictionnary to pass to the hist.h2 method
+
+        See Also
+        --------
+        plot.h2
+        """
+        copy = self._ps.copy()
+        a = plt.gca()
+
+        if t is not None: raise
+
+        T = np.linspace(t["min"],t["max"],t["Nbins"])
+
+        for tt in T:
+            copy.data.propagate(t=tt,verbose=True)
+            plt.clf()
+            a=copy.plot.h2(axis1,axis2,log=log,polar=polar,**kargs)
+            a.set_title('t = %.3E fs'%tt)
+            plt.pause(pause)
 
         return a
 
@@ -485,9 +565,7 @@ class _Plot(object):
         """
         pass
 
-    def h3(self,axis1,axis2,axis3,
-            snorm=1.0,hmin=0.0,
-            **kargs):
+    def h3(self,axis1,axis2,axis3,snorm=1.0,hmin=0.0,**kargs):
         """
         Plot the 3d histogram of given axes.
 
