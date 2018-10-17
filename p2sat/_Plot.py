@@ -565,7 +565,138 @@ class _Plot(object):
         """
         pass
 
-    def h3(self,axis1,axis2,axis3,snorm=1.0,hmin=0.0,**kargs):
+    def h3(self,axis1,axis2,axis3,s=1,**kargs):
+        """
+        Plot the 3d histogram of given axes.
+
+        TODO
+
+        Parameters
+        ----------
+        axis1,axis2,axis3 : str
+            Name of the axes to plot
+        x : list of float
+            list of x position where to plot
+        kargs : dict, optional
+            Dictionnary to pass to the hist.h2 method
+
+        See Also
+        --------
+        hist.h3
+        """
+        from mpl_toolkits.mplot3d import Axes3D
+        a = plt.subplot(projection='3d')
+        b1,b2,b3,h=self._h.h3(axis1,axis2,axis3,**kargs)
+        # for e in b1:
+        #     ax.pcolormesh()
+        xs,ys,zs,w = [],[],[],[]
+
+        for i1,e1 in enumerate(h):
+            for i2,e2 in enumerate(e1):
+                for i3,e3 in enumerate(e2):
+                    # if e3>hmin:
+                    if e3>0.:
+                        xs.append(b1[i1])
+                        ys.append(b2[i2])
+                        zs.append(b3[i3])
+                        w.append(h[i1][i2][i3])
+
+        c = np.log10(np.array(w))
+        # s = snorm*np.array(w)
+
+        # a.scatter(xs=xs,ys=ys,zs=zs,c=c,s=s)
+        a.scatter(xs=xs,ys=ys,zs=zs,c=c,s=s,marker='s')
+
+        plt.show()
+        return a
+    # def h3(self,axis1,axis2,axis3,**kargs):
+    #     """
+    #     Plot the 3d histogram of given axes.
+    #
+    #     TODO
+    #
+    #     Parameters
+    #     ----------
+    #     axis1,axis2,axis3 : str
+    #         Name of the axes to plot
+    #     x : list of float
+    #         list of x position where to plot
+    #     kargs : dict, optional
+    #         Dictionnary to pass to the hist.h2 method
+    #
+    #     See Also
+    #     --------
+    #     hist.h3
+    #     """
+    #     from mpl_toolkits.mplot3d import Axes3D
+    #     a = plt.subplot(projection='3d')
+    #     ax1 = self._ps.data.get_axis(axis1)
+    #     bwidth1=kargs.get("bwidth1",(max(ax1)-min(ax1))/10.)
+    #
+    #     b1,h1 = self._ps.hist.h1(axis1,bwidth=bwidth1)
+    #     for i1,e1 in enumerate(b1[:-1]):
+    #         if h1[i1]>0.:
+    #             ax2 = self._ps.data.get_axis(axis2,select={axis1:[e1-bwidth1,e1+bwidth1]})
+    #             ax3 = self._ps.data.get_axis(axis3,select={axis1:[e1-bwidth1,e1+bwidth1]})
+    #             w   = self._ps.data.get_axis("w",select={axis1:[e1-bwidth1,e1+bwidth1]})
+    #
+    #             bwidth2=kargs.get("bwidth2",(max(ax2)-min(ax2))/10.)
+    #             bwidth3=kargs.get("bwidth3",(max(ax3)-min(ax3))/10.)
+    #
+    #             h2,b2,b3=np.histogram2d(ax2,ax3,bins=[10,10],weights=w)
+    #             # print(len(h2),len(h2[0]))
+    #             # print(len(b2),len(b3))
+    #             g2,g3=np.meshgrid(b2[:-1],b3[:-1],indexing='ij')
+    #             # a.scatter(b2[:-1].T[:-1].T,b3[:-1].T[:-1].T,c=h2[:-1].T[:-1].T,zs=e1,zdir='x')
+    #             a.contourf(g2,g3,h2,zs=e1,zdir='x')
+    #
+    #     plt.show()
+    #     return a
+    # def h3(self,axis1,axis2,axis3,**kargs):
+    #     """
+    #     Plot the 3d histogram of given axes.
+    #
+    #     TODO
+    #
+    #     Parameters
+    #     ----------
+    #     axis1,axis2,axis3 : str
+    #         Name of the axes to plot
+    #     x : list of float
+    #         list of x position where to plot
+    #     kargs : dict, optional
+    #         Dictionnary to pass to the hist.h2 method
+    #
+    #     See Also
+    #     --------
+    #     hist.h3
+    #     """
+    #     from mpl_toolkits.mplot3d import Axes3D
+    #     a = plt.subplot(projection='3d')
+    #     ax1 = self._ps.data.get_axis(axis1)
+    #     bwidth1=kargs.get("bwidth1",(max(ax1)-min(ax1))/10.)
+    #
+    #     b1,h1 = self._ps.hist.h1(axis1,bwidth=bwidth1)
+    #     for i1,e1 in enumerate(b1[:-1]):
+    #         if h1[i1]>0.:
+    #             ax2 = self._ps.data.get_axis(axis2,select={axis1:[e1-bwidth1,e1+bwidth1]})
+    #             ax3 = self._ps.data.get_axis(axis3,select={axis1:[e1-bwidth1,e1+bwidth1]})
+    #             w   = self._ps.data.get_axis("w",select={axis1:[e1-bwidth1,e1+bwidth1]})
+    #             #
+    #             # bwidth2=kargs.get("bwidth2",(max(ax2)-min(ax2))/10.)
+    #             # bwidth3=kargs.get("bwidth3",(max(ax3)-min(ax3))/10.)
+    #             #
+    #             # h2,b2,b3=np.histogram2d(ax2,ax3,bins=[10,10],weights=w)
+    #             # # print(len(h2),len(h2[0]))
+    #             # # print(len(b2),len(b3))
+    #             # g2,g3=np.meshgrid(b2[:-1],b3[:-1],indexing='ij')
+    #             # # a.scatter(b2[:-1].T[:-1].T,b3[:-1].T[:-1].T,c=h2[:-1].T[:-1].T,zs=e1,zdir='x')
+    #             a.scatter(ax2,ax3,c=w,zs=e1,zdir='x')
+    #
+    #     plt.show()
+    #     return a
+
+    def s3(self,axis1,axis2,axis3,snorm=1.0,**kargs):
         """
         Plot the 3d histogram of given axes.
 
@@ -584,19 +715,16 @@ class _Plot(object):
         """
         from mpl_toolkits.mplot3d import Axes3D
         a = plt.subplot(projection='3d')
-        b1,b2,b3,h=self._h.h3(axis1,axis2,axis3,**kargs)
-        g1,g2,g3=np.meshgrid(b1,b2,b3,indexing='ij')
 
-        tmp=np.array(h)
+        b1  = self._ps.data.get_axis(axis1)
+        b2  = self._ps.data.get_axis(axis2)
+        b3  = self._ps.data.get_axis(axis3)
+        h   = self._ps.data.get_axis(kargs.get("weights","w"))
 
-        for i1,e1 in enumerate(h):
-            for i2,e2 in enumerate(e1):
-                for i3,e3 in enumerate(e2):
-                    if e3<hmin:
-                        tmp[i1][i2][i3]=0.0
-                    else:
-                        tmp[i1][i2][i3]=e3
+        c = h
+        s = snorm * h
 
-        a.scatter3D(g1,g2,g3,s=snorm*tmp,cmap='hot')
-
+        a.scatter(xs=b1,ys=b2,zs=b3,c=c,s=s,marker='o')
+        # a.plot(xs=b1,ys=b2,zs=b3,ls='o')
         plt.show()
+        return a
