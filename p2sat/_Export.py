@@ -93,7 +93,7 @@ class _Export(object):
         verbose : bool, optional
             verbosity of the function. If True, a message is displayed when the data is exported
         """
-        if verbose: print("Exporting %s phase space in %s ..."%(self._ps.particle["name"],path+"prop_th.t"))
+        if verbose: print("Exporting %s phase space in %s ..."%(self._ps.particle["name"],path+"prop_ph.t"))
 
         d=self._ps.data
 
@@ -119,6 +119,83 @@ class _Export(object):
                 f.write("\n")
 
         if verbose: print('Done !')
+
+    # def TrILEns_prop_ph(self,path,with_time=True,other=None,R=None,T=None,htes=True,verbose=True):
+    #     """
+    #     Export particle phase space in a TrILEns input file.
+    #
+    #     Parameters
+    #     ----------
+    #     path : str
+    #         path to the output folder
+    #     with_time : bool, optional
+    #         export phase-space with time coordinate. Default is True
+    #     other : PhaseSpace, optional
+    #         second gamma source. If None, only the phase space of current object is exported
+    #     R : tuple of 3 float, optional
+    #         rotation angles to pass to the `transformate` method. If None, no rotation
+    #     T : tuple of 3 float, optional
+    #         rotation angles to pass to the `transformate` method. If None, no translation
+    #     htes : bool
+    #         half tranform each source. Default is True
+    #     verbose : bool, optional
+    #         verbosity
+    #
+    #     Notes
+    #     -----
+    #
+    #     """
+    #     if other is None:
+    #         sources = self._ps
+    #     else:
+    #         s1 = self._ps.copy()
+    #         s2 = other.copy()
+    #         if R is None: R=(0,0,0)
+    #         if T is None: T=(0,0,0)
+    #
+    #         if htes:
+    #             R1 = - np.array(R)/2.
+    #             T1 = - np.array(T)/2.
+    #             R2 = np.array(R)/2.
+    #             T2 = np.array(T)/2.
+    #         else:
+    #             R1 = (0,0,0)
+    #             T1 = (0,0,0)
+    #             R2 = R
+    #             T2 = T
+    #         if verbose: print("Source 1 :")
+    #         s1.data.transformate(R=R1,T=T1,verbose=verbose)
+    #         if verbose: print("Source 2 :")
+    #         s2.data.transformate(R=R2,T=T2,verbose=verbose)
+    #
+    #         sources = s1 + s2
+    #
+    #     d=sources.data
+    #
+    #     if verbose: print("Exporting %s phase space in %s ..."%(self._ps.particle["name"],path+"prop_th.t"))
+    #
+    #     # Opening the output file
+    #     with open(path+'prop_ph.t','w') as f:
+    #         if with_time:
+    #             f.write('9 1.\n')
+    #             f.write(' poi  phx  phy  phz  pdx  pdy  pdz  gph  tim\n')
+    #         else:
+    #             f.write('8 1.\n')
+    #             f.write(' poi  phx  phy  phz  pdx  pdy  pdz  gph\n')
+    #
+    #         # Write data
+    #         for i in range(len(d.w)):
+    #             if with_time:
+    #                 data=[d.w[i],d.x[i],d.y[i],d.z[i],d.px[i],d.py[i],d.pz[i],1.+d.ekin[i]/0.511,d.t[i]]
+    #             else:
+    #                 data=[d.w[i],d.x[i],d.y[i],d.z[i],d.px[i],d.py[i],d.pz[i],1.+d.ekin[i]/0.511]
+    #
+    #             for e in data:
+    #                 tmp="% .7E"%e # 7 digits precision with E notation
+    #                 f.write("%-16s"%tmp) # the chain is placed under 16 characters
+    #             f.write("\n")
+    #
+    #     if verbose: print('Done !')
 
     def TrILEns_input(self,path,S1,S2,pasdt=1.0,maillage_spatial=None,with_time=True,verbose=True):
         """

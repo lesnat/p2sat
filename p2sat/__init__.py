@@ -103,7 +103,7 @@ Other examples and a more complete documentation can be found at :
 https://github.com/lesnat/p2sat
 
 """
-__version__ = "1.4.1"
+__version__ = "1.4.2"
 
 from .PhaseSpace import PhaseSpace
 
