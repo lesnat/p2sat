@@ -68,13 +68,13 @@ informations.
 All the data in you simulation file can now be found at `eps.data`
 
 >>> # List of all the statistical weights
->>> print(eps.data.w)
+>>> print(eps.data.raw.w)
 [1456.0, 1233.0 , 756.0, ... ]
 >>> # List of all the x position
->>> print(eps.data.x)
+>>> print(eps.data.raw.x)
 [10.0, 50.0, 30.0, ... ]
 >>> # List of all the kinetic energies
->>> print(eps.data.ekin)
+>>> print(eps.data.raw.ekin)
 [1.58, 4.61, 3.28, ... ]
 
 This means that at the first index, there is an electron at position

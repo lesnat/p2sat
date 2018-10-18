@@ -48,7 +48,7 @@ class PhaseSpace(object):
 
     and look at the imported data
 
-    >>> print(eps.data.w)
+    >>> print(eps.data.raw.w)
 
     or print general informations about your data set
 

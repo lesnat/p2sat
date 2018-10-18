@@ -14,6 +14,7 @@ class _Data(object):
     Notes
     -----
     Units :
+
     - lengths are defined in :math:`10^{-6}` meters (um)
     - momentums are defined in :math:`10^{6}` electron-volt/speed of light (MeV/c)
     - times are defined in :math:`10^{-15}` seconds (fs)

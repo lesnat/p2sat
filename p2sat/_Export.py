@@ -30,13 +30,13 @@ class _Export(object):
         -----
         The format in the output file is
         ::
-        # title
-        # legend
-        w x y z px py pz t
-        w x y z px py pz t
-        . . . . .  .  .  .
-        . . . . .  .  .  .
-        . . . . .  .  .  .
+            # title
+            # legend
+            w x y z px py pz t
+            w x y z px py pz t
+            . . . . .  .  .  .
+            . . . . .  .  .  .
+            . . . . .  .  .  .
 
         with 7 digits precision in scientific notation
 
