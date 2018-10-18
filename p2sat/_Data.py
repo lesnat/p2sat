@@ -14,6 +14,7 @@ class _Data(object):
     Notes
     -----
     Units :
+
     - lengths are defined in :math:`10^{-6}` meters (um)
     - momentums are defined in :math:`10^{6}` electron-volt/speed of light (MeV/c)
     - times are defined in :math:`10^{-15}` seconds (fs)
@@ -469,55 +470,55 @@ class _Data(object):
         # Update raw data
         self.update(w,X,Y,Z,Px,Py,Pz,t,verbose=verbose)
 
-    def propagate(self,x_pos=None,time=None,update=True,verbose=True):
+    def propagate(self,x=None,t=None,update=True,verbose=True):
         """
         Propagate the phase space to a given position or time.
 
         Parameters
         ----------
-        x_pos : float, optional
-            propagate the phase-space untill x = x_pos. Default is None (no propagation)
-        time : float, optional
-            propagate the phase-space untill t = time. Default is None (no propagation)
+        x : float, optional
+            propagate the phase-space to position x. Default is None (no propagation)
+        t : float, optional
+            propagate the phase-space to time t. Default is None (no propagation)
         verbose : bool, optional
             verbosity
 
         Notes
         -----
-        x_pos and time can not be defined simultaneously.
+        x and t can not be defined simultaneously.
         """
-        if time is None and x_pos is None:
-            raise ValueError("You must define time or x_pos.")
-        if time is not None and x_pos is not None:
-            raise ValueError("time and x_pos can not be defined simultaneously.")
+        if t is None and x is None:
+            raise ValueError("You must define t or x.")
+        if t is not None and x is not None:
+            raise ValueError("t and x can not be defined simultaneously.")
 
         r = self.raw
 
-        w = r.w
-        px = r.px
-        py = r.py
-        pz = r.pz
+        W = r.w
+        Px = r.px
+        Py = r.py
+        Pz = r.pz
 
-        if time is not None:
-            if verbose: print("Propagate %s phase-space to time = %.4E fs."%(self._ps.particle["name"],time))
-            t = np.array([time]*len(w))
-            Dt = t - r.t
-            x = r.x + (r.px/r.p)*r.v*Dt
-            y = r.y + (r.py/r.p)*r.v*Dt
-            z = r.z + (r.pz/r.p)*r.v*Dt
+        if t is not None:
+            if verbose: print("Propagate %s phase-space to t = %.4E fs."%(self._ps.particle["name"],t))
+            T = np.array([t]*len(W))
+            DT = T - r.t
+            X = r.x + (r.px/r.p)*r.v*DT
+            Y = r.y + (r.py/r.p)*r.v*DT
+            Z = r.z + (r.pz/r.p)*r.v*DT
 
-        if x_pos is not None:
-            if verbose: print("Propagate %s phase-space to x = %.4E um."%(self._ps.particle["name"],x_pos))
-            x = np.array([x_pos]*len(w))
-            Dt = (x - r.x)/r.v
-            t = r.t + Dt
-            y = r.y + (r.py/r.p)*r.v*Dt
-            z = r.z + (r.pz/r.p)*r.v*Dt
+        if x is not None:
+            if verbose: print("Propagate %s phase-space to x = %.4E um."%(self._ps.particle["name"],x))
+            X = np.array([x]*len(W))
+            DT = (X - r.x)/r.v
+            T = r.t + DT
+            Y = r.y + (r.py/r.p)*r.v*DT
+            Z = r.z + (r.pz/r.p)*r.v*DT
 
         if update:
-            self.update(w,x,y,z,px,py,pz,t,verbose=verbose)
+            self.update(W,X,Y,Z,Px,Py,Pz,T,verbose=verbose)
         else:
-            return w,x,y,z,px,py,pz,t
+            return W,X,Y,Z,Px,Py,Pz,T
 
     # def lorentz(self,beta_CM,verbose=True):
     #     """

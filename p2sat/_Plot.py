@@ -10,10 +10,10 @@ class _Plot(object):
     Attributes
     ----------
     autoclear : bool
-        True to auto clear figure when calling a plot method. Default is false
+        True to auto clear figure when calling a plot method. Default is False
     cmap : str
         color map to use in 2d plot. Default is viridris
-    rc : dict
+    rcParams : dict
         shortcut to matplotlib.rcParams dictionnary (change plot appearence)
     """
     def __init__(self,PhaseSpace):
@@ -83,7 +83,7 @@ class _Plot(object):
 
         # Construct weight label
         if den_label == "":
-            w_label = r.labels[weight]
+            w_label = "$%s$"%r.labels[weight]
         else:
             w_label = "$d%s/%s$"%(r.labels[weight],den_label)
 
@@ -103,7 +103,11 @@ class _Plot(object):
         # Construct and return labels list
         for i,_ in enumerate(axes):
             labels.append("$%s$ [$%s$]"%(ax_label[i],ax_unit[i]))
-        labels.append("%s [%s]"%(w_label,w_unit))
+
+        if w_unit == "":
+            labels.append(w_label)
+        else:
+            labels.append("%s [%s]"%(w_label,w_unit))
 
         return labels
 
@@ -274,6 +278,62 @@ class _Plot(object):
 
         return a
 
+    def a1(self,axis,t=None,pause=.5,where='post',log=False,polar=False,reverse=False,**kargs):
+        """
+        Plot the animation of 1d histogram of given axis.
+
+        Parameters
+        ----------
+        axis : str
+            Name of the axis to plot
+        t : dict
+            parameters to construct plot times
+        pause : float
+            waiting time between each plot (in seconds)
+        where : str, optional
+            ...
+        log : bool, optional
+            True to set log scale on y axis
+        polar : bool, optional
+            True to use a polar plot. axis must be an angle
+        reverse : bool, optional
+            True to plot axis against number instead of number against axis
+        kargs : dict, optional
+            Dictionnary to pass to the hist.h1 method
+
+        Notes
+        -----
+        t dictionnary must contains following keys :
+
+        - "min", to define the first plot time
+        - "max", to define the last plot time
+        - "Nbins", to define the number of timesteps to plot
+
+        Examples
+        --------
+
+        >>> eps.plot.autoclear = False
+        >>> eps.plot.a1('r',t={'min':0,'max':1000,'Nbins':10},bwidth=1.)
+
+        See Also
+        --------
+        plot.h1
+        """
+        copy = self._ps.copy()
+        a = plt.gca()
+
+        T = np.linspace(t["min"],t["max"],t["Nbins"])
+
+        for tt in T:
+            copy.data.propagate(t=tt,verbose=True)
+            if self.autoclear:a.clear()
+            a=copy.plot.h1(axis,where=where,log=log,polar=polar,reverse=reverse,**kargs)
+            a.set_label('t = %.3E fs'%tt)
+            plt.pause(pause)
+        plt.legend()
+
+        return a
+
     def h2(self,axis1,axis2,log=False,polar=False,**kargs):
         """
         Plot the 2d histogram of given axes.
@@ -322,6 +382,56 @@ class _Plot(object):
         plt.colorbar(a2,label=labels[2])
 
         plt.show()
+
+        return a
+
+    def a2(self,axis1,axis2,t=None,pause=.5,log=False,polar=False,**kargs):
+        """
+        Plot the animation of 2d histogram of given axes.
+
+        Parameters
+        ----------
+        axis1,axis2 : str
+            Name of the axes to plot
+        t : dict
+            parameters to construct plot times
+        pause : float
+            waiting time between each plot (in seconds)
+        log : bool, optional
+            True to set log scale on y axis
+        polar : bool, optional
+            True to use a polar plot. axis1 must be an angle
+        kargs : dict, optional
+            Dictionnary to pass to the hist.h2 method
+
+        Notes
+        -----
+        t dictionnary must contains following keys :
+
+        - "min", to define the first plot time
+        - "max", to define the last plot time
+        - "Nbins", to define the number of timesteps to plot
+
+        Examples
+        --------
+
+        >>> eps.plot.a2('x','y',t={'min':0,'max':1000,'Nbins':10},log=True)
+
+        See Also
+        --------
+        plot.h2
+        """
+        copy = self._ps.copy()
+        a = plt.gca()
+
+        T = np.linspace(t["min"],t["max"],t["Nbins"])
+
+        for tt in T:
+            copy.data.propagate(t=tt,verbose=True)
+            plt.clf()
+            a=copy.plot.h2(axis1,axis2,log=log,polar=polar,**kargs)
+            a.set_title('t = %.3E fs'%tt)
+            plt.pause(pause)
 
         return a
 
@@ -383,14 +493,18 @@ class _Plot(object):
 
         return a
 
-    def s2(self,axis1,axis2,log=False,polar=False,select=None):
+    def s2(self,axis1,axis2,weight='w',snorm=1.,log=False,polar=False,select=None):
         """
         Plot the 2d scattering plot of given axes.
 
         Parameters
         ----------
         axis1,axis2 : str
-            Name of the axes to plot
+            name of the axes to plot
+        weight : str, optional
+            weight to plot. Default is w
+        snorm : float, optional
+            dots size normalization. Default is 1
         log : bool, optional
             True to set log scale on y axis
         polar : bool, optional
@@ -403,18 +517,13 @@ class _Plot(object):
             a=plt.gca(polar=True)
         else:
             a=plt.gca()
-        labels=self.get_labels([axis1,axis2],kargs.get('weight','w'),normed=True)
+        labels=self.get_labels([axis1,axis2],weight,normed=False)
 
         d = self._ps.data
 
-        if type(axis1) is str:axis1 = eval("d.%s"%axis1)
-        if type(axis2) is str:axis2 = eval("d.%s"%axis2)
-        w   = np.array(d.w)
-
-        if select is not None:
-            w = d.select(w,faxis=select.keys(),frange=select.values())
-            axis1=d.select(axis1,faxis=select.keys(),frange=select.values())
-            axis2=d.select(axis2,faxis=select.keys(),frange=select.values())
+        axis1   = d.get_axis(axis1,select=select)
+        axis2   = d.get_axis(axis2,select=select)
+        w       = d.get_axis(weight,select=select)
 
         if polar: axis1=np.radians(axis1)
 
@@ -424,7 +533,9 @@ class _Plot(object):
         else:
             norm=None
 
-        a2 = a.scatter(axis1,axis2,c=w,norm=norm,cmap=self.cmap)
+        s = snorm * w/max(w)
+
+        a2 = a.scatter(axis1,axis2,c=w,s=s,norm=norm,cmap=self.cmap)
 
         if polar:
             pass
@@ -442,42 +553,43 @@ class _Plot(object):
         """
         TODO
         """
-        # https://matplotlib.org/examples/pylab_examples/scatter_hist.html
-        # https://matplotlib.org/examples/axes_grid/demo_edge_colorbar.html
-        kargs1={'X':kargs.get('X',None),
-                'erange':kargs.get('erange',[None,None]),
-                'bwidth':kargs.get('bwidth1',None),
-                'brange':kargs.get('brange1',[None,None])
-                }
-
-        kargs2={'X':kargs.get('X',None),
-                'erange':kargs.get('erange',[None,None]),
-                'bwidth':kargs.get('bwidth2',None),
-                'brange':kargs.get('brange2',[None,None])
-                }
-
-        tmp = bool(self.autoclear)
-        if self.autoclear : self.clear()
-        self.autoclear=False
-
-        plt.subplots_adjust(hspace=0.15,wspace=0.15)
-
-        ax1=plt.subplot(221)
-        self.h1(axis2,log=False,reverse=True)
-        if log:ax1.set_xscale('log')
-
-        ax2=plt.subplot(224)
-
-        self.h1(axis1,log=log)
-
-        ax3=plt.subplot(222,sharex=ax2,sharey=ax1)
-        self.h2(axis1,axis2,log=log,**kargs)
-        plt.setp(ax3.get_yticklabels(), visible=False)
-        plt.setp(ax3.get_xticklabels(), visible=False)
-
-        self.autoclear=tmp
-
-        plt.show()
+        # # https://matplotlib.org/examples/pylab_examples/scatter_hist.html
+        # # https://matplotlib.org/examples/axes_grid/demo_edge_colorbar.html
+        # kargs1={'X':kargs.get('X',None),
+        #         'erange':kargs.get('erange',[None,None]),
+        #         'bwidth':kargs.get('bwidth1',None),
+        #         'brange':kargs.get('brange1',[None,None])
+        #         }
+        #
+        # kargs2={'X':kargs.get('X',None),
+        #         'erange':kargs.get('erange',[None,None]),
+        #         'bwidth':kargs.get('bwidth2',None),
+        #         'brange':kargs.get('brange2',[None,None])
+        #         }
+        #
+        # tmp = bool(self.autoclear)
+        # if self.autoclear : self.clear()
+        # self.autoclear=False
+        #
+        # plt.subplots_adjust(hspace=0.15,wspace=0.15)
+        #
+        # ax1=plt.subplot(221)
+        # self.h1(axis2,log=False,reverse=True)
+        # if log:ax1.set_xscale('log')
+        #
+        # ax2=plt.subplot(224)
+        #
+        # self.h1(axis1,log=log)
+        #
+        # ax3=plt.subplot(222,sharex=ax2,sharey=ax1)
+        # self.h2(axis1,axis2,log=log,**kargs)
+        # plt.setp(ax3.get_yticklabels(), visible=False)
+        # plt.setp(ax3.get_xticklabels(), visible=False)
+        #
+        # self.autoclear=tmp
+        #
+        # plt.show()
+        pass
 
     def s2h1(self,axis1,axis2,log=False):
         """
@@ -485,40 +597,139 @@ class _Plot(object):
         """
         pass
 
-    def h3(self,axis1,axis2,axis3,
-            snorm=1.0,hmin=0.0,
-            **kargs):
+    def h3(self,axis1,axis2,axis3,s=5,wmin=0,log=False,**kargs):
         """
         Plot the 3d histogram of given axes.
-
-        TODO
 
         Parameters
         ----------
         axis1,axis2,axis3 : str
             Name of the axes to plot
+        s : float, optional
+            square sizes. Default is 5
+        wmin : float, optional
+            minimum weight to plot. Default is 0
+        log : bool, optional
+            log color scale. Default is False
         kargs : dict, optional
-            Dictionnary to pass to the hist.h2 method
+            Dictionnary to pass to the hist.h3 method
 
         See Also
         --------
         hist.h3
         """
         from mpl_toolkits.mplot3d import Axes3D
-        a = plt.subplot(projection='3d')
-        b1,b2,b3,h=self._h.h3(axis1,axis2,axis3,**kargs)
-        g1,g2,g3=np.meshgrid(b1,b2,b3,indexing='ij')
+        # https://codereview.stackexchange.com/questions/62180/colorbar-for-matplotlib-3d-patch-plot
+        from matplotlib import cm
 
-        tmp=np.array(h)
+        a = plt.subplot(projection='3d')
+
+        labels=self.get_labels([axis1,axis2,axis3],kargs.get('weight','w'),kargs.get('normed',True))
+
+        b1,b2,b3,h=self._ps.hist.h3(axis1,axis2,axis3,**kargs)
+
+        xs,ys,zs,w = [],[],[],[]
 
         for i1,e1 in enumerate(h):
             for i2,e2 in enumerate(e1):
                 for i3,e3 in enumerate(e2):
-                    if e3<hmin:
-                        tmp[i1][i2][i3]=0.0
-                    else:
-                        tmp[i1][i2][i3]=e3
+                    if e3>wmin:
+                        xs.append(b1[i1])
+                        ys.append(b2[i2])
+                        zs.append(b3[i3])
+                        w.append(h[i1][i2][i3])
 
-        a.scatter3D(g1,g2,g3,s=snorm*tmp,cmap='hot')
+        if log:
+            c = np.log10(w)
+        else:
+            c = w
+
+        a.scatter(xs=xs,ys=ys,zs=zs,c=c,s=s,marker='s')
+
+        a.set_xlim(min(xs),max(xs))
+        a.set_ylim(min(ys),max(ys))
+        a.set_zlim(min(zs),max(zs))
+        a.set_xlabel(labels[0],labelpad=15)
+        a.set_ylabel(labels[1],labelpad=15)
+        a.set_zlabel(labels[2],labelpad=15)
+
+        m = cm.ScalarMappable(cmap=self.cmap)
+        m.set_array([min(w),max(w)])
+
+        if log:
+            from matplotlib.colors import LogNorm
+            norm=LogNorm()
+        else:
+            norm=None
+
+        m.set_norm(norm)
+
+        f=plt.gcf()
+
+        f.colorbar(m,label=labels[3])
 
         plt.show()
+        return a
+
+
+    def s3(self,axis1,axis2,axis3,weight="w",snorm=1.0,log=False,select=None):
+        """
+        Plot the 3d histogram of given axes.
+
+        Parameters
+        ----------
+        axis1,axis2,axis3 : str
+            Name of the axes to plot
+        weight : str, optional
+            weight to plot. Default is w
+        snorm : float, optional
+            dots size normalization. Default is 1
+        log : bool, optional
+            log color scale. Default is False
+        select : dict, optional
+            filtering dictionnary
+        """
+        from mpl_toolkits.mplot3d import Axes3D
+        from matplotlib import cm
+
+        a = plt.subplot(projection='3d')
+
+        labels=self.get_labels([axis1,axis2,axis3],weight,normed=False)
+
+        b1  = self._ps.data.get_axis(axis1,select=select)
+        b2  = self._ps.data.get_axis(axis2,select=select)
+        b3  = self._ps.data.get_axis(axis3,select=select)
+        w   = self._ps.data.get_axis(weight,select=select)
+
+        if log:
+            c = np.log10(w)
+        else:
+            c = w
+        s = snorm * w/max(w)
+
+        a.scatter(xs=b1,ys=b2,zs=b3,c=c,s=s,marker='o')
+
+        a.set_xlim(min(b1),max(b1))
+        a.set_ylim(min(b2),max(b2))
+        a.set_zlim(min(b3),max(b3))
+        a.set_xlabel(labels[0],labelpad=15)
+        a.set_ylabel(labels[1],labelpad=15)
+        a.set_zlabel(labels[2],labelpad=15)
+
+        m = cm.ScalarMappable(cmap=self.cmap)
+        m.set_array([min(w),max(w)])
+
+        if log:
+            from matplotlib.colors import LogNorm
+            norm=LogNorm()
+        else:
+            norm=None
+
+        m.set_norm(norm)
+
+        f=plt.gcf()
+
+        f.colorbar(m,label=labels[3])
+
+        plt.show()
+        return a

@@ -9,7 +9,7 @@ It allows to generate and manipulate phase space
 # Import p2sat
 p2sat_path="../"
 import sys
-if p2sat_path not in sys.path:sys.path.append(p2sat_path)
+if p2sat_path not in sys.path:sys.path.insert(0,p2sat_path)
 import p2sat
 
 # Boolean to export or not the generated phase space
@@ -17,7 +17,7 @@ export = False
 check_input = True
 
 # Instanciate a PhaseSpace object for electron specie
-gps1 = p2sat.PhaseSpace(specie="gamma")
+gps1 = p2sat.PhaseSpace(particle="gamma")
 
 # Define energy and angle parameters
 ekin_dict = {"law":"exp","ekin0":1.0}
@@ -50,21 +50,24 @@ if check_input:
 # Copy current PhaseSpace in a new object
 gps2 = gps1.copy()
 # Rotate and translate phase spaces
-gps1.data.transformate(T=(-200.,0.,0.),R=(0.,45.,45.))
+gps1.data.transformate(T=(-200.,0.,0.),R=(0.,0.,45.))
 gps2.data.transformate(T=(200.,0.,0.),R=(0.,0.,180.),rotate_first=True)
 
 # Propagate to a given time
-gps1.data.propagate(time=300.)
-gps2.data.propagate(time=300.)
+gps1.data.propagate(t=300.)
+gps2.data.propagate(t=300.)
 
 # Combine the 2 previous PhaseSpace
 gps = gps1 + gps2
 
 # Plot results
-gps.plot.figure(3)
-gps.plot.h2('x','px',bwidth1=1.,bwidth2=.1,log=True)
-gps.plot.figure(4)
-gps.plot.h2('x','y',bwidth1=1.,bwidth2=1.,log=True)
+if check_input:
+    gps.plot.figure(3)
+    gps.plot.h2('x','px',bwidth1=1.,bwidth2=.1,log=True)
+    gps.plot.figure(4)
+    gps.plot.h2('x','y',bwidth1=1.,bwidth2=1.,log=True)
+    gps.plot.figure(5)
+    gps.plot.h3('x','y','z',wmin=1e6,s=10,log=True)
 
 # Export phase space if needed
 if export:

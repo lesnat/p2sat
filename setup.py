@@ -11,8 +11,9 @@ setup(
     packages=['p2sat'],
     author="lesnat",
     description="Particle Phase Space Analysis Toolkit",
-    long_description=p2sat.__doc__,
-    install_requires= ['numpy','matplotlib'],
+    long_description=open('README.md').read(),
+    long_description_content_type='text/markdown',
+    # install_requires= ['numpy','matplotlib'],
     include_package_data=True,
     url='https://github.com/lesnat/p2sat',
     classifiers=[

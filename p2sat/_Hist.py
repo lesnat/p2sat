@@ -198,8 +198,6 @@ class _Hist(object):
         """
         Create and return the 3 dimensional histogram of given axis.
 
-        TODO
-
         Parameters
         ----------
         axis1,axis2,axis3 : str or np.array
