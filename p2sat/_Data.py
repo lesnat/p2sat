@@ -614,7 +614,7 @@ class _Data(object):
         else:
             queue.put([w,x,y,z,px,py,pz,t])
 
-    def discretize(self,with_time=True,split=4,MP=True,verbose=True,**kargs):
+    def discretize(self,with_time=True,split=4,MP=False,verbose=True,**kargs):
         """
         Discretize the particles phase space in a 6 or 7 D histogram.
 
