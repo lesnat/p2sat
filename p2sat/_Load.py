@@ -98,7 +98,6 @@ class _Load(object):
                         pz.append(0.)
                         t.append(et*tnorm)
 
-
         pz = [0.0] * len(w)
         x = [X] * len(w)
         z = [0.0] * len(w)

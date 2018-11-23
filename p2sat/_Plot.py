@@ -267,7 +267,7 @@ class _Plot(object):
         if polar:
             if log:a.set_rscale('log')
         else:
-            a.set_xlim(xmin=min(b),xmax=max(b))
+            #a.set_xlim(xmin=min(b),xmax=max(b))
             a.set_xlabel(labels[0])
             a.set_ylabel(labels[1])
             if log:a.set_yscale('log')

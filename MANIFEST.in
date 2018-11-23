@@ -1,2 +1,3 @@
 include *.md
-include *.png
+include h1.png
+include h2.png
