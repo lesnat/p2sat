@@ -105,56 +105,6 @@ class _Load(object):
         print("Done !")
         self._ps.data.update(w,x,y,z,px,py,pz,t)
 
-    def Geant4_csv(self,file_name,nthreads=1,verbose=True):
-        """
-        Extract simulation results from a Geant4 NTuple csv output file
-
-        DEPRECATED
-
-        Parameters
-        ----------
-        file_name : str
-            name of the output file. If it ends with '*_t0.*', the number '0' will be replaced by the number of the current thread
-        nthreads : int
-            total number of threads to consider
-        verbose : bool, optional
-            verbosity
-        """
-        raise DeprecationWarning("Deprecated. Use extract.gp3m2_csv")
-        data = []
-        fext = file_name.split('.')[-1]   # File extension
-        fbase= file_name[:-(len(fext)+1)] # File base name
-
-        for thread in range(0,nthreads):
-            fname=fbase[:-1]+str(thread)+"."+fext
-            if verbose:print("Extracting %s ..."%fname)
-
-            if fext=="csv":
-                with open(fname,'r') as f:
-                    for line in f.readlines():
-                        if line[0]!='#':
-                            for e in line.split(','):
-                                data.append(float(e))
-                        elif fext=="xml":
-                            from lxml import etree
-                            with etree.parse(fname) as tree:
-                                for entry in tree.xpath('/aida/tuple/rows/row/entry'):
-                                    data.append(float(entry.get('value')))
-            else:
-                raise NameError("Unknown file extension : %s"%fext)
-
-        w   = data[0::8]
-        x   = data[1::8]
-        y   = data[2::8]
-        z   = data[3::8]
-        px  = data[4::8]
-        py  = data[5::8]
-        pz  = data[6::8]
-        t   = data[7::8]
-        if verbose:print("Done !")
-
-        self._ps.data.update(w,x,y,z,px,py,pz,t,verbose)
-
     def gp3m2_csv(self,base_name,verbose=True):
         """
         Extract simulation results from a gp3m2 NTuple csv output file
