@@ -16,7 +16,7 @@ class PhaseSpace(object):
     Parameters
     ----------
     particle : str
-        Name of the particle. Availables are gamma,e-,e+,mu-,mu+.
+        Name of the particle. Availables are gamma,e-,e+,mu-,mu+,proton,neutron.
 
     Attributes
     ----------
@@ -82,6 +82,14 @@ class PhaseSpace(object):
             self.particle["name"] = "mu-"
             self.particle["mass"] = 105.6
             self.particle["label"]= "\mu^-"
+        elif particle in ("proton","p"):
+            self.particle["name"] = "proton"
+            self.particle["mass"] = 938.3
+            self.particle["label"]= "p"
+        elif particle in ("neutron","n"):
+            self.particle["name"] = "neutron"
+            self.particle["mass"] = 939.6
+            self.particle["label"]= "n"
         else:
             raise NameError("Unknown particle particle.")
         self.data     = _Data(self)
