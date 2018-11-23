@@ -5,7 +5,7 @@ from ._Data import _Data
 from ._Hist import _Hist
 from ._Plot import _Plot
 from ._Export import _Export
-from ._Extract import _Extract
+from ._Load import _Load
 from ._Stat import _Stat
 
 
@@ -28,7 +28,7 @@ class PhaseSpace(object):
         make histograms from data
     plot : sub-object
         plot histograms
-    extract : sub-object
+    load : sub-object
         load phase space from a file
     export : sub-object
         export phase space into a file
@@ -42,9 +42,9 @@ class PhaseSpace(object):
 
     >>> eps = p2sat.PhaseSpace(particle="e-")
 
-    You can then import data from a file, using the `txt` method of sub-object `extract`
+    You can then import data from a file, using the `txt` method of sub-object `load`
 
-    >>> eps.extract.txt("example.csv")
+    >>> eps.load.txt("example.csv")
 
     and look at the imported data
 
@@ -95,7 +95,7 @@ class PhaseSpace(object):
         self.data     = _Data(self)
         self.hist     = _Hist(self)
         self.plot     = _Plot(self)
-        self.extract  = _Extract(self)
+        self.load     = _Load(self)
         self.export   = _Export(self)
         self.stat     = _Stat(self)
 

@@ -1,7 +1,7 @@
 #coding:utf8
 import numpy as np
 
-class _Extract(object):
+class _Load(object):
     """
     Import data from a file.
 
