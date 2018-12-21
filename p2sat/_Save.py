@@ -2,7 +2,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-class _Export(object):
+class _Save(object):
     """
     Export phase space into several file format.
     """

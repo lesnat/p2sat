@@ -4,7 +4,7 @@ import numpy as np
 from ._Data import _Data
 from ._Hist import _Hist
 from ._Plot import _Plot
-from ._Export import _Export
+from ._Save import _Save
 from ._Load import _Load
 from ._Stat import _Stat
 
@@ -96,7 +96,7 @@ class PhaseSpace(object):
         self.hist     = _Hist(self)
         self.plot     = _Plot(self)
         self.load     = _Load(self)
-        self.export   = _Export(self)
+        self.save     = _Save(self)
         self.stat     = _Stat(self)
 
     def __add__(self,other):

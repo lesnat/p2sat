@@ -16,7 +16,7 @@ import p2sat
 eps = p2sat.PhaseSpace(particle="electron")
 
 # Import data from a file
-eps.extract.txt("example.csv",sep=",",verbose=False)
+eps.load.txt("example.csv",sep=",",verbose=False)
 
 # Get the mean value of theta
 theta_ev = eps.stat.expected_value('theta')
