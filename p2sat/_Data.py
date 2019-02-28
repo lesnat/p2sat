@@ -92,9 +92,62 @@ class _Data(object):
         self.raw._t  = np.array(t)
         if verbose: print("Done !")
 
-    def generate(self,Nconf,Npart,ekin,theta,phi,x=None,y=None,z=None,r=None,t=None,verbose=True):
+    def _generate(self,dct,Nconf,radians=False):
+        """
+        """
+        # Convert dict values into radians
+        if radians:
+            convval = []
+            for val in dct.values():
+                if isinstance(val,(float,int)):
+                    convval.append(np.radians(val))
+                else:
+                    convval.append(val)
+
+            dct = dict(zip(dct.keys(),convval))
+
+        if dct["law"] == "mono":
+            # Mono
+            X0 = dct["X0"]
+            axis = np.array([X0] * Nconf)
+        elif dct["law"] == "uni":
+            # Uniform law
+            mini = dct["min"]
+            maxi = dct["max"]
+            axis = np.random.uniform(mini,maxi,Nconf)
+        elif dct["law"] == "exp":
+            # Exponential law
+            X0 = dct["X0"]
+            axis = np.random.exponential(X0,Nconf)
+        elif dct["law"] == "iso":
+            # Isotropic law. Only for angles
+            axis = self._generate(dict(law="uni",min=0,max=180),Nconf=Nconf,radians=True)
+        elif dct["law"] == "gauss":
+            # Gaussian law
+            mu = dct["mu"]
+            sigma = dct["sigma"]
+            axis = np.random.normal(mu,sigma,Nconf)
+        elif dct["law"] == "grid":
+            # Points placed on a grid
+            mini = dct["min"]
+            maxi = dct["max"]
+            Nbins = dct['Nbins']
+            bins = np.linspace(mini,maxi,Nbins)
+            index = np.random.randint(0,len(bins),Nconf)
+            axis = bins[index]
+        elif dct["law"] == "user":
+            # User definition
+            bins = dct["bins"]
+            index = np.random.randint(0,len(bins),Nconf)
+            axis = bins[index]
+
+        return axis
+
+    def generate(self,Nconf,Npart,ekin,theta=None,phi=None,x=None,y=None,z=None,r=None,t=None,verbose=True):
         """
         Generate a particle phase space from given laws.
+
+        TODO : UPDATE DOCUMENTATION
 
         Parameters
         ----------
@@ -104,10 +157,10 @@ class _Data(object):
             total number of particles
         ekin : dict
             parameters to generate kinetic energy
-        theta : dict
-            parameters to generate theta angle distribution
-        phi : dict
-            parameters to generate phi angle distribution
+        theta : dict, optional
+            parameters to generate theta angle distribution. Default is 'iso'
+        phi : dict, optional
+            parameters to generate phi angle distribution. Default is 'iso'
         x,y,z : dict, optional
             parameters to generate position distribution. Default is 0 for x,y,z
         r : dict,optional
@@ -134,14 +187,14 @@ class _Data(object):
         For dict `x`,`y`,`z`,`t`, available laws are :
 
         - 'mono', for a unique position/time. This parameter must be given as a value of keyword `x0`/`y0`/`z0`/`t0`
-        - 'range', for a uniform law in a given range. Keywords 'min' and 'max' MUST be given to specify a minimum and maximum
+        - 'uni', for a uniform law in a given range. Keywords 'min' and 'max' MUST be given to specify a minimum and maximum
         - 'exp', for exponential distribution. Charasteristic length/time must be given as a value of keyword `x0`/`y0`/`z0`/`t0`
         - 'gauss', for a gaussian distribution. Center of the distribution must be given with keyword 'mu', and standard deviantion with keyword 'sigma'
         - 'grid', for uniformly placed on a given grid. Keywords 'bins' OR 'min' + 'max' + 'Nbins' MUST be given.
 
         For dict `r`, available laws are :
 
-        - 'range', for a uniform law in a given range. Keywords 'min' and 'max' MUST be given to specify a minimum and maximum
+        - 'uni', for a uniform law in a given range. Keywords 'min' and 'max' MUST be given to specify a minimum and maximum
         - 'gauss', for a gaussian distribution. Center of the distribution must be given with keyword 'mu', and standard deviantion with keyword 'sigma'
 
         Details of the calculations :
@@ -167,7 +220,7 @@ class _Data(object):
         by 1e6 configurations as follows
 
         >>> eps.data.generate(Nconf=1e6,Npart=1e12,
-        ...                  ekin={"law":"mono","ekin0":20.0},
+        ...                  ekin={"law":"mono","X0":20.0},
         ...                  theta={"law":"iso"},
         ...                  phi={"law":"iso"})
         ...
@@ -186,106 +239,63 @@ class _Data(object):
 
         # Ensure that Nconf is of type int (for values such as 1e6)
         Nconf = int(Nconf)
+
         # Generate weights
-        weight = float(Npart)/Nconf
-        g_w = np.array([weight] * Nconf)
+        weight  = float(Npart)/Nconf
+        g_w     = self._generate(dict(law="mono",X0=weight),Nconf)
+
+        # Generate energy
+        g_ekin  = self._generate(ekin,Nconf)
 
         # Generate theta angle
-        if theta["law"]=="mono":
-            g_theta = np.array([theta["theta0"]] * Nconf)
-        elif theta["law"]=="iso":
-            try:
-                mini = np.radians(theta["min"])
-            except KeyError:
-                mini = 0.
-            try:
-                maxi = np.radians(theta["max"])
-            except KeyError:
-                maxi = np.pi
-            g_theta = np.random.uniform(0.,maxi,Nconf)
-        elif theta["law"]=="gauss":
-            mu = np.radians(theta["mu"])
-            sigma = np.radians(theta["sigma"])
-            g_theta = abs(np.random.normal(mu,sigma,Nconf))
+        if theta is not None:
+            g_theta = self._generate(theta,Nconf,radians=True)
+        else:
+            g_theta = self._generate(dict(law="iso"),Nconf,radians=True)
+
         # Generate phi angle
-        if phi["law"]=="mono":
-            g_phi = np.array([phi["phi0"]] * Nconf)
-        elif phi["law"]=="iso":
-            try:
-                mini = np.radians(phi["min"])
-            except KeyError:
-                mini = 0.
-            try:
-                maxi = np.radians(phi["max"])
-            except KeyError:
-                maxi = np.pi
-            g_phi = np.random.uniform(-maxi,maxi,Nconf)
-        elif phi["law"]=="gauss":
-            mu = np.radians(phi["mu"])
-            sigma = np.radians(phi["sigma"])
-            g_phi = np.random.normal(mu,sigma,Nconf)
-        # Generate energy
-        if ekin["law"]=="mono":
-            g_ekin = np.array([ekin["ekin0"]] * Nconf)
-        elif ekin["law"]=="exp":
-            g_ekin = np.random.exponential(ekin["ekin0"],Nconf)
+        if phi is not None:
+            g_phi   = self._generate(phi,Nconf,radians=True)
+        else:
+            g_theta = self._generate(dict(law="iso"),Nconf,radians=True)
 
         # Reconstruct momentum from energy and angle distributions
-        mass  = self._ps.particle["mass"]
+        mass    = self._ps.particle["mass"]
         g_p     = np.sqrt(g_ekin**2 + 2*g_ekin*mass)
         g_px    = g_p * np.cos(g_theta)
         g_py    = np.sign(g_phi)*np.sqrt((g_p**2 - g_px**2)/(1. + np.tan(g_phi)**2))
         g_pz    = g_py*np.tan(g_phi)
 
-        # Generate position and time
-        ax_dicts = [x,y,z,t]
-        ax_labels= ["x","y","z","t"]
-        for i,ax in enumerate(ax_dicts):
-            if ax is None:
-                g_ax = np.array([0.] * Nconf)
-            elif ax["law"]=="mono":
-                g_ax = np.array([ax[ax_labels[i]+"0"]] * Nconf)
-            elif ax["law"]=="range":
-                g_ax = np.random.uniform(ax["min"],ax["max"],Nconf)
-            elif ax["law"]=="exp":
-                g_ax = np.random.exponential(ax[ax_labels[i]+"0"],Nconf)
-            elif ax["law"]=="gauss":
-                mu = ax["mu"]
-                sigma = ax["sigma"]
-                g_ax = np.random.normal(mu,sigma,Nconf)
-            elif ax["law"]=="grid":
-                try:
-                    bins = ax["bins"]
-                except KeyError:
-                    mini = ax['min']
-                    maxi = ax['max']
-                    Nbins = ax['Nbins']
-                    bins = np.linspace(mini,maxi,Nbins)
-                index = np.random.randint(0,len(bins),Nconf)
-                g_ax = bins[index]
+        # Generate positions and time
+        if x is not None:
+            g_x     = self._generate(x,Nconf)
+        else:
+            g_x     = self._generate(dict(law="mono",X0=0),Nconf)
 
-            if ax_labels[i]=="x":
-                g_x = g_ax
-            if ax_labels[i]=="y":
-                g_y = g_ax
-            if ax_labels[i]=="z":
-                g_z = g_ax
-            if ax_labels[i]=="t":
-                g_t = g_ax
+        if y is not None:
+            g_y     = self._generate(y,Nconf)
+        else:
+            g_y     = self._generate(dict(law="mono",X0=0),Nconf)
 
-        # Generate transverse position if defined
+        if z is not None:
+            g_z     = self._generate(z,Nconf)
+        else:
+            g_z     = self._generate(dict(law="mono",X0=0),Nconf)
+
+        if t is not None:
+            g_t     = self._generate(t,Nconf)
+        else:
+            g_t     = self._generate(dict(law="mono",X0=0),Nconf)
+
+        # If transverse position is defined, it replaces g_y,g_z
         if r is not None:
-            if r["law"]=="range":
-                g_r = np.random.uniform(r["min"],r["max"],Nconf)
-            elif r["law"]=="gauss":
-                mu = r["mu"]
-                sigma = r["sigma"]
-                g_r = np.random.normal(mu,sigma,Nconf)
+            g_r = self._generate(r,Nconf)
             angle = np.random.uniform(0.,2*np.pi,Nconf)
             g_z = g_r * np.cos(angle)
             g_y = g_r * np.sin(angle)
 
         if verbose: print("Done !")
+        
         # Update current object
         self.update(g_w,g_x,g_y,g_z,g_px,g_py,g_pz,g_t,verbose=verbose)
 
