@@ -16,7 +16,7 @@ import p2sat
 export = False
 check_input = True
 
-# Instanciate a PhaseSpace object for electron specie
+# Instanciate a PhaseSpace object for electron specie
 gps1 = p2sat.PhaseSpace(particle="gamma")
 
 # Define energy and angle parameters

@@ -310,7 +310,7 @@ class _Hist(object):
             # Return axis and spectrum
             return x,f(x,*popt)
         else:
-            # Format the result in a list
+            # Format the result in a list
             res = [x]
             for e in popt:
                 res.append(e)

@@ -61,7 +61,7 @@ class _Raw(object):
 
         l['theta'] = '\\theta'          ; u['theta'] = 'deg'
         l['phi'] = '\\phi'              ; u['phi'] = 'deg'
-        # l['omega'] = '\Omega'           ; u['omega'] = 'sr'
+        l['omega'] = '\Omega'           ; u['omega'] = 'sr'
 
         l['ekin_density'] = '(N_{%s} %s)'%(part_label,ekin_label)
         u['ekin_density'] = 'MeV'
@@ -194,26 +194,24 @@ class _Raw(object):
         """
         return np.degrees(np.arctan2(self.pz,self.py))
 
-    # @property
-    # def omega(self):
-    #     """
-    #     Particle solid angle (in sr) ????
-    #
-    #     Notes
-    #     -----
-    #     omega is calculated as follow :
-    #
-    #     .. math::
-    #         ???
-    #
-    #     References
-    #     ----------
-    #     https://en.wikipedia.org/wiki/Solid_angle
-    #     """
-    #     # return np.pi*self.r**2/self.x**2
-    #     theta = np.radians(self.theta)
-    #     phi = np.pi + np.radians(self.phi)
-    #     return np.sin(theta) * theta * phi
+    @property
+    def omega(self):
+        """
+        Minimum solid angle in which the particle is contained (in sr)
+
+        Notes
+        -----
+        omega is calculated as follow :
+
+        .. math::
+            2 \pi (1 - \cos{\\theta})
+
+        References
+        ----------
+        https://en.wikipedia.org/wiki/Solid_angle#Cone,_spherical_cap,_hemisphere
+        """
+        theta = np.radians(self.theta)
+        return 2*np.pi*(1-np.cos(theta))
 
     @property
     def etot(self):
