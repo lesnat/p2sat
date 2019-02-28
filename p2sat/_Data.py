@@ -375,7 +375,8 @@ class _Data(object):
         if verbose: print("Filtering %s phase space with axis %s ..."%(self._ps.particle["name"],faxes))
         data = []
         for ax in self.get_ps():
-            data.append(self.select(ax,faxes,frange,fpp=fpp))
+            # Make a copy of faxes and frange for each axes (because they are modified in select)
+            data.append(self.select(ax,list(faxes),list(frange),fpp=fpp))
 
         w   = data[0::8]
         x   = data[1::8]
