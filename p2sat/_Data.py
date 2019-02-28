@@ -542,8 +542,8 @@ class _Data(object):
     #     g = 1./np.sqrt(1-b**2)
     #
     #     # 4 position
-    #     a1 = c*self.t
-    #     Z1 = np.array([self.x,self.y,self.z]).T
+    #     a1 = c*r.t
+    #     Z1 = np.array([r.x,r.y,r.z]).T
     #
     #     a2,Z2 =[],[]
     #     for i in range(len(a1)):
@@ -555,7 +555,7 @@ class _Data(object):
     #
     #     # 4 momentum
     #     a1 = self.ekin/c
-    #     Z1 = np.array([self.px,self.py,self.pz]).T
+    #     Z1 = np.array([r.px,r.py,r.pz]).T
     #
     #     a2,Z2 =[],[]
     #     for i in range(len(a1)):
@@ -567,7 +567,7 @@ class _Data(object):
     #     w = self.raw.w
     #     self.update(w,x,y,z,px,py,pz,t)
 
-    def _discretize(self,with_time,queue=None,**kargs):
+    def _discretize(self,with_time,**kargs):
         """
         See discretize
 
@@ -575,10 +575,9 @@ class _Data(object):
         ----------
         with_time : bool
             discretize with time
-        queue : multiprocessing.Queue
-            queue to put results. If none, no multiprocessing is used
         """
         hn=self._ps.hist.hn
+        r = self.raw
 
         # Initialize
         w       = []
@@ -588,10 +587,10 @@ class _Data(object):
 
         # Get histo and bins
         if with_time:
-            bi,hi=hn([self.x,self.y,self.z,self.px,self.py,self.pz,self.t],normed=False,**kargs)
+            bi,hi=hn([r.x,r.y,r.z,r.px,r.py,r.pz,r.t],normed=False,**kargs)
             bx,by,bz,bpx,bpy,bpz,bt=bi
         else:
-            bi,hi=hn([self.x,self.y,self.z,self.px,self.py,self.pz],normed=False,**kargs)
+            bi,hi=hn([r.x,r.y,r.z,r.px,r.py,r.pz],normed=False,**kargs)
             bx,by,bz,bpx,bpy,bpz=bi
 
         # Get configurations with non-zero weight
@@ -610,12 +609,15 @@ class _Data(object):
         else:
             t   = [0.0]*len(w)
 
-        if queue is None:
-            return w,x,y,z,px,py,pz,t
-        else:
-            queue.put([w,x,y,z,px,py,pz,t])
+        return w,x,y,z,px,py,pz,t
 
-    def discretize(self,with_time=True,split=4,MP=False,verbose=True,**kargs):
+    def _construct_configuration(self,brange,width,id):
+        """
+        """
+        brc = [[brange[j][0] + id[j]*width[j],brange[j][0] + (id[j]+1)*width[j]] for j in range(len(id))]
+        return brc
+
+    def discretize(self,with_time=True,split=4,verbose=True,**kargs):
         """
         Discretize the particles phase space in a 6 or 7 D histogram.
 
@@ -623,6 +625,8 @@ class _Data(object):
         ----------
         with_time : bool, optional
             discretize with time (7D). Default is True
+        split : int
+            split phase space into `split` parts per axis, to mitigate MemoryError
         verbose : bool, optional
             verbosity. Default is True
         kargs
@@ -638,12 +642,8 @@ class _Data(object):
         hist.hn
         """
         hn=self._ps.hist.hn
-
+        r = self.raw
         if verbose : print('Discretize %s phase space with a bin range splited %i times per axis ...'%(self._ps.particle["name"],split))
-        if MP:
-            import time
-            import multiprocessing as mp
-            q = mp.Queue()
 
         # Initialize
         w       = []
@@ -654,25 +654,7 @@ class _Data(object):
         # Get current brange or reconstruct the default one
         brange = kargs.get('brange',None)
         if brange is None:
-            if with_time:
-                brange = np.array([
-                    [min(self.x),max(self.x)],
-                    [min(self.y),max(self.y)],
-                    [min(self.z),max(self.z)],
-                    [min(self.px),max(self.px)],
-                    [min(self.py),max(self.py)],
-                    [min(self.pz),max(self.pz)],
-                    [min(self.t),max(self.t)]
-                ])
-            else:
-                brange = np.array([
-                    [min(self.x),max(self.x)],
-                    [min(self.y),max(self.y)],
-                    [min(self.z),max(self.z)],
-                    [min(self.px),max(self.px)],
-                    [min(self.py),max(self.py)],
-                    [min(self.pz),max(self.pz)]
-                ])
+            brange = np.array([[min(ax),max(ax)] for ax in self.get_ps()])
         else:
             del kargs['brange']
         brange = np.array(brange)
@@ -682,6 +664,7 @@ class _Data(object):
         brconf=[]
         for ix in range(split):
             # x
+            print("Constructing bin range list : %i / %i ..."%(ix,split))
             for iy in range(split):
                 # y
                 for iz in range(split):
@@ -695,114 +678,28 @@ class _Data(object):
                                 if with_time:
                                     for it in range(split):
                                         # t
-                                        brconf.append([
-                                        [brange[0][0] + ix*width[0],brange[0][0] + (ix+1)*width[0]],
-                                        [brange[1][0] + iy*width[1],brange[1][0] + (iy+1)*width[1]],
-                                        [brange[2][0] + iz*width[2],brange[2][0] + (iz+1)*width[2]],
-                                        [brange[3][0] + ipx*width[3],brange[3][0] + (ipx+1)*width[3]],
-                                        [brange[4][0] + ipy*width[4],brange[4][0] + (ipy+1)*width[4]],
-                                        [brange[5][0] + ipz*width[5],brange[5][0] + (ipz+1)*width[5]],
-                                        [brange[6][0] + it*width[6],brange[6][0] + (it+1)*width[6]]
-                                        ])
+                                        id = [ix,iy,iz,ipx,ipy,ipz,it]
+                                        brc=self._construct_configuration(brange,width,id)
+                                        W,X,Y,Z,Px,Py,Pz,T=self._discretize(with_time=with_time,brange=brc,**kargs)
+                                        # Print advance approximately 50 times in all the process
+                                        base = [split**k for k in range(7)]
+                                        print("%s/%i configurations done ..."%(np.dot(list(reversed(id)),base),split**7))
+                                        # Append current phase space configurations to last ones
+                                        w += list(W)
+                                        x += list(X)        ; y += list(Y)      ; z += list(Z)
+                                        px += list(Px)      ; py += list(Py)    ; pz += list(Pz)
+                                        t += list(T)
                                 else:
-                                    brconf.append([
-                                    [brange[0][0] + ix*width[0],brange[0][0] + (ix+1)*width[0]],
-                                    [brange[1][0] + iy*width[1],brange[1][0] + (iy+1)*width[1]],
-                                    [brange[2][0] + iz*width[2],brange[2][0] + (iz+1)*width[2]],
-                                    [brange[3][0] + ipx*width[3],brange[3][0] + (ipx+1)*width[3]],
-                                    [brange[4][0] + ipy*width[4],brange[4][0] + (ipy+1)*width[4]],
-                                    [brange[5][0] + ipz*width[5],brange[5][0] + (ipz+1)*width[5]]
-                                    ])
-        if not MP:
-            i = 0
-            for brc in brconf:
-                # Print advance approximately 50 times in all the process
-                if i%(len(brconf)/50)==0: print("%s/%i configurations done ..."%(i,len(brconf)))
-                i+=1
-                W,X,Y,Z,Px,Py,Pz,T=self._discretize(with_time=with_time,brange=brc,**kargs)
-                # Append current phase space configurations to last ones
-                w += list(W)
-                x += list(X)        ; y += list(Y)      ; z += list(Z)
-                px += list(Px)      ; py += list(Py)    ; pz += list(Pz)
-                t += list(T)
-        else:
-            processes = []
-            for brc in brconf:
-                proc = mp.Process(target=self._discretize, kwargs = dict(with_time=with_time,queue=q,brange=brc,**kargs))
-                processes.append(proc)
-
-            # n = 4
-            # for i,proc in enumerate(processes):
-            #     if i%n==0 and i!=0:
-            #         for j in range(1,n+1):
-            #             print("Start process %i"%(i-j))
-            #             processes[i-j].start()
-            #
-            #         for j in range(1,n+1):
-            #             processes[i-j].join()
-            #             print("Process %i finished"%(i-j))
-            n = 4
-            for i,proc in enumerate(processes):
-                for j in range(1,n+1):
-                    print("Start process %i"%((i+n)-j))
-                    processes[(i+n)-j].start()
-
-                for j in range(1,n+1):
-                    processes[(i+n)-j].join()
-                    print("Process %i finished"%((i+n)-j))
-
-            for i in range(len(processes)%n):
-                j = len(processes)/n
-                k = i + j
-                print(k)
-                processes[k].start()
-            for i in range(len(processes)%n):
-                j = len(processes)/n
-                k = i + j
-                print(k)
-                processes[k].join()
-
-            # i=0
-            # while i<len(processes):
-            #     process[i].start()
-            #     i+=1
-            #     if i%4==0:
-            #         process[]
-            # n = 4
-            # for i in range(len(processes)/n):
-            #     for j in range(1,n):
-            #         k = i*j
-            #         processes[k].start()
-            #         print('k=%i'%k)
-            #
-            #     for j in range(1,n):
-            #         k = i*j
-            #         processes[k].join()
-            #
-            # for i in range(len(processes)%n):
-            #     k = len(processes)/n + i
-            #     processes[k].start()
-            # for i in range(len(processes)%n):
-            #     k = len(processes)/n + i
-            #     processes[k].join()
-            #
-            # for proc in processes:
-            #     proc.start()
-            #
-            # i=0
-            # nproc = len(processes)
-            # while i<nproc:
-            #     qsize=int(q.qsize())
-            #     if qsize>i:
-            #         i+=1
-            #         print("{:.0F} % done ...".format(float(i)/nproc * 100))
-            #     else:
-            #         time.sleep(1.)
-            #
-            # for proc in processes:
-            #     proc.join()
-
-            w,x,y,z,px,py,pz,t=np.array([q.get() for p in processes]).T
+                                    id = [ix,iy,iz,ipx,ipy,ipz,None]
+                                    brc=self._construct_configuration(brange,width,id)
+                                    W,X,Y,Z,Px,Py,Pz,T=self._discretize(with_time=with_time,brange=brc,**kargs)
+                                    # Print advance approximately 50 times in all the process
+                                    print("%s/%i configurations done ..."%(np.product((np.array(id)+1)**7),split**7))
+                                    # Append current phase space configurations to last ones
+                                    w += list(W)
+                                    x += list(X)        ; y += list(Y)      ; z += list(Z)
+                                    px += list(Px)      ; py += list(Py)    ; pz += list(Pz)
+                                    t += [0.]*len(W)
 
         if verbose : print('Done !')
 
