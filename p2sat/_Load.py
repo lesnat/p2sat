@@ -122,7 +122,8 @@ class _Load(object):
         Assuming a `p2sat.PhaseSpace` object is instanciated for particle `e-` as eps,
         you can import simulation results for all the threads as follows
 
-        >>> eps.extract.gp3m2_csv("Al_target")
+        >>> eps = ExamplePhaseSpace()
+        >>> # eps.extract.gp3m2_csv("Al_target")
         """
         # Get gp3m2 particle name from p2sat particle name
         part = self._ps.particle["name"]
@@ -185,8 +186,8 @@ class _Load(object):
 
         Examples
         --------
-        >>> eps = p2sat.PhaseSpace(particle="e-")
-        >>> eps.extract.TrILEns_output("../TrILEns/")
+        >>> eps = ExamplePhaseSpace()
+        >>> # eps.extract.TrILEns_output("../TrILEns/")
         """
         particle = self._ps.particle["name"]
         if verbose:print("Extracting {} phase space from {}output.txt ...".format(particle,path))

@@ -45,8 +45,7 @@ class _Hist(object):
 
         Examples
         --------
-        Using `eps` as a `PhaseSpace` instance
-
+        >>> eps = ExamplePhaseSpace()
         >>> w,x = eps.hist.hn(['x'],
         ...                   bwidth=[50],brange=[[0,1000]],
         ...                   normed=[True],

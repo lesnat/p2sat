@@ -311,7 +311,7 @@ class _Plot(object):
 
         Examples
         --------
-
+        >>> eps = ExamplePhaseSpace()
         >>> eps.plot.autoclear = False
         >>> eps.plot.a1('r',t={'min':0,'max':1000,'Nbins':10},bwidth=1.)
 

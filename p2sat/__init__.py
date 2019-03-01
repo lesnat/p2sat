@@ -62,7 +62,7 @@ Assuming `p2sat` is imported, you can instanciate a `PhaseSpace` object for,
 let say, electrons, and import a simulation file containing the phase space
 informations.
 
->>> eps = p2sat.PhaseSpace(particle="electron")
+>>> eps = ExamplePhaseSpace()
 >>> eps.extract.txt("example.csv",sep=",")
 
 All the data in you simulation file can now be found at `eps.data`
@@ -107,12 +107,16 @@ __version__ = "2.0.0"
 
 from .PhaseSpace import PhaseSpace,ExamplePhaseSpace
 
-def testing(name="all"):
-    from ._tests import run
-    if name=="all":
-        run(name="raw")
-        run(name="hist")
-        run(name="plot")
-        run(name="heritage")
-    else:
-        run(name=name)
+def test(verbose=False):
+    # import doctest
+    # import unittest
+    #
+    # suite = unittest.TestSuite()
+    # suite.addTest(doctest.DocTestSuite(PhaseSpace))
+    # #
+    # # runner = unittest.TextTestRunner(verbosity=2)
+    # runner.run(suite)
+    # import doctest
+    # doctest.testmod(verbose=verbose)
+    from ._Data import _testing
+    testing()

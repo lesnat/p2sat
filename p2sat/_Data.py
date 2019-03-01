@@ -32,12 +32,18 @@ class _Data(object):
         self.raw = _Raw(PhaseSpace)
         self.update(None,None,None,None,None,None,None,None,verbose=False)
 
-    def get_ps(self):
+    def get_ps(self,select=None):
         """
         Return current phase space raw data.
         """
-        r = self.raw
-        return (r.w,r.x,r.y,r.z,r.px,r.py,r.pz,r.t)
+        # Filter the data if needed
+        if select is not None:
+            ps = self.filter_ps(select=select,update=False)
+        else:
+            r = self.raw
+            ps = (r.w,r.x,r.y,r.z,r.px,r.py,r.pz,r.t)
+
+        return ps
 
     def get_axis(self,axis,select=None):
         """
@@ -52,7 +58,7 @@ class _Data(object):
 
         Examples
         --------
-        >>> eps = p2sat.ExamplePhaseSpace()
+        >>> eps = ExamplePhaseSpace()
         >>> eps.data.get_axis("w")
         array([5.74880106e+00, 4.21936663e+00, 3.00738745e+00, ... ])
         >>> eps.data.get_axis("theta",select={'x':[0.,1.],'ekin':[0.511,None]})
@@ -209,7 +215,7 @@ class _Data(object):
         spreading of 5 degrees on theta, representing 1e12 particles
         by 1e6 configurations as follows :
 
-        >>> eps = p2sat.ExamplePhaseSpace()
+        >>> eps = ExamplePhaseSpace()
         >>> eps.data.generate(Nconf=1e6,Npart=1e12,
         ...                  ekin=dict(law="dirac",center=20.0),
         ...                  theta=dict(law="gauss",mu=0,sigma=5),
@@ -318,14 +324,14 @@ class _Data(object):
         It is possible to filter an axis by a range, like for example
         select all the :math:`\\theta` with :math:`E_{kin} \in [0.511,+\infty]` MeV
 
-        >>> eps = p2sat.ExamplePhaseSpace()
-        >>> theta = eps.data.filter_axis('theta',select={'ekin':[0.511,None]})
-        >>> print(theta)
+        >>> eps = ExamplePhaseSpace()
+        >>> ftheta = eps.data.filter_axis('theta',select={'ekin':[0.511,None]})
+        >>> print(ftheta)
         array([5.74880106e+00, 3.00738745e+00, 2.25344608e+00, ...])
 
         or with several ranges, like in a given space-time volume
-        >>> ekin = eps.data.filter_axis('ekin',select={'x':[-5.,5.],'r':[0,10],'t':[150,None]})
-        >>> print(ekin)
+        >>> fekin = eps.data.filter_axis('ekin',select={'x':[-5.,5.],'r':[0,10],'t':[150,None]})
+        >>> print(fekin)
         array([2.25314526, 1.59015669, 0.30925764, ...])
 
         It is also possible to filter with an int or a float.
@@ -344,7 +350,7 @@ class _Data(object):
             fax = self.get_axis(key,select=None) # Current filtering axis
             faxes.append(fax)
             # Convert int or float values into a list
-            if type(v) in (int,float):
+            if type(val) in (int,float):
                 frange.append([val,val])
             else:
                 fra = list(val) # Current filtering range is a copy of select values
@@ -381,35 +387,26 @@ class _Data(object):
 
         Examples
         --------
-        >>> eps = p2sat.ExamplePhaseSpace()
+        >>> eps = ExamplePhaseSpace()
         >>> eps.data.filter_ps(select={'x':[-5.,5.],'r':[0,10],'t':[150,None]}, update=True)
         >>> print(eps.data.raw.ekin)
         array([2.25314526, 1.59015669, 0.30925764, ...])
 
         See Also
         --------
-        filter_axis
+        filter_axis()
         """
-        if verbose: print("Filtering %s phase space with axis %s ..."%(self._ps.particle["name"],faxes))
+        if verbose: print("Filtering %s phase space with axes %s ..."%(self._ps.particle["name"],list(select.keys())))
         data = []
         for ax in self.get_ps():
             data.append(self.filter_axis(ax,select,fpp=fpp))
 
-        w   = data[0::8]
-        x   = data[1::8]
-        y   = data[2::8]
-        z   = data[3::8]
-        px  = data[4::8]
-        py  = data[5::8]
-        pz  = data[6::8]
-        t   = data[7::8]
-
         if verbose: print("Done !")
 
         if update:
-            self.update(w,x,y,z,px,py,pz,t,verbose=verbose)
+            self.update(*data,verbose=verbose)
         else:
-            return w,x,y,z,px,py,pz,t
+            return data
 
     def transformate(self,T=None,R=None,rotate_first=False,verbose=True):
         """
@@ -576,7 +573,7 @@ class _Data(object):
 
         Examples
         --------
-        >>> eps = p2sat.ExamplePhaseSpace()
+        >>> eps = ExamplePhaseSpace()
         >>> eps.data.raw.x
         [...]
         >>> eps.data.round_axis("x",decimals=1)
@@ -652,7 +649,7 @@ class _Data(object):
 
         Examples
         --------
-        >>> eps = p2sat.ExamplePhaseSpace()
+        >>> eps = ExamplePhaseSpace()
         >>> eps.data.raw.x
         [...]
         >>> eps.data.rebin_axis("x")
@@ -703,7 +700,7 @@ class _Data(object):
 
         Examples
         --------
-        >>> eps = p2sat.ExamplePhaseSpace()
+        >>> eps = ExamplePhaseSpace()
         >>> eps.data.rebin_ps(nbins=10,deduplicate=True)
         >>> eps.data.raw.w
         [...]

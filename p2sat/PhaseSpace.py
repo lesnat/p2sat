@@ -40,14 +40,14 @@ class PhaseSpace(object):
     Assuming you already imported p2sat, you can create a PhaseSpace object
     for, let say, electrons, as follows
 
-    >>> eps = p2sat.PhaseSpace(particle="e-")
+    >>> # eps = p2sat.PhaseSpace(particle="e-")
 
     You can then import data from a file, using the `txt` method of sub-object `load`
 
-    >>> eps.load.txt("example.csv")
+    >>> # eps.load.txt("example.csv")
 
     and look at the imported data
-
+    >>> eps = ExamplePhaseSpace()
     >>> print(eps.data.raw.w)
 
     or print general informations about your data set
