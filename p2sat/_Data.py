@@ -535,6 +535,29 @@ class _Data(object):
         else:
             return W,X,Y,Z,Px,Py,Pz,T
 
+    def rescale_axis(self,axis,scale):
+        """
+        Multiply given axis by given scale.
+
+        Parameters
+        ----------
+        axis : str
+            axis to rescale
+        scale : float
+            scaling coefficient
+        """
+        if verbose:print("Rescaling axis %s ..."%axis)
+        axis = self.get_axis(axis)
+        ps = []
+        for ax in self.get_ps():
+            if ax is axis:
+                ps.append(scale*ax)
+            else:
+                ps.append(ax)
+
+        if verbose: print("Done !")
+        self.update(*ps,verbose=verbose)
+        
     def round_axis(self,axis,decimals=8,verbose=True):
         """
         Round the given axis.

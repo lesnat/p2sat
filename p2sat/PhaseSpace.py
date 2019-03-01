@@ -21,7 +21,7 @@ class PhaseSpace(object):
     Attributes
     ----------
     particle : dict
-        contains informations about particle particle, such as name, mass and label in TeX format
+        contains informations about particle specie, such as name, mass and label in TeX format
     data : sub-object
         contains raw data and methods to manipulate it, such as discretization or transformation.
     hist : sub-object
@@ -91,7 +91,7 @@ class PhaseSpace(object):
             self.particle["mass"] = 939.6
             self.particle["label"]= "n"
         else:
-            raise NameError("Unknown particle particle.")
+            raise NameError("Unknown particle specie.")
         self.data     = _Data(self)
         self.hist     = _Hist(self)
         self.plot     = _Plot(self)
