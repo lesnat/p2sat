@@ -257,7 +257,7 @@ class _Data(object):
         if phi is not None:
             g_phi   = self._generate(phi,Nconf,radians=True)
         else:
-            g_theta = self._generate(dict(law="iso"),Nconf,radians=True) # FIXME: between 0 and pi ?
+            g_phi = self._generate(dict(law="iso"),Nconf,radians=True) # FIXME: between 0 and pi ?
 
         # Reconstruct momentum from energy and angle distributions
         mass    = self._ps.particle["mass"]
@@ -704,7 +704,8 @@ class _Data(object):
                                     brc=self._construct_configuration(brange,width,id)
                                     W,X,Y,Z,Px,Py,Pz,T=self._discretize(with_time=with_time,brange=brc,**kargs)
                                     # Print advance approximately 50 times in all the process
-                                    print("%s/%i configurations done ..."%(np.product((np.array(id)+1)**7),split**7))
+                                    base = [split**k for k in range(6)]
+                                    print("%s/%i configurations done ..."%(np.dot(list(reversed(id)),base),split**6))
                                     # Append current phase space configurations to last ones
                                     w += list(W)
                                     x += list(X)        ; y += list(Y)      ; z += list(Z)
@@ -714,3 +715,105 @@ class _Data(object):
         if verbose : print('Done !')
 
         self.update(w,x,y,z,px,py,pz,t,verbose=verbose)
+
+    def round_axis(self,axis,decimals=8,verbose=True):
+        """
+        Round the given axis.
+
+        Parameters
+        ----------
+        axis : str
+            axis to round
+        decimals : int, optional
+            number of decimals
+        verbose : bool, optional
+            verbosity
+        """
+        if verbose:print("Rounding axis %s ..."%axis)
+        axis = self.get_axis(axis)
+        ps = []
+        for ax in self.get_ps():
+            if ax is axis:
+                ps.append(np.around(axis,decimals))
+            else:
+                ps.append(ax)
+
+        if verbose: print("Done !")
+        self.update(*ps,verbose=verbose)
+
+    def deduplicate_ps(self,verbose=True):
+        """
+        Eliminate duplicated configurations by summing their weights.
+
+        Parameters
+        ----------
+        verbose : bool, optional
+            verbosity
+        """
+        if verbose:print("Reshaping phase space ...")
+        # Get current phase space configurations
+        current_w,*current_ps = self.get_ps()
+        current_confs = list(zip(*current_ps))
+
+        # Construct a list of all possible configurations
+        reshaped_confs = []
+        i=0
+        Nconfs = len(current_confs)
+        for conf in current_confs:
+            if verbose and i%(Nconfs/10)==0:print("Constructing configuration %i/%i ..."%(i,Nconfs))
+            i+=1
+            if conf not in reshaped_confs:
+                reshaped_confs.append(conf)
+
+        # Reconstruct the weights of each new configuration
+        reshaped_w = np.zeros(len(reshaped_confs))
+        # Loop over all the old configurations, and add their weight to new conf
+        for i,conf in enumerate(current_confs):
+            if verbose and i%(Nconfs/10)==0: print("Reshaping weight %i/%i ..."%(i,Nconfs))
+            # OK to get the first index because each new configuration should be unique
+            reshaped_id = reshaped_confs.index(conf)
+            reshaped_w[reshaped_id] += current_w[i]
+
+        if verbose:print("Done !")
+
+        reshaped_ps = np.transpose(reshaped_confs)
+        self.update(reshaped_w,*reshaped_ps,verbose=verbose)
+
+    def rebin_axis(self,axis,brange,bwidth):
+        """
+        ...
+        """
+        axis = self.get_axis(axis)
+        # Rebin only if there is different values on axis
+        if brange[0] == brange[1]:
+            rebined_axis = axis
+        else:
+            # Initialize with nan
+            rebined_axis = np.array([np.nan] * len(axis))
+            # Create bins array
+            bins = np.arange(brange[0],brange[1],bwidth)
+            for b in bins:
+                id = self.select("id",[axis],[[b,b+bwidth]])
+                rebined_axis[id] = np.array([b] * len(id))
+        return rebined_axis
+
+    def rebin_ps(self,bwidth=None,reshape=False,verbose=True):
+        """
+        # rebin, then reshape
+        """
+        if verbose:print("Rebinning phase space ...")
+        # Get current configurations
+        w,*ps = self.get_ps()
+        # Rebin current configurations
+        rebined_ps = []
+        for axis in ps:
+            brange = [min(axis),max(axis)]
+            bwidth = (brange[1]-brange[0])/10
+            rebined_ps.append(self.rebin_axis(axis,brange,bwidth))
+
+        if verbose:print("Done !")
+
+        self.update(w,*rebined_ps,verbose=verbose)
+
+        if reshape:
+            self.deduplicate_ps(verbose=verbose)

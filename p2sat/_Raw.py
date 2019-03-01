@@ -67,6 +67,13 @@ class _Raw(object):
         u['ekin_density'] = 'MeV'
 
     @property
+    def id(self):
+        """
+        Particle index
+        """
+        return np.array(range(len(self.w)))
+
+    @property
     def w(self):
         """
         Particle statistical weight
