@@ -108,8 +108,8 @@ class _Data(object):
 
         if dct["law"] == "mono":
             # Mono
-            X0 = dct["X0"]
-            axis = np.array([X0] * Nconf)
+            K = dct["K"]
+            axis = np.array([K] * Nconf)
         elif dct["law"] == "uni":
             # Uniform law
             mini = dct["min"]
@@ -117,8 +117,8 @@ class _Data(object):
             axis = np.random.uniform(mini,maxi,Nconf)
         elif dct["law"] == "exp":
             # Exponential law
-            X0 = dct["X0"]
-            axis = np.random.exponential(X0,Nconf)
+            K = dct["K"]
+            axis = np.random.exponential(K,Nconf)
         elif dct["law"] == "iso":
             # Isotropic law. Only for angles
             axis = self._generate(dict(law="uni",min=0,max=180),Nconf=Nconf,radians=True)
@@ -220,7 +220,7 @@ class _Data(object):
         by 1e6 configurations as follows
 
         >>> eps.data.generate(Nconf=1e6,Npart=1e12,
-        ...                  ekin={"law":"mono","X0":20.0},
+        ...                  ekin={"law":"mono","K":20.0},
         ...                  theta={"law":"iso"},
         ...                  phi={"law":"iso"})
         ...
@@ -242,7 +242,7 @@ class _Data(object):
 
         # Generate weights
         weight  = float(Npart)/Nconf
-        g_w     = self._generate(dict(law="mono",X0=weight),Nconf)
+        g_w     = self._generate(dict(law="mono",K=weight),Nconf)
 
         # Generate energy
         g_ekin  = self._generate(ekin,Nconf)
@@ -257,7 +257,7 @@ class _Data(object):
         if phi is not None:
             g_phi   = self._generate(phi,Nconf,radians=True)
         else:
-            g_theta = self._generate(dict(law="iso"),Nconf,radians=True)
+            g_theta = self._generate(dict(law="iso"),Nconf,radians=True) # FIXME: between 0 and pi ?
 
         # Reconstruct momentum from energy and angle distributions
         mass    = self._ps.particle["mass"]
@@ -270,22 +270,22 @@ class _Data(object):
         if x is not None:
             g_x     = self._generate(x,Nconf)
         else:
-            g_x     = self._generate(dict(law="mono",X0=0),Nconf)
+            g_x     = self._generate(dict(law="mono",K=0),Nconf)
 
         if y is not None:
             g_y     = self._generate(y,Nconf)
         else:
-            g_y     = self._generate(dict(law="mono",X0=0),Nconf)
+            g_y     = self._generate(dict(law="mono",K=0),Nconf)
 
         if z is not None:
             g_z     = self._generate(z,Nconf)
         else:
-            g_z     = self._generate(dict(law="mono",X0=0),Nconf)
+            g_z     = self._generate(dict(law="mono",K=0),Nconf)
 
         if t is not None:
             g_t     = self._generate(t,Nconf)
         else:
-            g_t     = self._generate(dict(law="mono",X0=0),Nconf)
+            g_t     = self._generate(dict(law="mono",K=0),Nconf)
 
         # If transverse position is defined, it replaces g_y,g_z
         if r is not None:
@@ -295,7 +295,7 @@ class _Data(object):
             g_y = g_r * np.sin(angle)
 
         if verbose: print("Done !")
-        
+
         # Update current object
         self.update(g_w,g_x,g_y,g_z,g_px,g_py,g_pz,g_t,verbose=verbose)
 
