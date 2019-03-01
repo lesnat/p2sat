@@ -52,7 +52,6 @@ class _Data(object):
 
         Examples
         --------
-
         >>> eps.data.get_axis("w")
         >>> eps.data.get_axis("w",select={'x':150,'ekin':[0.511,None]})
         """
@@ -147,7 +146,7 @@ class _Data(object):
         """
         Generate a particle phase space from given laws.
 
-        TODO : UPDATE DOCUMENTATION
+        TODO : UPDATE DOCUMENTATION, add seed parameter
 
         Parameters
         ----------
@@ -324,7 +323,7 @@ class _Data(object):
         Given the `PhaseSpace` instance `eps`, it is possible to filter by an int value
         (Select all the :math:`w` satisfying :math:`x=3`)
 
-        >>> w,x = eps.data.filter_axis('w',['x'],[3])
+        >>> w = eps.data.filter_axis('w',['x'],[3])
 
         or filter by a range (Select all the :math:`\\theta` with :math:`E_{kin} \in [0.511,+\infty]` MeV)
 
@@ -363,7 +362,7 @@ class _Data(object):
 
     def filter_ps(self,faxes,frange,fpp=1e-7,update=False,verbose=True):
         """
-        Select all the phase space with given condition
+        Filter all the phase space with given condition
 
         Parameters
         ----------
@@ -374,13 +373,13 @@ class _Data(object):
         fpp : float, optional
             relative floating point precision. Default is 1e-7
         update : bool, optional
-            update or not the current `PhaseSpace` instance. Default is false
+            update or not the current `PhaseSpace` instance. Default is False
         verbose : bool, optional
             verbosity
 
         See Also
         --------
-        data.select
+        filter_axis
         """
         if verbose: print("Filtering %s phase space with axis %s ..."%(self._ps.particle["name"],faxes))
         data = []
@@ -415,7 +414,7 @@ class _Data(object):
         R : tuple of 3 float, optional
             rotate (x,y,z) and (px,py,pz) of R degree. Default is (0,0,0)
         rotate_first : bool, optional
-            process rotation before translation. Default is false
+            process rotation before translation. Default is False
         verbose : bool, optional
             verbosity
         """
@@ -543,6 +542,15 @@ class _Data(object):
             number of decimals
         verbose : bool, optional
             verbosity
+
+        Examples
+        --------
+        >>> eps = p2sat.ExamplePhaseSpace()
+        >>> eps.data.raw.x
+        [...]
+        >>> eps.data.round_axis("x",decimals=1)
+        >>> eps.data.raw.x
+        [...]
         """
         if verbose:print("Rounding axis %s ..."%axis)
         axis = self.get_axis(axis)
@@ -565,70 +573,125 @@ class _Data(object):
         verbose : bool, optional
             verbosity
         """
-        if verbose:print("Reshaping phase space ...")
+        if verbose:print("Deduplicating phase space configurations ...")
         # Get current phase space configurations
         current_w,*current_ps = self.get_ps()
         current_confs = list(zip(*current_ps))
 
         # Construct a list of all possible configurations
-        reshaped_confs = []
+        deduped_confs = []
         i=0
         Nconfs = len(current_confs)
         for conf in current_confs:
-            if verbose and i%(Nconfs/10)==0:print("Constructing configuration %i/%i ..."%(i,Nconfs))
+            if verbose and i%(Nconfs/10)==0:print("Constructing configuration number %i/%i ..."%(i,Nconfs))
             i+=1
-            if conf not in reshaped_confs:
-                reshaped_confs.append(conf)
+            if conf not in deduped_confs:
+                deduped_confs.append(conf)
 
         # Reconstruct the weights of each new configuration
-        reshaped_w = np.zeros(len(reshaped_confs))
+        deduped_w = np.zeros(len(deduped_confs))
         # Loop over all the old configurations, and add their weight to new conf
         for i,conf in enumerate(current_confs):
-            if verbose and i%(Nconfs/10)==0: print("Reshaping weight %i/%i ..."%(i,Nconfs))
+            if verbose and i%(Nconfs/10)==0: print("Summing weight %i/%i ..."%(i,Nconfs))
             # OK to get the first index because each new configuration should be unique
-            reshaped_id = reshaped_confs.index(conf)
-            reshaped_w[reshaped_id] += current_w[i]
+            deduped_id = deduped_confs.index(conf)
+            deduped_w[deduped_id] += current_w[i]
 
         if verbose:print("Done !")
 
-        reshaped_ps = np.transpose(reshaped_confs)
-        self.update(reshaped_w,*reshaped_ps,verbose=verbose)
+        deduped_ps = np.transpose(deduped_confs)
+        self.update(deduped_w,*deduped_ps,verbose=verbose)
 
-    def rebin_axis(self,axis,brange,bwidth):
+    def rebin_axis(self,axis,nbins=100):
         """
-        ...
+        Rebin the given axis.
+
+        TODO : why is there still nan after rebinning ?
+
+        Parameters
+        ----------
+        axis : str
+            axis to rebin
+        nbins : int
+            number of bins to use
+
+        See Also
+        --------
+        round_axis
+
+        Examples
+        --------
+        >>> eps = p2sat.ExamplePhaseSpace()
+        >>> eps.data.raw.x
+        [...]
+        >>> eps.data.rebin_axis("x")
+        >>> eps.data.raw.x
+        [...]
         """
         axis = self.get_axis(axis)
+
+        # Define bin range
+        brange = [min(axis),max(axis)]
+
         # Rebin only if there is different values on axis
         if brange[0] == brange[1]:
             rebined_axis = axis
         else:
             # Initialize with nan
             rebined_axis = np.array([np.nan] * len(axis))
+            # rebined_axis = axis.copy()
             # Create bins array
-            bins = np.arange(brange[0],brange[1],bwidth)
+            bwidth = (brange[1]-brange[0])/nbins
+            bins = np.linspace(brange[0],brange[1],nbins)
+            # Loop over all bins
             for b in bins:
-                id = self.filter_axis("id",[axis],[[b,b+bwidth]])
-                rebined_axis[id] = np.array([b] * len(id))
+                print(b, b+bwidth)
+                id = self.filter_axis("id",list([axis]),list([[round(b,7),round(b+bwidth,7)]]),fpp=1e-7)
+                rebined_axis[id] = b
+
         return rebined_axis
 
-    def rebin_ps(self,bwidth=None,reshape=False,verbose=True):
+    def rebin_ps(self,nbins=100,deduplicate=False,verbose=True):
         """
-        # rebin, then reshape
+        Rebin all the phase space
+
+        Parameters
+        ----------
+        nbins : int or list of 7 int
+            number of bins to use
+        deduplicate : bool, optional
+            call or not the deduplicate_ps function
+        verbose : bool, optional
+            verbosity
+
+        See Also
+        --------
+        rebin_axis
+        deduplicate_ps
+
+        Examples
+        --------
+        >>> eps = p2sat.ExamplePhaseSpace()
+        >>> eps.data.rebin_ps(nbins=10,deduplicate=True)
+        >>> eps.data.raw.w
+        [...]
+
         """
         if verbose:print("Rebinning phase space ...")
         # Get current configurations
         w,*ps = self.get_ps()
+        # Create nbins array
+        if type(nbins) is int: nbins = [nbins] * 7
         # Rebin current configurations
         rebined_ps = []
-        for axis in ps:
+        for i,axis in enumerate(ps):
             brange = [min(axis),max(axis)]
             bwidth = (brange[1]-brange[0])/10
-            rebined_ps.append(self.rebin_axis(axis,brange,bwidth))
+            rebined_ps.append(self.rebin_axis(axis,nbins=nbins[i]))
 
         if verbose:print("Done !")
 
         self.update(w,*rebined_ps,verbose=verbose)
 
-        if reshape:
+        if deduplicate:
             self.deduplicate_ps(verbose=verbose)
