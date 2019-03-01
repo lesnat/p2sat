@@ -64,7 +64,7 @@ class _Data(object):
             ax = eval("self.raw.%s"%axis)
             # Filter the data if needed
             if select is not None:
-                ax = self.select(ax,faxes=list(select.keys()),frange=list(select.values()))
+                ax = self.filter_axis(ax,faxes=list(select.keys()),frange=list(select.values()))
             # return result
             return ax
 
@@ -299,7 +299,7 @@ class _Data(object):
         # Update current object
         self.update(g_w,g_x,g_y,g_z,g_px,g_py,g_pz,g_t,verbose=verbose)
 
-    def select(self,axis,faxes,frange,fpp=1e-7):
+    def filter_axis(self,axis,faxes,frange,fpp=1e-7):
         """
         Filter an axis with a value/range on another axis.
 
@@ -324,11 +324,11 @@ class _Data(object):
         Given the `PhaseSpace` instance `eps`, it is possible to filter by an int value
         (Select all the :math:`w` satisfying :math:`x=3`)
 
-        >>> w,x = eps.data.select('w',['x'],[3])
+        >>> w,x = eps.data.filter_axis('w',['x'],[3])
 
         or filter by a range (Select all the :math:`\\theta` with :math:`E_{kin} \in [0.511,+\infty]` MeV)
 
-        >>> theta,ekin = eps.data.select('theta',['ekin'],[[0.511,None]])
+        >>> theta,ekin = eps.data.filter_axis('theta',['ekin'],[[0.511,None]])
 
         If frange is a list/tuple or a float, the filtering is done with a fpp precision
         """
@@ -352,16 +352,16 @@ class _Data(object):
                 axis=axis[faxes[i]==frange[i]]
             # Filter for a float
             elif type(frange[i]) is float:
-                axis=self.select(axis,faxes=[faxes[i]],frange=[[frange[i],frange[i]]])
+                axis=self.filter_axis(axis,faxes=[faxes[i]],frange=[[frange[i],frange[i]]])
             else:
                 raise TypeError('frange type must be int/float or list/tuple of 2 float.')
 
             # filter next faxes with current faxes
-            if len(faxes)>i+1:faxes[i+1]=self.select(faxes[i+1],[faxes[i]],[frange[i]])
+            if len(faxes)>i+1:faxes[i+1]=self.filter_axis(faxes[i+1],[faxes[i]],[frange[i]])
 
         return axis
 
-    def full_select(self,faxes,frange,fpp=1e-7,update=False,verbose=True):
+    def filter_ps(self,faxes,frange,fpp=1e-7,update=False,verbose=True):
         """
         Select all the phase space with given condition
 
@@ -386,7 +386,7 @@ class _Data(object):
         data = []
         for ax in self.get_ps():
             # Make a copy of faxes and frange for each axes (because they are modified in select)
-            data.append(self.select(ax,list(faxes),list(frange),fpp=fpp))
+            data.append(self.filter_axis(ax,list(faxes),list(frange),fpp=fpp))
 
         w   = data[0::8]
         x   = data[1::8]
@@ -531,191 +531,6 @@ class _Data(object):
         else:
             return W,X,Y,Z,Px,Py,Pz,T
 
-    # def lorentz(self,beta_CM,verbose=True):
-    #     """
-    #     Lorentz-transformate the particle phase-space with given speed of the center of mass.
-    #
-    #     TODO
-    #
-    #     References
-    #     ----------
-    #     https://en.wikipedia.org/wiki/Lorentz_transformation#Transformation_of_other_quantities
-    #     """
-    #     if verbose: print("Lorentz-transform %s phase-space with center of mass frame moving at %s c."%(self._ps.particle,beta_CM))
-    #     # lowercase : scalar, caption : vector
-    #
-    #     B = -np.array(beta_CM)
-    #     b = np.dot(B,B)
-    #     N = B/b
-    #     c = 2.99792458e8 * 1e6/1e15 # speed of light in um/fs
-    #     v = b * c
-    #     g = 1./np.sqrt(1-b**2)
-    #
-    #     # 4 position
-    #     a1 = c*r.t
-    #     Z1 = np.array([r.x,r.y,r.z]).T
-    #
-    #     a2,Z2 =[],[]
-    #     for i in range(len(a1)):
-    #         a2.append(g*(a1[i] - (v*np.dot(N,Z1[i]))/c))
-    #         Z2.append(Z1[i] + (g-1)*np.dot(Z1[i],N)*N - g*(a1[i]*v*N)/c)
-    #
-    #     t = np.array(a2)/c
-    #     x,y,z = np.array(Z2).T
-    #
-    #     # 4 momentum
-    #     a1 = self.ekin/c
-    #     Z1 = np.array([r.px,r.py,r.pz]).T
-    #
-    #     a2,Z2 =[],[]
-    #     for i in range(len(a1)):
-    #         a2.append(g*(a1[i] - (v*np.dot(N,Z1[i]))/c))
-    #         Z2.append(Z1[i] + (g-1)*np.dot(Z1[i],N)*N - g*(a1[i]*v*N)/c)
-    #
-    #     px,py,pz = np.array(Z2).T
-    #
-    #     w = self.raw.w
-    #     self.update(w,x,y,z,px,py,pz,t)
-
-    def _discretize(self,with_time,**kargs):
-        """
-        See discretize
-
-        Parameters
-        ----------
-        with_time : bool
-            discretize with time
-        """
-        hn=self._ps.hist.hn
-        r = self.raw
-
-        # Initialize
-        w       = []
-        x,y,z   = [],[],[]
-        px,py,pz= [],[],[]
-        t       = []
-
-        # Get histo and bins
-        if with_time:
-            bi,hi=hn([r.x,r.y,r.z,r.px,r.py,r.pz,r.t],normed=False,**kargs)
-            bx,by,bz,bpx,bpy,bpz,bt=bi
-        else:
-            bi,hi=hn([r.x,r.y,r.z,r.px,r.py,r.pz],normed=False,**kargs)
-            bx,by,bz,bpx,bpy,bpz=bi
-
-        # Get configurations with non-zero weight
-        hb=hi.nonzero()
-
-        # Get data with non-zero weight
-        w   = hi[hb]
-        x   = bx[hb[0]]
-        y   = by[hb[1]]
-        z   = bz[hb[2]]
-        px  = bpx[hb[3]]
-        py  = bpy[hb[4]]
-        pz  = bpz[hb[5]]
-        if with_time:
-            t   = bt[hb[6]]
-        else:
-            t   = [0.0]*len(w)
-
-        return w,x,y,z,px,py,pz,t
-
-    def _construct_configuration(self,brange,width,id):
-        """
-        """
-        brc = [[brange[j][0] + id[j]*width[j],brange[j][0] + (id[j]+1)*width[j]] for j in range(len(id))]
-        return brc
-
-    def discretize(self,with_time=True,split=4,verbose=True,**kargs):
-        """
-        Discretize the particles phase space in a 6 or 7 D histogram.
-
-        Parameters
-        ----------
-        with_time : bool, optional
-            discretize with time (7D). Default is True
-        split : int
-            split phase space into `split` parts per axis, to mitigate MemoryError
-        verbose : bool, optional
-            verbosity. Default is True
-        kargs
-            optional keyword arguments to pass to the hist.hn function
-
-        Notes
-        -----
-        This method can be used to significantly reduce disk space usage
-        when saving data into output file.
-
-        See Also
-        --------
-        hist.hn
-        """
-        hn=self._ps.hist.hn
-        r = self.raw
-        if verbose : print('Discretize %s phase space with a bin range splited %i times per axis ...'%(self._ps.particle["name"],split))
-
-        # Initialize
-        w       = []
-        x,y,z   = [],[],[]
-        px,py,pz= [],[],[]
-        t       = []
-
-        # Get current brange or reconstruct the default one
-        brange = kargs.get('brange',None)
-        if brange is None:
-            brange = np.array([[min(ax),max(ax)] for ax in self.get_ps()])
-        else:
-            del kargs['brange']
-        brange = np.array(brange)
-        # Calculate width
-        width = [(b[1]-b[0])/float(split) for b in brange]
-        # Create brange configurations
-        brconf=[]
-        for ix in range(split):
-            # x
-            print("Constructing bin range list : %i / %i ..."%(ix,split))
-            for iy in range(split):
-                # y
-                for iz in range(split):
-                    # z
-                    for ipx in range(split):
-                        # px
-                        for ipy in range(split):
-                            # py
-                            for ipz in range(split):
-                                # pz
-                                if with_time:
-                                    for it in range(split):
-                                        # t
-                                        id = [ix,iy,iz,ipx,ipy,ipz,it]
-                                        brc=self._construct_configuration(brange,width,id)
-                                        W,X,Y,Z,Px,Py,Pz,T=self._discretize(with_time=with_time,brange=brc,**kargs)
-                                        # Print advance approximately 50 times in all the process
-                                        base = [split**k for k in range(7)]
-                                        print("%s/%i configurations done ..."%(np.dot(list(reversed(id)),base),split**7))
-                                        # Append current phase space configurations to last ones
-                                        w += list(W)
-                                        x += list(X)        ; y += list(Y)      ; z += list(Z)
-                                        px += list(Px)      ; py += list(Py)    ; pz += list(Pz)
-                                        t += list(T)
-                                else:
-                                    id = [ix,iy,iz,ipx,ipy,ipz,None]
-                                    brc=self._construct_configuration(brange,width,id)
-                                    W,X,Y,Z,Px,Py,Pz,T=self._discretize(with_time=with_time,brange=brc,**kargs)
-                                    # Print advance approximately 50 times in all the process
-                                    base = [split**k for k in range(6)]
-                                    print("%s/%i configurations done ..."%(np.dot(list(reversed(id)),base),split**6))
-                                    # Append current phase space configurations to last ones
-                                    w += list(W)
-                                    x += list(X)        ; y += list(Y)      ; z += list(Z)
-                                    px += list(Px)      ; py += list(Py)    ; pz += list(Pz)
-                                    t += [0.]*len(W)
-
-        if verbose : print('Done !')
-
-        self.update(w,x,y,z,px,py,pz,t,verbose=verbose)
-
     def round_axis(self,axis,decimals=8,verbose=True):
         """
         Round the given axis.
@@ -793,7 +608,7 @@ class _Data(object):
             # Create bins array
             bins = np.arange(brange[0],brange[1],bwidth)
             for b in bins:
-                id = self.select("id",[axis],[[b,b+bwidth]])
+                id = self.filter_axis("id",[axis],[[b,b+bwidth]])
                 rebined_axis[id] = np.array([b] * len(id))
         return rebined_axis
 
