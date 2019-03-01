@@ -24,7 +24,7 @@ class _Data(object):
     As all the calculations are done with the previously defined units,
     the input data might be firstly converted to those units.
 
-    All the attributes can not be overwriden as they are defined as properties.
+    All the attributes can not be overwritten as they are defined as properties.
     Please call the `update` method to update particle phase-space data.
     """
     def __init__(self,PhaseSpace):
@@ -52,18 +52,21 @@ class _Data(object):
 
         Examples
         --------
+        >>> eps = p2sat.ExamplePhaseSpace()
         >>> eps.data.get_axis("w")
-        >>> eps.data.get_axis("w",select={'x':150,'ekin':[0.511,None]})
+        array([5.74880106e+00, 4.21936663e+00, 3.00738745e+00, ... ])
+        >>> eps.data.get_axis("theta",select={'x':[0.,1.],'ekin':[0.511,None]})
+        array([0.50540292, 5.96185252, 0.31544692, ... ])
         """
         if type(axis) is not str:
             # If not a str, return axis
-            return axis
+            return axis # FIXME : OK or not ?
         else:
             # Evaluate axis
             ax = eval("self.raw.%s"%axis)
             # Filter the data if needed
             if select is not None:
-                ax = self.filter_axis(ax,faxes=list(select.keys()),frange=list(select.values()))
+                ax = self.filter_axis(ax,select=select)
             # return result
             return ax
 
@@ -93,6 +96,7 @@ class _Data(object):
 
     def _generate(self,dct,Nconf,radians=False):
         """
+        Generate axis configuration from given law.
         """
         # Convert dict values into radians
         if radians:
@@ -105,10 +109,10 @@ class _Data(object):
 
             dct = dict(zip(dct.keys(),convval))
 
-        if dct["law"] == "mono":
-            # Mono
-            K = dct["K"]
-            axis = np.array([K] * Nconf)
+        if dct["law"] == "dirac":
+            # Dirac distribution
+            center = dct["center"]
+            axis = np.array([center] * Nconf)
         elif dct["law"] == "uni":
             # Uniform law
             mini = dct["min"]
@@ -116,11 +120,8 @@ class _Data(object):
             axis = np.random.uniform(mini,maxi,Nconf)
         elif dct["law"] == "exp":
             # Exponential law
-            K = dct["K"]
-            axis = np.random.exponential(K,Nconf)
-        elif dct["law"] == "iso":
-            # Isotropic law. Only for angles
-            axis = self._generate(dict(law="uni",min=0,max=180),Nconf=Nconf,radians=True)
+            scale = dct["scale"]
+            axis = np.random.exponential(scale,Nconf)
         elif dct["law"] == "gauss":
             # Gaussian law
             mu = dct["mu"]
@@ -148,8 +149,6 @@ class _Data(object):
         """
         Generate a particle phase space from given laws.
 
-        TODO : UPDATE DOCUMENTATION, add seed parameter
-
         Parameters
         ----------
         Nconf : int
@@ -159,9 +158,9 @@ class _Data(object):
         ekin : dict
             parameters to generate kinetic energy
         theta : dict, optional
-            parameters to generate theta angle distribution. Default is 'iso'
+            parameters to generate theta angle distribution. Default is isotropic
         phi : dict, optional
-            parameters to generate phi angle distribution. Default is 'iso'
+            parameters to generate phi angle distribution. Default is isotropic
         x,y,z : dict, optional
             parameters to generate position distribution. Default is 0 for x,y,z
         r : dict,optional
@@ -174,29 +173,19 @@ class _Data(object):
         The dictionnaries must each time at least contain the key 'law' with a value
         depending on which law are available for each physical quantity
 
-        For dict `ekin`, available laws are :
+        Available laws are :
 
-        - 'mono', for a mono-energetic source. Energy must be given as a value of keyword 'ekin0'
-        - 'exp', for exponential energy. Charasteristic energy must be given as a value of keyword 'ekin0'
+        - 'dirac', for a dirac distribution. The center of the distribution should be given as the value of keyword 'center'.
+        - 'uni', for a uniform law in a given range. Keywords 'min' and 'max' must be given to specify a minimum and maximum.
+        - 'exp', for an exponential distribution. The scale of the exponential should be given as a value of keyword 'scale'.
+        - 'gauss', for a gaussian (normal) distribution. Center of the distribution must be given with keyword 'mu', and standard deviantion with keyword 'sigma'.
+        - 'grid', for uniformly placed on a given grid. Keywords 'min', 'max' and 'Nbins' must be given.
+        - 'user', for a user-defined distribution. Keyword 'bins' must be given with a list of all available possibilities.
 
-        For dict `theta` and `phi`, available laws are :
+        For theta and phi, the defaults are isotropic laws.
+        They are created using theta={'law':'uni','min':0,'max':180}
+        and phi={'law':'uni','min':0,'max':360}.
 
-        - 'mono', for a directional source. Angle must be given as a value of keyword 'theta0' or '/phi0'
-        - 'iso', for an isotropic source. Optional keywords 'min' and 'max' can be given to specify a minimum/maximum angle (centered on 0 deg)
-        - 'gauss', for a gaussian spreading. Center of the distribution must be given with keyword 'mu', and standard deviantion with keyword 'sigma'
-
-        For dict `x`,`y`,`z`,`t`, available laws are :
-
-        - 'mono', for a unique position/time. This parameter must be given as a value of keyword `x0`/`y0`/`z0`/`t0`
-        - 'uni', for a uniform law in a given range. Keywords 'min' and 'max' MUST be given to specify a minimum and maximum
-        - 'exp', for exponential distribution. Charasteristic length/time must be given as a value of keyword `x0`/`y0`/`z0`/`t0`
-        - 'gauss', for a gaussian distribution. Center of the distribution must be given with keyword 'mu', and standard deviantion with keyword 'sigma'
-        - 'grid', for uniformly placed on a given grid. Keywords 'bins' OR 'min' + 'max' + 'Nbins' MUST be given.
-
-        For dict `r`, available laws are :
-
-        - 'uni', for a uniform law in a given range. Keywords 'min' and 'max' MUST be given to specify a minimum and maximum
-        - 'gauss', for a gaussian distribution. Center of the distribution must be given with keyword 'mu', and standard deviantion with keyword 'sigma'
 
         Details of the calculations :
 
@@ -216,15 +205,18 @@ class _Data(object):
 
         Examples
         --------
-        With a `PhaseSpace` object instanciated as `eps`, you can generate
-        a mono-energetic source in isotropic direction for 1e12 particles represented
-        by 1e6 configurations as follows
+        You can generate a mono-energetic source at 20 MeV with a gaussian
+        spreading of 5 degrees on theta, representing 1e12 particles
+        by 1e6 configurations as follows :
 
+        >>> eps = p2sat.ExamplePhaseSpace()
         >>> eps.data.generate(Nconf=1e6,Npart=1e12,
-        ...                  ekin={"law":"mono","K":20.0},
-        ...                  theta={"law":"iso"},
-        ...                  phi={"law":"iso"})
+        ...                  ekin=dict(law="dirac",center=20.0),
+        ...                  theta=dict(law="gauss",mu=0,sigma=5),
+        ...                  seed=113)
         ...
+        >>> eps.data.raw.theta
+        array([0.74994896, 4.66375703, 1.04599696, ... ])
         """
         # Print a starting message
         if verbose:
@@ -246,7 +238,7 @@ class _Data(object):
 
         # Generate weights
         weight  = float(Npart)/Nconf
-        g_w     = self._generate(dict(law="mono",K=weight),Nconf)
+        g_w     = self._generate(dict(law="dirac",center=weight),Nconf)
 
         # Generate energy
         g_ekin  = self._generate(ekin,Nconf)
@@ -255,13 +247,13 @@ class _Data(object):
         if theta is not None:
             g_theta = self._generate(theta,Nconf,radians=True)
         else:
-            g_theta = self._generate(dict(law="iso"),Nconf,radians=True)
+            g_theta = self._generate(dict(law="uni",min=0,max=180),Nconf,radians=True)
 
         # Generate phi angle
         if phi is not None:
             g_phi   = self._generate(phi,Nconf,radians=True)
         else:
-            g_phi = self._generate(dict(law="iso"),Nconf,radians=True) # FIXME: between 0 and pi ?
+            g_phi = self._generate(dict(law="uni",min=0,max=360),Nconf,radians=True) # FIXME: between 0 and pi ?
 
         # Reconstruct momentum from energy and angle distributions
         mass    = self._ps.particle["mass"]
@@ -274,22 +266,22 @@ class _Data(object):
         if x is not None:
             g_x     = self._generate(x,Nconf)
         else:
-            g_x     = self._generate(dict(law="mono",K=0),Nconf)
+            g_x     = self._generate(dict(law="dirac",center=0),Nconf)
 
         if y is not None:
             g_y     = self._generate(y,Nconf)
         else:
-            g_y     = self._generate(dict(law="mono",K=0),Nconf)
+            g_y     = self._generate(dict(law="dirac",center=0),Nconf)
 
         if z is not None:
             g_z     = self._generate(z,Nconf)
         else:
-            g_z     = self._generate(dict(law="mono",K=0),Nconf)
+            g_z     = self._generate(dict(law="dirac",center=0),Nconf)
 
         if t is not None:
             g_t     = self._generate(t,Nconf)
         else:
-            g_t     = self._generate(dict(law="mono",K=0),Nconf)
+            g_t     = self._generate(dict(law="dirac",center=0),Nconf)
 
         # If transverse position is defined, it replaces g_y,g_z
         if r is not None:
@@ -303,7 +295,7 @@ class _Data(object):
         # Update current object
         self.update(g_w,g_x,g_y,g_z,g_px,g_py,g_pz,g_t,verbose=verbose)
 
-    def filter_axis(self,axis,faxes,frange,fpp=1e-7):
+    def filter_axis(self,axis,select,fpp=1e-7):
         """
         Filter an axis with a value/range on another axis.
 
@@ -311,10 +303,8 @@ class _Data(object):
         ----------
         axis : str or numpy.ndarray
             axis to filter
-        faxes : list of str or list of numpy.ndarray
-            filtering axis
-        frange : list of int, float, list/tuple of 2 float
-            filtering value/range (value if int, range if float or list/tuple). If a frange element is None, the minimum/maximum value is taken
+        select : dict
+            filtering dictionary
         fpp : float, optional
             relative floating point precision. Default is 1e-7
 
@@ -325,62 +315,76 @@ class _Data(object):
 
         Examples
         --------
-        Given the `PhaseSpace` instance `eps`, it is possible to filter by an int value
-        (Select all the :math:`w` satisfying :math:`x=3`)
+        It is possible to filter an axis by a range, like for example
+        select all the :math:`\\theta` with :math:`E_{kin} \in [0.511,+\infty]` MeV
 
-        >>> w = eps.data.filter_axis('w',['x'],[3])
+        >>> eps = p2sat.ExamplePhaseSpace()
+        >>> theta = eps.data.filter_axis('theta',select={'ekin':[0.511,None]})
+        >>> print(theta)
+        array([5.74880106e+00, 3.00738745e+00, 2.25344608e+00, ...])
 
-        or filter by a range (Select all the :math:`\\theta` with :math:`E_{kin} \in [0.511,+\infty]` MeV)
+        or with several ranges, like in a given space-time volume
+        >>> ekin = eps.data.filter_axis('ekin',select={'x':[-5.,5.],'r':[0,10],'t':[150,None]})
+        >>> print(ekin)
+        array([2.25314526, 1.59015669, 0.30925764, ...])
 
-        >>> theta,ekin = eps.data.filter_axis('theta',['ekin'],[[0.511,None]])
+        It is also possible to filter with an int or a float.
 
-        If frange is a list/tuple or a float, the filtering is done with a fpp precision
+        See Also
+        --------
+        get_axis()
         """
-        # Get a copy of axis and faxes (from a str or not)
+        # Get a copy of axis
         axis=self.get_axis(axis,select=None)
-        for i,fax in enumerate(faxes):
-            faxes[i] = self.get_axis(fax,select=None)
 
+        # Construct filtering axes and filtering ranges
+        faxes = []
+        frange= []
+        for key,val in select.items():
+            fax = self.get_axis(key,select=None) # Current filtering axis
+            faxes.append(fax)
+            # Convert int or float values into a list
+            if type(v) in (int,float):
+                frange.append([val,val])
+            else:
+                fra = list(val) # Current filtering range is a copy of select values
+                # Default ranges are min and max of current filtering axis
+                if fra[0] is None: fra[0] = min(fax)
+                if fra[1] is None: fra[1] = max(fax)
+                frange.append(fra)
+
+        # Before filtering, consider all the configurations
+        filtr = np.array([True] * len(axis))
         # Loop over filtering axes
         for i,_ in enumerate(faxes):
-            # Filter in a given range
-            if isinstance(frange[i],(list,tuple,type(np.array(0)))):
-                # Default ranges are min and max of filtering axis
-                if frange[i][0] is None: frange[i][0]=min(faxes[i])
-                if frange[i][1] is None: frange[i][1]=max(faxes[i])
-                # The filtr array is an array of bool, whether the filtering condition is fullfiled or not
-                filtr=np.array([x>frange[i][0]*(1-fpp) and x<frange[i][1]*(1+fpp) for x in faxes[i]])
-                axis=axis[filtr]
-            # Filter for an int
-            elif type(frange[i]) is int:
-                axis=axis[faxes[i]==frange[i]]
-            # Filter for a float
-            elif type(frange[i]) is float:
-                axis=self.filter_axis(axis,faxes=[faxes[i]],frange=[[frange[i],frange[i]]])
-            else:
-                raise TypeError('frange type must be int/float or list/tuple of 2 float.')
+            # Then do a boolean AND between last filtr and current one
+            # A filtr element is True when the element of filtering axis is contained in filtering range
+            filtr *= np.array([x>frange[i][0]*(1-fpp) and x<frange[i][1]*(1+fpp) for x in faxes[i]])
 
-            # filter next faxes with current faxes
-            if len(faxes)>i+1:faxes[i+1]=self.filter_axis(faxes[i+1],[faxes[i]],[frange[i]])
+        # Finally return the filtered axis
+        return axis[filtr]
 
-        return axis
-
-    def filter_ps(self,faxes,frange,fpp=1e-7,update=False,verbose=True):
+    def filter_ps(self,select,fpp=1e-7,update=False,verbose=True):
         """
         Filter all the phase space with given condition
 
         Parameters
         ----------
-        faxes : list of str or list of numpy.ndarray
-            filtering axis
-        frange : list of int, float, list/tuple of 2 float
-            filtering value/range (value if int, range if float or list/tuple). If a frange element is None, the minimum/maximum value is taken
+        select : dict
+            filtering dictionary
         fpp : float, optional
             relative floating point precision. Default is 1e-7
         update : bool, optional
             update or not the current `PhaseSpace` instance. Default is False
         verbose : bool, optional
             verbosity
+
+        Examples
+        --------
+        >>> eps = p2sat.ExamplePhaseSpace()
+        >>> eps.data.filter_ps(select={'x':[-5.,5.],'r':[0,10],'t':[150,None]}, update=True)
+        >>> print(eps.data.raw.ekin)
+        array([2.25314526, 1.59015669, 0.30925764, ...])
 
         See Also
         --------
@@ -389,8 +393,7 @@ class _Data(object):
         if verbose: print("Filtering %s phase space with axis %s ..."%(self._ps.particle["name"],faxes))
         data = []
         for ax in self.get_ps():
-            # Make a copy of faxes and frange for each axes (because they are modified in select)
-            data.append(self.filter_axis(ax,list(faxes),list(frange),fpp=fpp))
+            data.append(self.filter_axis(ax,select,fpp=fpp))
 
         w   = data[0::8]
         x   = data[1::8]
@@ -557,7 +560,7 @@ class _Data(object):
 
         if verbose: print("Done !")
         self.update(*ps,verbose=verbose)
-        
+
     def round_axis(self,axis,decimals=8,verbose=True):
         """
         Round the given axis.
