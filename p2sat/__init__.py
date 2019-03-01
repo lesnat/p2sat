@@ -103,9 +103,9 @@ Other examples and a more complete documentation can be found at :
 https://github.com/lesnat/p2sat
 
 """
-__version__ = "1.4.2"
+__version__ = "2.0.0"
 
-from .PhaseSpace import PhaseSpace
+from .PhaseSpace import PhaseSpace,ExamplePhaseSpace
 
 def testing(name="all"):
     from ._tests import run

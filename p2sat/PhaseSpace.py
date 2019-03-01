@@ -165,3 +165,21 @@ class PhaseSpace(object):
         new.data.update(r.w,r.x,r.y,r.z,r.px,r.py,r.pz,r.t,verbose=verbose)
 
         return new
+
+
+class ExamplePhaseSpace(PhaseSpace):
+    """
+    Example phase space.
+    """
+    def __init__(self):
+        super().__init__(particle="electron")
+        ekin = {"law":"exp","K":1.0}
+        theta = {"law":"gauss","mu":1.0,"sigma":5.0}
+        phi = {"law":"uni","min":0.0,"max":360}
+        x = {"law":"uni","min":-10.0,"max":10.0}
+        r = {"law":"gauss","mu":0.0,"sigma":10.0}
+        t = {"law":"exp","K":100.0}
+        self.data.generate(Nconf=500,Npart=1e10,
+                            ekin=ekin,theta=theta,phi=phi,
+                            x=x,r=r,t=t,
+                            seed=113,verbose=False)

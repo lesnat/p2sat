@@ -142,7 +142,9 @@ class _Data(object):
 
         return axis
 
-    def generate(self,Nconf,Npart,ekin,theta=None,phi=None,x=None,y=None,z=None,r=None,t=None,verbose=True):
+    def generate(self,Nconf,Npart,
+                ekin,theta=None,phi=None,x=None,y=None,z=None,r=None,t=None,
+                seed=None,verbose=True):
         """
         Generate a particle phase space from given laws.
 
@@ -235,6 +237,9 @@ class _Data(object):
             if z is not None: print("    z     : %s"%z)
             if r is not None: print("    r     : %s"%r)
             if t is not None: print("    t     : %s"%t)
+
+        # Set the random seed
+        np.random.seed(seed)
 
         # Ensure that Nconf is of type int (for values such as 1e6)
         Nconf = int(Nconf)
@@ -645,8 +650,9 @@ class _Data(object):
             bins = np.linspace(brange[0],brange[1],nbins)
             # Loop over all bins
             for b in bins:
-                print(b, b+bwidth)
-                id = self.filter_axis("id",list([axis]),list([[round(b,7),round(b+bwidth,7)]]),fpp=1e-7)
+                # print(b, b+bwidth)
+                # id = self.filter_axis("id",list([axis]),list([[round(b,7),round(b+bwidth,7)]]),fpp=1e-7)
+                id = self.filter_axis("id",list([axis]),list([[b,b+bwidth]]))
                 rebined_axis[id] = b
 
         return rebined_axis
