@@ -150,7 +150,7 @@ class _Data(object):
         return axis
 
     def generate(self,Nconf,Npart,
-                ekin,theta=None,phi=None,x=None,y=None,z=None,r=None,t=None,
+                ekin,phi=None,theta=None,omega=None,x=None,y=None,z=None,r=None,t=None,
                 seed=None,verbose=True):
         """
         Generate a particle phase space from given laws.
@@ -249,23 +249,31 @@ class _Data(object):
         # Generate energy
         g_ekin  = self._generate(ekin,Nconf)
 
-        # Generate theta angle
-        if theta is not None:
-            g_theta = self._generate(theta,Nconf,radians=True)
-        else:
-            g_theta = self._generate(dict(law="uni",min=0,max=180),Nconf,radians=True)
-
         # Generate phi angle
         if phi is not None:
             g_phi   = self._generate(phi,Nconf,radians=True)
         else:
             g_phi = self._generate(dict(law="uni",min=0,max=360),Nconf,radians=True) # FIXME: between 0 and pi ?
 
+        # Generate theta angle
+        if theta is not None:
+            g_theta = self._generate(theta,Nconf,radians=True)
+        else:
+            g_theta = self._generate(dict(law="uni",min=0,max=180),Nconf,radians=True)
+
+        # Generate theta from omega
+        if omega is not None:
+            g_omega = abs(self._generate(omega,Nconf))
+            g_theta = np.arccos(1 - g_omega/(2*np.pi))
+
         # Reconstruct momentum from energy and angle distributions
         mass    = self._ps.particle["mass"]
         g_p     = np.sqrt(g_ekin**2 + 2*g_ekin*mass)
         g_px    = g_p * np.cos(g_theta)
-        g_py    = np.sign(g_phi)*np.sqrt((g_p**2 - g_px**2)/(1. + np.tan(g_phi)**2))
+        g_py_sign = 2 * np.random.randint(0, 2, size = Nconf) - 1
+        g_py    = g_py_sign * np.sqrt((g_p**2 - g_px**2)/(1. + np.tan(g_phi)**2))
+        # g_py    = np.sign(g_phi)*np.sqrt((g_p**2 - g_px**2)/(1. + np.tan(g_phi)**2))
+        # g_py_sign = 2 * np.random.randint(0,2) - 1
         g_pz    = g_py*np.tan(g_phi)
 
         # Generate positions and time
@@ -603,7 +611,8 @@ class _Data(object):
         """
         if verbose:print("Deduplicating phase space configurations ...")
         # Get current phase space configurations
-        current_w,*current_ps = self.get_ps()
+        # current_w,*current_ps = self.get_ps() # Python3
+        current_w,current_ps = self.get_ps() # Python2
         current_confs = list(zip(*current_ps))
 
         # Construct a list of all possible configurations
@@ -708,7 +717,8 @@ class _Data(object):
         """
         if verbose:print("Rebinning phase space ...")
         # Get current configurations
-        w,*ps = self.get_ps()
+        # w,*ps = self.get_ps()
+        w,ps = self.get_ps()
         # Create nbins array
         if type(nbins) is int: nbins = [nbins] * 7
         # Rebin current configurations
