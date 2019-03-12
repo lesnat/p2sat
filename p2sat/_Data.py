@@ -59,10 +59,13 @@ class _Data(object):
         Examples
         --------
         >>> eps = ExamplePhaseSpace()
-        >>> eps.data.get_axis("w")
-        array([5.74880106e+00, 4.21936663e+00, 3.00738745e+00, ... ])
+        >>> eps.data.get_axis("x")
+        array([-4.26043957, -8.225104  ,  0.25424565, ..., -3.19180518])
+
         >>> eps.data.get_axis("theta",select={'x':[0.,1.],'ekin':[0.511,None]})
-        array([0.50540292, 5.96185252, 0.31544692, ... ])
+        array([4.85380308, 3.79207276, 0.23348689, 0.59771946, 1.02382589,
+           1.65421016, 6.84567286, 4.75129691, 3.82330291, 4.15075404,
+           7.23677374, 2.69007983])
         """
         if type(axis) is not str:
             # If not a str, return axis
@@ -221,8 +224,16 @@ class _Data(object):
         ...                  theta=dict(law="gauss",mu=0,sigma=5),
         ...                  seed=113)
         ...
+        Generate e- phase-space ...
+            ekin  : {'law': 'dirac', 'center': 20.0}
+            theta : {'law': 'gauss', 'mu': 0, 'sigma': 5}
+            phi   : None
+        Done !
+        Updating raw values ...
+        Done !
+
         >>> eps.data.raw.theta
-        array([0.74994896, 4.66375703, 1.04599696, ... ])
+        array([4.40494361, 1.56579907, 3.67853302, ..., 5.42816942])
         """
         # Print a starting message
         if verbose:
@@ -334,13 +345,13 @@ class _Data(object):
 
         >>> eps = ExamplePhaseSpace()
         >>> ftheta = eps.data.filter_axis('theta',select={'ekin':[0.511,None]})
-        >>> print(ftheta)
-        array([5.74880106e+00, 3.00738745e+00, 2.25344608e+00, ...])
+        >>> ftheta
+        array([ 4.42559421,  4.85380308,  0.57311281, ..., 0.10975927])
 
         or with several ranges, like in a given space-time volume
         >>> fekin = eps.data.filter_axis('ekin',select={'x':[-5.,5.],'r':[0,10],'t':[150,None]})
-        >>> print(fekin)
-        array([2.25314526, 1.59015669, 0.30925764, ...])
+        >>> fekin
+        array([1.14810454e-01, 1.78725015e+00, 6.30877382e-01, ..., 3.37300348e+00])
 
         It is also possible to filter with an int or a float.
 
@@ -397,8 +408,13 @@ class _Data(object):
         --------
         >>> eps = ExamplePhaseSpace()
         >>> eps.data.filter_ps(select={'x':[-5.,5.],'r':[0,10],'t':[150,None]}, update=True)
-        >>> print(eps.data.raw.ekin)
-        array([2.25314526, 1.59015669, 0.30925764, ...])
+        Filtering e- phase space with axes ['x', 'r', 't'] ...
+        Done !
+        Updating raw values ...
+        Done !
+
+        >>> eps.data.raw.ekin
+        array([1.14810454e-01, 1.78725015e+00, 6.30877382e-01, ..., 3.37300348e+00])
 
         See Also
         --------
@@ -583,10 +599,14 @@ class _Data(object):
         --------
         >>> eps = ExamplePhaseSpace()
         >>> eps.data.raw.x
-        [...]
+        array([-4.26043957, -8.225104  ,  0.25424565, ..., -3.19180518])
+
         >>> eps.data.round_axis("x",decimals=1)
+        Rounding axis x ...
+        Done !
+
         >>> eps.data.raw.x
-        [...]
+        array([-4.3, -8.2,  0.3, ..., -3.2])
         """
         if verbose:print("Rounding axis %s ..."%axis)
         axis = self.get_axis(axis)
@@ -611,8 +631,8 @@ class _Data(object):
         """
         if verbose:print("Deduplicating phase space configurations ...")
         # Get current phase space configurations
-        # current_w,*current_ps = self.get_ps() # Python3
-        current_w,current_ps = self.get_ps() # Python2
+        current_data = self.get_ps() # Python2 compatibility
+        current_w, current_ps = current_data[0], current_data[1:]
         current_confs = list(zip(*current_ps))
 
         # Construct a list of all possible configurations
@@ -620,7 +640,8 @@ class _Data(object):
         i=0
         Nconfs = len(current_confs)
         for conf in current_confs:
-            if verbose and i%(Nconfs/10)==0:print("Constructing configuration number %i/%i ..."%(i,Nconfs))
+            if verbose and i % (Nconfs//10) == 0:
+                print("Constructing configuration number %i/%i ..."%(i,Nconfs))
             i+=1
             if conf not in deduped_confs:
                 deduped_confs.append(conf)
@@ -629,7 +650,8 @@ class _Data(object):
         deduped_w = np.zeros(len(deduped_confs))
         # Loop over all the old configurations, and add their weight to new conf
         for i,conf in enumerate(current_confs):
-            if verbose and i%(Nconfs/10)==0: print("Summing weight %i/%i ..."%(i,Nconfs))
+            if verbose and i % (Nconfs//10) == 0:
+                print("Summing weight %i/%i ..."%(i,Nconfs))
             # OK to get the first index because each new configuration should be unique
             deduped_id = deduped_confs.index(conf)
             deduped_w[deduped_id] += current_w[i]
@@ -660,10 +682,11 @@ class _Data(object):
         --------
         >>> eps = ExamplePhaseSpace()
         >>> eps.data.raw.x
-        [...]
+        array([-4.26043957, -8.225104  ,  0.25424565, ..., -3.19180518])
+
         >>> eps.data.rebin_axis("x")
         >>> eps.data.raw.x
-        [...]
+        [1]
         """
         axis = self.get_axis(axis)
 
@@ -717,8 +740,8 @@ class _Data(object):
         """
         if verbose:print("Rebinning phase space ...")
         # Get current configurations
-        # w,*ps = self.get_ps()
-        w,ps = self.get_ps()
+        data = self.get_ps() # Python2 compatibility
+        w, ps = data[0], data[1:]
         # Create nbins array
         if type(nbins) is int: nbins = [nbins] * 7
         # Rebin current configurations

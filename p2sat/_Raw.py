@@ -28,43 +28,43 @@ class _Raw(object):
         self._ps= PhaseSpace
         part_label = self._ps.particle['label']
         if self._ps.particle['name']=="gamma":
-            etot_label = 'E_{\gamma}'
-            ekin_label = 'E_{\gamma}'
+            etot_label = r'E_{\gamma}'
+            ekin_label = r'E_{\gamma}'
         else:
-            etot_label = 'E_{Tot}'
-            ekin_label = 'E_{kin}'
+            etot_label = r'E_{Tot}'
+            ekin_label = r'E_{kin}'
 
         self.labels = {}                ; self.units = {}
         l = self.labels                 ; u = self.units
 
-        l['w'] = 'N_{%s}'%part_label    ; u['w'] = None
-        l['x'] = 'x'                    ; u['x'] = '\mu m'
-        l['y'] = 'y'                    ; u['y'] = '\mu m'
-        l['z'] = 'z'                    ; u['z'] = '\mu m'
-        l['px'] = 'p_x'                 ; u['px'] = 'MeV/c'
-        l['py'] = 'p_y'                 ; u['py'] = 'MeV/c'
-        l['pz'] = 'p_z'                 ; u['pz'] = 'MeV/c'
-        l['t'] = 't'                    ; u['t'] = 'fs'
+        l['w'] = r'N_{%s}'%part_label   ; u['w'] = None
+        l['x'] = r'x'                   ; u['x'] = r'\mu m'
+        l['y'] = r'y'                   ; u['y'] = r'\mu m'
+        l['z'] = r'z'                   ; u['z'] = r'\mu m'
+        l['px'] = r'p_x'                ; u['px'] = r'MeV/c'
+        l['py'] = r'p_y'                ; u['py'] = r'MeV/c'
+        l['pz'] = r'p_z'                ; u['pz'] = r'MeV/c'
+        l['t'] = r't'                   ; u['t'] = r'fs'
 
-        l['r'] = 'r'                    ; u['r'] = '\mu m'
-        l['p'] = 'p'                    ; u['p'] = 'MeV/c'
+        l['r'] = r'r'                   ; u['r'] = r'\mu m'
+        l['p'] = r'p'                   ; u['p'] = r'MeV/c'
 
-        l['etot'] = etot_label          ; u['etot'] = 'MeV'
-        l['ekin'] = ekin_label          ; u['ekin'] = 'MeV'
-        l['gamma'] = '\gamma'           ; u['gamma'] = None
-        l['beta'] = '\\beta'            ; u['beta'] = None
-        l['m'] = 'm'                    ; u['m'] = 'MeV'
-        l['v'] = 'v'                    ; u['v'] = '\mu m/fs'
-        l['ux'] = 'u_x'                 ; u['ux'] = None
-        l['uy'] = 'u_y'                 ; u['uy'] = None
-        l['uz'] = 'u_z'                 ; u['uz'] = None
+        l['etot'] = etot_label          ; u['etot'] = r'MeV'
+        l['ekin'] = ekin_label          ; u['ekin'] = r'MeV'
+        l['gamma'] = r'\gamma'          ; u['gamma'] = None
+        l['beta'] = r'\\beta'           ; u['beta'] = None
+        l['m'] = r'm'                   ; u['m'] = r'MeV'
+        l['v'] = r'v'                   ; u['v'] = r'\mu m/fs'
+        l['ux'] = r'u_x'                ; u['ux'] = None
+        l['uy'] = r'u_y'                ; u['uy'] = None
+        l['uz'] = r'u_z'                ; u['uz'] = None
 
-        l['theta'] = '\\theta'          ; u['theta'] = 'deg'
-        l['phi'] = '\\phi'              ; u['phi'] = 'deg'
-        l['omega'] = '\Omega'           ; u['omega'] = 'sr'
+        l['theta'] = r'\\theta'         ; u['theta'] = r'deg'
+        l['phi'] = r'\\phi'             ; u['phi'] = r'deg'
+        l['omega'] = r'\Omega'          ; u['omega'] = r'sr'
 
-        l['ekin_density'] = '(N_{%s} %s)'%(part_label,ekin_label)
-        u['ekin_density'] = 'MeV'
+        l['ekin_density'] = r'(N_{%s} %s)'%(part_label,ekin_label)
+        u['ekin_density'] = r'MeV'
 
     @property
     def id(self):
