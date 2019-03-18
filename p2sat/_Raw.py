@@ -52,15 +52,15 @@ class _Raw(object):
         l['etot'] = etot_label          ; u['etot'] = r'MeV'
         l['ekin'] = ekin_label          ; u['ekin'] = r'MeV'
         l['gamma'] = r'\gamma'          ; u['gamma'] = None
-        l['beta'] = r'\\beta'           ; u['beta'] = None
+        l['beta'] = r'\beta'           ; u['beta'] = None
         l['m'] = r'm'                   ; u['m'] = r'MeV'
         l['v'] = r'v'                   ; u['v'] = r'\mu m/fs'
         l['ux'] = r'u_x'                ; u['ux'] = None
         l['uy'] = r'u_y'                ; u['uy'] = None
         l['uz'] = r'u_z'                ; u['uz'] = None
 
-        l['theta'] = r'\\theta'         ; u['theta'] = r'deg'
-        l['phi'] = r'\\phi'             ; u['phi'] = r'deg'
+        l['theta'] = r'\theta'         ; u['theta'] = r'deg'
+        l['phi'] = r'\phi'             ; u['phi'] = r'deg'
         l['omega'] = r'\Omega'          ; u['omega'] = r'sr'
 
         l['ekin_density'] = r'(N_{%s} %s)'%(part_label,ekin_label)

@@ -107,4 +107,11 @@ __version__ = "2.0.0"
 from .PhaseSpace import PhaseSpace,ExamplePhaseSpace
 
 def test():
-    pass
+    """
+    Launch all the p2sat tests using the pytest library.
+    """
+    import pytest
+    import os
+    path = os.path.abspath(__file__)
+    path = path.replace("p2sat/__init__.py","")
+    pytest.main([path])
