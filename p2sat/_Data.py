@@ -559,7 +559,7 @@ class _Data(object):
         else:
             return W,X,Y,Z,Px,Py,Pz,T
 
-    def rescale_axis(self,axis,scale):
+    def rescale_axis(self,axis,scale,verbose=True):
         """
         Multiply given axis by given scale.
 
@@ -569,6 +569,8 @@ class _Data(object):
             axis to rescale
         scale : float
             scaling coefficient
+        verbose : bool, optional
+            verbosity
         """
         if verbose:print("Rescaling axis %s ..."%axis)
         axis = self.get_axis(axis)
@@ -622,7 +624,7 @@ class _Data(object):
 
     def deduplicate_ps(self,verbose=True):
         """
-        Eliminate duplicated configurations by summing their weights.
+        Eliminate twin configurations by summing their weights.
 
         Parameters
         ----------
@@ -688,7 +690,8 @@ class _Data(object):
         >>> eps.data.raw.x
         [1]
         """
-        axis = self.get_axis(axis)
+        axis_label = axis
+        axis = self.get_axis(axis_label)
 
         # Define bin range
         brange = [min(axis),max(axis)]
@@ -701,14 +704,18 @@ class _Data(object):
             rebined_axis = np.array([np.nan] * len(axis))
             # rebined_axis = axis.copy()
             # Create bins array
-            bwidth = (brange[1]-brange[0])/nbins
-            bins = np.linspace(brange[0],brange[1],nbins)
+            bwidth = (brange[1]-brange[0])/(nbins-1)
+            bins = np.linspace(brange[0],brange[1]+bwidth,nbins+1)
             # Loop over all bins
-            for b in bins:
-                # print(b, b+bwidth)
-                # id = self.filter_axis("id",list([axis]),list([[round(b,7),round(b+bwidth,7)]]),fpp=1e-7)
-                id = self.filter_axis("id",list([axis]),list([[b,b+bwidth]]))
-                rebined_axis[id] = b
+            for i in range(nbins):
+                id = self.filter_axis("id",select={axis_label:[bins[i],bins[i+1]]},fpp=1e-20)
+                rebined_axis[id] = bins[i]
+
+            # Fix min and max
+            id = np.where(np.isclose(axis,min(axis)))
+            rebined_axis[id] = min(axis)
+            id = np.where(np.isclose(axis,max(axis)))
+            rebined_axis[id] = max(axis)
 
         return rebined_axis
 
