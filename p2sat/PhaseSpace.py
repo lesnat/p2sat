@@ -209,7 +209,7 @@ class ExamplePhaseSpace(PhaseSpace):
     Example phase space.
     """
     def __init__(self):
-        super().__init__(particle="electron")
+        super(ExamplePhaseSpace, self).__init__(particle="electron")
         ekin = {"law":"exp","scale":1.0}
         theta = {"law":"gauss","mu":1.0,"sigma":5.0}
         phi = {"law":"uni","min":0.0,"max":360}
