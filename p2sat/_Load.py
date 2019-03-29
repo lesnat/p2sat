@@ -61,55 +61,61 @@ class _Load(object):
         # Save data in PhaseSpace object
         self._ps.data.update(w,x,y,z,px,py,pz,t,verbose=verbose)
 
-    def Smilei_Screen_1d(self,Screen,xnorm,wnorm,tnorm,X=0):
+    def Smilei_TrackParticles(self,path,species,verbose=True):
         """
-        TODO
+        Extract phase space from a TrackParticles Smilei diagnostic.
+
+        Parameters
+        ----------
+        path : str
+            path to the simulation folder
+        species : str
+            name of the specie in the Smilei namelist
+        verbose : bool, optional
+            verbosity
         """
+        if verbose: print("Extracting %s phase space from %s TrackParticles ..."%(self._ps.particle["name"],species))
+        import happi
+        S = happi.Open(path,verbose=False)
+        timesteps = S.TrackParticles(species=species,sort=False).getTimesteps()
+
         w         = []
         x,y,z     = [],[],[]
         px,py,pz  = [],[],[]
         t         = []
 
-        time= Screen().get()['times']
+        for ts in timesteps:
+            if verbose:print("Timestep %i/%i ..."%(ts,timesteps[-1]))
+            data = S.TrackParticles(species=species,timesteps=ts,sort=False).get()[ts]
+            id = data["Id"]
+            if len(id[id>0]) == 0: continue
+            w += list(data["w"][id>0])
+            x += list(data["x"][id>0])
+            try:
+                y += list(data["y"][id>0])
+            except:
+                y += [0.]
+            try:
+                z += list(data["z"][id>0])
+            except:
+                z += [0.]
+            px += list(data["px"][id>0])
+            py += list(data["py"][id>0])
+            pz += list(data["pz"][id>0])
+            t += [ts]*len(id[id>0])
 
-        Px  = Screen().get()['px'] * 0.511
-        Py  = Screen().get()['py'] * 0.511
+        if verbose: print("Done !")
 
-        wNorm = wnorm/(0.511**2)
-        wNorm *= (max(Px)-min(Px))/len(Px)
-        wNorm *= (max(Py)-min(Py))/len(Py)
+        self._ps.data.update(w,x,y,z,px,py,pz,t,verbose=verbose)
 
-        cdata=np.array([[0.]*len(Px)]*len(Py))
-
-        print("Extracting screen data ...")
-        for it,et in enumerate(time):
-            ldata = cdata
-            cdata = Screen(timesteps=et).getData()[0]
-            for ipx,epx in enumerate(cdata):
-                for ipy,epy in enumerate(epx):
-                    depy = epy-ldata[ipx][ipy]
-                    if depy!=0.:
-                        w.append(depy*wNorm)
-                        x.append(X)
-                        y.append(0.)
-                        z.append(0.)
-                        px.append(Px[ipx])
-                        py.append(Py[ipy])
-                        pz.append(0.)
-                        t.append(et*tnorm)
-
-        pz = [0.0] * len(w)
-        x = [X] * len(w)
-        z = [0.0] * len(w)
-        print("Done !")
-        self._ps.data.update(w,x,y,z,px,py,pz,t)
-
-    def gp3m2_csv(self,base_name,verbose=True):
+    def gp3m2_csv(self,path,base_name,verbose=True):
         """
         Extract simulation results from a gp3m2 NTuple csv output file
 
         Parameters
         ----------
+        path : str
+            path to the simulation folder
         base_name : str
             base file name
         verbose : bool, optional
