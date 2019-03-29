@@ -663,11 +663,9 @@ class _Data(object):
         deduped_ps = np.transpose(deduped_confs)
         self.update(deduped_w,*deduped_ps,verbose=verbose)
 
-    def rebin_axis(self,axis,nbins=100):
+    def rebin_axis(self,axis,nbins=100,update=True,queue=None,verbose=True):
         """
         Rebin the given axis.
-
-        TODO : why is there still nan after rebinning ?
 
         Parameters
         ----------
@@ -691,6 +689,7 @@ class _Data(object):
         [1]
         """
         axis_label = axis
+        if verbose: print("Rebinning axis %s ..."%axis_label)
         axis = self.get_axis(axis_label)
 
         # Define bin range
@@ -717,9 +716,16 @@ class _Data(object):
             id = np.where(np.isclose(axis,max(axis)))
             rebined_axis[id] = max(axis)
 
-        return rebined_axis
+        if verbose: print("Done !")
+        if update:
+            pass
+        else:
+            if queue is not None:
+                queue.put(rebined_axis)
+            else:
+                return rebined_axis
 
-    def rebin_ps(self,nbins=100,deduplicate=False,verbose=True):
+    def rebin_ps(self,nbins=100,MP=False,deduplicate=False,verbose=True):
         """
         Rebin all the phase space
 
@@ -743,24 +749,39 @@ class _Data(object):
         >>> eps.data.rebin_ps(nbins=10,deduplicate=True)
         >>> eps.data.raw.w
         [...]
-
         """
         if verbose:print("Rebinning phase space ...")
-        # Get current configurations
-        data = self.get_ps() # Python2 compatibility
-        w, ps = data[0], data[1:]
-        # Create nbins array
+        w = self._ps.data.raw.w
         if type(nbins) is int: nbins = [nbins] * 7
         # Rebin current configurations
-        rebined_ps = []
-        for i,axis in enumerate(ps):
-            brange = [min(axis),max(axis)]
-            bwidth = (brange[1]-brange[0])/10
-            rebined_ps.append(self.rebin_axis(axis,nbins=nbins[i]))
+        if MP:
+            import multiprocessing as mp
+            q = mp.Manager().Queue()
+            processes = []
+            for i,ax in enumerate(["x","y","z","px","py","pz","t"]):
+                proc = mp.Process(target=self.rebin_axis, args=(ax,), kwargs=dict(nbins=nbins[i],update=False,queue=q,verbose=verbose))
+                processes.append(proc)
+                proc.start()
 
-        if verbose:print("Done !")
+            for proc in processes:
+                proc.join()
 
-        self.update(w,*rebined_ps,verbose=verbose)
+            ps = []
+            while not q.empty():
+                ps.append(q.get())
+
+            self.update(w, *ps, verbose=verbose)
+
+        else:
+            x = self.rebin_axis("x",nbins=nbins[0],update=False,verbose=verbose)
+            y = self.rebin_axis("y",nbins=nbins[1],update=False,verbose=verbose)
+            z = self.rebin_axis("z",nbins=nbins[2],update=False,verbose=verbose)
+            px = self.rebin_axis("px",nbins=nbins[3],update=False,verbose=verbose)
+            py = self.rebin_axis("py",nbins=nbins[4],update=False,verbose=verbose)
+            pz = self.rebin_axis("pz",nbins=nbins[5],update=False,verbose=verbose)
+            t = self.rebin_axis("t",nbins=nbins[6],update=False,verbose=verbose)
+            if verbose:print("Done !")
+            self.update(w,x,y,z,px,py,pz,t,verbose=verbose)
 
         if deduplicate:
             self.deduplicate_ps(verbose=verbose)
