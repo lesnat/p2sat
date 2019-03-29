@@ -20,16 +20,16 @@ check_input = True
 gps1 = p2sat.PhaseSpace(particle="gamma")
 
 # Define energy and angle parameters
-ekin_dict = {"law":"exp","K":1.0}
-theta_dict = {"law":"gauss","mu":0.,"sigma":5.}
+ekin_dict = {"law":"exp","scale":1.0}
+omega_dict = {"law":"gauss","mu":0.,"sigma":5.}
 phi_dict = {"law":"iso"}
 x_dict = {"law":"gauss","mu":0.,"sigma":10.}
 r_dict = {"law":"gauss","mu":0.,"sigma":50.}
-t_dict = {"law":"exp","K":150.}
+t_dict = {"law":"exp","scale":150.}
 
 # Generate particle phase space
 gps1.data.generate(Nconf = 1e4, Npart = 1e12,
-                  ekin=ekin_dict, theta=theta_dict, phi=phi_dict,
+                  ekin=ekin_dict, omega=omega_dict, phi=phi_dict,
                   x=x_dict, r=r_dict, t=t_dict)
 
 # Look at the consistency of phase space generation
