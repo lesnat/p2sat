@@ -104,18 +104,19 @@ class _Hist(object):
             bins.append(self._calculate_bins(axis[i],brange[i],bwidth[i]))
 
         # # Get weight normalization
-        # if type(normed) is bool:
-        #     if normed:
-        #         normed=[True]*len(axis)
-        #     else:
-        #         normed=[False]*len(axis)
-        # wnorm = 1.
-        # for i,_ in enumerate(axis):
-        #     if normed[i]: wnorm*=bwidth[i]
+        if type(normed) is bool:
+            if normed:
+                normed=[True]*len(axis)
+            else:
+                normed=[False]*len(axis)
+        wnorm = 1.
+        for i,_ in enumerate(axis):
+            if normed[i]: wnorm*=bwidth[i]
 
         # Calculate the multi dimensional histo, normalized by wnorm
-        # h,b=np.histogramdd(axis,weights=w/wnorm,bins=bins)
-        h,b=np.histogramdd(axis,weights=w,normed=normed,bins=bins)
+        h,b=np.histogramdd(axis,weights=w/wnorm,bins=bins)
+        # Use numpy instead ?
+        # h,b=np.histogramdd(axis,weights=w,normed=normed,bins=bins)
 
         # Return the bins and histo
         return b,h

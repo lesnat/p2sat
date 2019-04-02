@@ -637,85 +637,14 @@ class _Data(object):
         current_w, current_ps = current_data[0], current_data[1:]
         current_confs = list(zip(*current_ps))
 
-        # # Construct a list of all possible configurations
-        # deduped_confs = []
-        # i=0
-        # Nconfs = len(current_confs)
-        # for conf in current_confs:
-        #     if verbose and i % (Nconfs//10) == 0:
-        #         print("Constructing configuration number %i/%i ..."%(i,Nconfs))
-        #     i+=1
-        #     if conf not in deduped_confs:
-        #         deduped_confs.append(conf)
-        #
-        # # Reconstruct the weights of each new configuration
-        # deduped_w = np.zeros(len(deduped_confs))
-        # # Loop over all the old configurations, and add their weight to new conf
-        # for i,conf in enumerate(current_confs):
-        #     if verbose and i % (Nconfs//10) == 0:
-        #         print("Summing weight %i/%i ..."%(i,Nconfs))
-        #     # OK to get the first index because each new configuration should be unique
-        #     deduped_id = deduped_confs.index(conf)
-        #     deduped_w[deduped_id] += current_w[i]
-        # Construct a list of all possible configurations
-
-        # New method
-        # deduped_w = np.zeros(len(deduped_confs))
-        # deduped_w = []
-        # deduped_confs = []
-        # i=0
-        # Nconfs = len(current_confs)
-        # while len(current_confs)>0:
-        #     conf = current_confs[0]
-        #     w = current_w[0]
-        #     # Append current conf
-        #     deduped_confs.append(conf)
-        #     deduped_w.append(conf)
-        #     # Search if this conf is also present in another location
-        #     # Delete old conf
-        #     current_confs.pop(0)
-        #     current_w.pop(0)
-
-        # Another
-        # # deduped_w = np.zeros(len(deduped_confs))
-        # for conf in current_confs:
-        #     while True:
-        #         try:
-        #             id = current_confs.index(conf)
-        #             deduped_confs.append(conf)
-        #             deduped_w[-1] +=
-        #         except ValueError:
-        #             break
-
-        # # Another
-        # for iconf,conf in enumerate(current_confs):
-        #     # If this conf has already been deduplicated, go to next iteration
-        #     if current_w[iconf] == 0:
-        #         continue
-        #     else:
-        #         # Search id of twins configurations
-        #         while True:
-        #             i = int(iconf)
-        #             try:
-        #                 # Try to find next id of twin conf
-        #                 id = current_confs[iconf+i].index(conf)
-        #                 # If one has been found, sum weights
-        #                 current_w[iconf] += current_w[id]
-        #                 current_w[id] = 0
-        #             except ValueError:
-        #                 # If no more index, break the loop
-        #                 break
-        #
-        #
-        #     # Find the first index of current conf
-        #     idfc = # Id of first conf
-        #     # Find other possible indexes of current conf
-        #     idoc = # Id of other conf
-        # # deduped_w = np.nonzero(current_w)
-
-        # Another
+        # Initialize deduplicated confs lists
+        deduped_w = []
+        deduped_confs = []
         already_treated_id = []
+        Nconfs = len(current_confs)
+        # Loop over all confs not already treated
         for icconf,cconf in enumerate(current_confs):
+            if icconf % (Nconfs//1000) == 0: print(icconf)
             if icconf not in already_treated_id:
                 # Add current conf
                 deduped_confs.append(cconf)
@@ -726,8 +655,8 @@ class _Data(object):
                 select = dict(id=[icconf+1,None],x=cconf[0],y=cconf[1],z=cconf[2],px=cconf[3],py=cconf[4],pz=cconf[5],t=cconf[6])
                 id = self.filter_axis("id",select=select)
                 if len(id)>0:
-                    deduped_confs.append(cconf)
-                    deduped_w.append(w)
+                    # Add weights of twin confs to weight of ref conf
+                    deduped_w[-1] += sum(current_w[id])
                     already_treated_id += list(id)
 
         if verbose:print("Done !")

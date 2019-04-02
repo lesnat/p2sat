@@ -61,6 +61,115 @@ class _Load(object):
         # Save data in PhaseSpace object
         self._ps.data.update(w,x,y,z,px,py,pz,t,verbose=verbose)
 
+    def Smilei_Screen_1d(self,path,nb,r,x=0,verbose=True):
+        """
+        Extract phase space from Smilei 1D Screen diagnostic.
+
+        Parameters
+        ----------
+        path : str
+            path to the simulation folder
+        nb : int
+            Screen number
+        r : float
+            typical radius to consider in transverse direction (in um)
+        x : float, optional
+            diagnostic position
+        verbose : bool, optional
+
+        Notes
+        -----
+        On a 1D Smilei simulation, a typical DiagScreen must be declared as follows
+        ::
+            DiagScreen(
+                shape               = 'plane',
+                point               = [xtarget[1] - 5*um],
+                vector              = [1.],
+                direction           = 'forward',
+
+                deposited_quantity  = 'weight',
+                species             = ['e'],
+                axes                = [
+                     ['px' , pmin     , pmax     , 301],
+                     ['py' , -pmax/5  , pmax/5   , 301]
+                ],
+
+                every               = every
+            )
+        """
+        if verbose: print("Extracting screen data from %s ..."%path)
+
+        # Import Smilei simulation
+        import happi
+        S = happi.Open(path,verbose=False)
+        nl = S.namelist
+
+        # Define physical constants
+        m_e = 9.11e-31
+        epsilon_0 = 8.85e-12
+        e = 1.6e-19
+        c = 2.99792458e8
+        epsilon_0 = 8.854187817e-12
+        # Smilei's unit in SI
+        Wr = nl.Main.reference_angular_frequency_SI
+        Tr = 1/Wr
+        Lr = c/Wr
+        # Calculate normalizations
+        nc = m_e * epsilon_0 * (Wr/e)**2
+        Lx = nl.Main.grid_length[0] * Lr # Use a try/except ?
+        vol = Lx * np.pi * (r * 1e-6)**2
+        wnorm = nc * vol
+        tnorm = 1e-15/Tr
+        xnorm = 1e-6/Lr
+
+        # Initialize phase space lists
+        w         = []
+        x,y,z     = [],[],[]
+        px,py,pz  = [],[],[]
+        t         = []
+
+        # Retrieve Screen data
+        times = S.Screen(nb).getTimes()
+        timesteps= S.Screen(nb).getTimesteps()
+
+        Px  = S.Screen(nb).getAxis("px") * 0.511
+        Py  = S.Screen(nb).getAxis("py") * 0.511
+
+        # Compensate happi correction on weights
+        wnorm /= 0.511**2
+        wnorm *= (max(Px)-min(Px))/len(Px)
+        wnorm *= (max(Py)-min(Py))/len(Py)
+
+        # Current data is initialized as an empty matrix
+        cdata=np.array([[0.]*len(Px)]*len(Py))
+
+        # Loop over times
+        for it,et in enumerate(timesteps):
+            ldata = cdata
+            # Retrieve data for given time
+            cdata = S.Screen(nb,timesteps=et).getData()[0]
+            # Loop over px then py
+            if verbose and it % (len(times)//10) == 0: print("Retrieving timestep %i/%i ..."%(et,timesteps[-1]))
+            for ipx,epx in enumerate(cdata):
+                for ipy,epy in enumerate(epx):
+                    # Get weight difference for given configuration
+                    depy = epy-ldata[ipx][ipy]
+                    # If non-zero, save config
+                    if depy!=0.:
+                        w.append(depy * wnorm)
+                        px.append(Px[ipx])
+                        py.append(Py[ipy])
+                        t.append(times[it] * tnorm)
+
+        # Reconstruct missing data
+        pz = [0.0] * len(w)
+        x = [x] * len(w)
+        z = [0.0] * len(w)
+
+        # Update current phase space
+        if verbose: print("Done !")
+        self._ps.data.update(w,x,y,z,px,py,pz,t)
+
     def Smilei_TrackParticles(self,path,species,verbose=True):
         """
         Extract phase space from a TrackParticles Smilei diagnostic.
