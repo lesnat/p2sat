@@ -114,13 +114,16 @@ class _Load(object):
         Wr = nl.Main.reference_angular_frequency_SI
         Tr = 1/Wr
         Lr = c/Wr
+        Pr = 0.511 # MeV/c
         # Calculate normalizations
         nc = m_e * epsilon_0 * (Wr/e)**2
         Lx = nl.Main.grid_length[0] * Lr # Use a try/except ?
         vol = Lx * np.pi * (r * 1e-6)**2
-        wnorm = nc * vol
+        wnorm = nc * vol # Weight normalization : Before -> in Nc/Pr/Pr, After -> in Number/Pr/Pr
         tnorm = 1e-15/Tr
         xnorm = 1e-6/Lr
+        # Save diag position
+        xdiag = x
 
         # Initialize phase space lists
         w         = []
@@ -132,13 +135,13 @@ class _Load(object):
         times = S.Screen(nb).getTimes()
         timesteps= S.Screen(nb).getTimesteps()
 
-        Px  = S.Screen(nb).getAxis("px") * 0.511
-        Py  = S.Screen(nb).getAxis("py") * 0.511
+        Px  = S.Screen(nb).getAxis("px") * Pr
+        Py  = S.Screen(nb).getAxis("py") * Pr
 
         # Compensate happi correction on weights
-        wnorm /= 0.511**2
-        wnorm *= (max(Px)-min(Px))/len(Px)
-        wnorm *= (max(Py)-min(Py))/len(Py)
+        wnorm /= Pr**2 # Weights are now in Nb/(MeV/c)/(MeV/c) (independant of bin size)
+        wnorm *= (max(Px)-min(Px))/len(Px) # Multiply by bin size : weights are now in Nb/(MeV/c)/bin
+        wnorm *= (max(Py)-min(Py))/len(Py) # Weight are now in Nb/bin/bin (dependant of bin size, it counts number of particles for given conf)
 
         # Current data is initialized as an empty matrix
         cdata=np.array([[0.]*len(Px)]*len(Py))
@@ -163,7 +166,8 @@ class _Load(object):
 
         # Reconstruct missing data
         pz = [0.0] * len(w)
-        x = [x] * len(w)
+        x = [xdiag] * len(w)
+        y = [0.0] * len(w)
         z = [0.0] * len(w)
 
         # Update current phase space
@@ -184,15 +188,19 @@ class _Load(object):
             verbosity
         """
         if verbose: print("Extracting %s phase space from %s TrackParticles ..."%(self._ps.particle["name"],species))
+        # Open simulation
         import happi
         S = happi.Open(path,verbose=False)
         timesteps = S.TrackParticles(species=species,sort=False).getTimesteps()
+        dt = S.namelist.Main.timestep
 
+        # Initialize ps list
         w         = []
         x,y,z     = [],[],[]
         px,py,pz  = [],[],[]
         t         = []
 
+        # Get data for each timestep
         for ts in timesteps:
             if verbose:print("Timestep %i/%i ..."%(ts,timesteps[-1]))
             data = S.TrackParticles(species=species,timesteps=ts,sort=False).get()[ts]
@@ -211,7 +219,7 @@ class _Load(object):
             px += list(data["px"][id>0])
             py += list(data["py"][id>0])
             pz += list(data["pz"][id>0])
-            t += [ts]*len(id[id>0])
+            t += [ts/dt]*len(id[id>0])
 
         if verbose: print("Done !")
 
@@ -258,7 +266,7 @@ class _Load(object):
         # Loop over threads
         i = 0
         while True:
-            fname = fbase + str(i) + fext
+            fname = path + fbase + str(i) + fext
             i    += 1
             try:
                 # Open file for thread i-1
@@ -298,11 +306,6 @@ class _Load(object):
             simulation path
         verbose : bool, optional
             verbosity
-
-        Examples
-        --------
-        >>> eps = ExamplePhaseSpace()
-        >>> # eps.extract.TrILEns_output("../TrILEns/")
         """
         particle = self._ps.particle["name"]
         if verbose:print("Extracting {} phase space from {}output.txt ...".format(particle,path))
@@ -369,7 +372,14 @@ class _Load(object):
 
     def TrILEns_prop_ph(self,path,verbose=True):
         """
-        TODO
+        Extract simulation results from a TrILEns prop_ph file
+
+        Parameters
+        ----------
+        path : str
+            simulation path
+        verbose : bool, optional
+            verbosity
         """
         if self._ps.particle["name"]!="gamma":
             raise NameError("prop_ph.t contains informations about gamma photons ! Current particle name is %s"%self._ps.particle["name"])
