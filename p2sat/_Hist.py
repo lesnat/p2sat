@@ -98,25 +98,34 @@ class _Hist(object):
         # Default bin range and width
         if brange is None   : brange=[[None,None]]*len(axis)
         if bwidth is None   : bwidth=[None]*len(axis)
+        if type(normed) is bool: normed=[normed] * len(axis)
+
+        # Define weight normalization
+        wnorm = 1.
+
         # Calculate bins
         bins=[]
         for i,_ in enumerate(axis):
-            bins.append(self._calculate_bins(axis[i],brange[i],bwidth[i]))
+            # Default bin range
+            if brange[i][0] is None: brange[i][0] = min(axis[i])
+            if brange[i][1] is None: brange[i][1] = max(axis[i])
+            # Default bin width
+            if bwidth[i] is None: bwidth[i] = (brange[i][1] - brange[i][0])/100
 
-        # # Get weight normalization
-        if type(normed) is bool:
-            if normed:
-                normed=[True]*len(axis)
-            else:
-                normed=[False]*len(axis)
-        wnorm = 1.
-        for i,_ in enumerate(axis):
+            # Calculate number of bins
+            # nbins = int((brange[i][1] - brange[i][0])/bwidth[i])
+            #
+            # return np.linspace(brange[i][0], brange[i][1]+bwidth[i], nbins+1)
+
+            # Calculate bin edges
+            b = np.arange(brange[i][0], brange[i][1]+2*bwidth[i], bwidth[i]) # max is excluded
+            bins.append(b)
+
+            # Normalize weight/bin
             if normed[i]: wnorm*=bwidth[i]
 
         # Calculate the multi dimensional histo, normalized by wnorm
         h,b=np.histogramdd(axis,weights=w/wnorm,bins=bins)
-        # Use numpy instead ?
-        # h,b=np.histogramdd(axis,weights=w,normed=normed,bins=bins)
 
         # Return the bins and histo
         return b,h
