@@ -155,7 +155,7 @@ class _Data(object):
     def generate(self,Nconf,Npart,
                 ekin,phi=None,theta=None,omega=None,x=None,y=None,z=None,r=None,t=None,
                 seed=None,verbose=True):
-        """
+        r"""
         Generate a particle phase space from given laws.
 
         Parameters
@@ -204,13 +204,17 @@ class _Data(object):
         We also have :math:`E_T^2 = p^2 + m_0^2` and :math:`p^2=p_x^2 + p_y^2 + p_z^2`
         with :math:`p` in MeV/c.
 
-        Assuming :math:`\cos{\\theta}=\\frac{p_x}{p}` and
-        :math:`\\tan{\\phi}=\\frac{p_z}{p_y}` we finaly get
+        Assuming :math:`\cos{\theta}=\frac{p_x}{p}` and
+        :math:`\tan{\phi}=\frac{p_z}{p_y}` we finaly get
 
         - :math:`p = E_k^2 - 2 E_k m_0`
-        - :math:`p_x = p \cos{\\theta}`
-        - :math:`p_y = \\frac{\phi}{\mid \phi \mid} \sqrt{\\frac{p^2 - p_x^2}{1 + \\tan^2{\phi}}}`
-        - :math:`p_z = p_y \\tan{\phi}`
+        - :math:`p_x = p \cos{\theta}`
+        - :math:`p_y = \frac{\phi}{\mid \phi \mid} \sqrt{\frac{p^2 - p_x^2}{1 + \tan^2{\phi}}}`
+        - :math:`p_z = p_y \tan{\phi}`
+
+        We also have :math:`\Omega = 2 \pi (1 - \cos{\theta})`
+        or :math:`\theta = \arccos{1 - \frac{\Omega}{2 \pi}}`,
+        with :math:`\Omega` generated with a :math:`2 \pi` modulo.
 
         Examples
         --------
@@ -239,6 +243,7 @@ class _Data(object):
         if verbose:
             print("Generate %s phase-space ..."%(self._ps.particle["name"]))
             print("    ekin  : %s"%ekin)
+            print("    omega : %s"%omega)
             print("    theta : %s"%theta)
             print("    phi   : %s"%phi)
             if x is not None: print("    x     : %s"%x)
@@ -274,7 +279,7 @@ class _Data(object):
 
         # Generate theta from omega
         if omega is not None:
-            g_omega = abs(self._generate(omega,Nconf))
+            g_omega = abs(self._generate(omega,Nconf)) % 4*np.pi
             g_theta = np.arccos(1 - g_omega/(2*np.pi))
 
         # Reconstruct momentum from energy and angle distributions
@@ -321,7 +326,7 @@ class _Data(object):
         self.update(g_w,g_x,g_y,g_z,g_px,g_py,g_pz,g_t,verbose=verbose)
 
     def filter_axis(self,axis,select,fpp=1e-7):
-        """
+        r"""
         Filter an axis with a value/range on another axis.
 
         Parameters
@@ -341,7 +346,7 @@ class _Data(object):
         Examples
         --------
         It is possible to filter an axis by a range, like for example
-        select all the :math:`\\theta` with :math:`E_{kin} \in [0.511,+\infty]` MeV
+        select all the :math:`\theta` with :math:`E_{kin} \in [0.511,+\infty]` MeV
 
         >>> eps = ExamplePhaseSpace()
         >>> ftheta = eps.data.filter_axis('theta',select={'ekin':[0.511,None]})
