@@ -127,6 +127,10 @@ class PhaseSpace(object):
             self.particle["name"] = "neutron"
             self.particle["mass"] = 939.6
             self.particle["label"]= r"n"
+        elif particle in ("OpPhoton","hv"):
+            self.particle["name"] = "OpPhoton"
+            self.particle["mass"] = 0.
+            self.particle["label"]= r"h \nu"
         else:
             raise NameError("Unknown particle specie.")
         self.data     = _Data(self)
