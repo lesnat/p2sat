@@ -62,19 +62,19 @@ Assuming `p2sat` is imported, you can instanciate a `PhaseSpace` object for,
 let say, electrons, and import a simulation file containing the phase space
 informations.
 
->>> eps = p2sat.PhaseSpace(particle="electron")
->>> eps.extract.txt("example.csv",sep=",")
+>>> eps = p2sat.PhaseSpace(particle="electron") #doctest: +SKIP
+>>> eps.load.txt("example.csv",sep=",") #doctest: +SKIP
 
 All the data in you simulation file can now be found at `eps.data`
 
 >>> # List of all the statistical weights
->>> print(eps.data.raw.w)
+>>> print(eps.data.raw.w) #doctest: +SKIP
 [1456.0, 1233.0 , 756.0, ... ]
 >>> # List of all the x position
->>> print(eps.data.raw.x)
+>>> print(eps.data.raw.x) #doctest: +SKIP
 [10.0, 50.0, 30.0, ... ]
 >>> # List of all the kinetic energies
->>> print(eps.data.raw.ekin)
+>>> print(eps.data.raw.ekin) #doctest: +SKIP
 [1.58, 4.61, 3.28, ... ]
 
 This means that at the first index, there is an electron at position
@@ -83,36 +83,35 @@ x=10.0 um with 1.58 MeV of kinetic energy and with statistical weight of 1456.0.
 You can now do statistics with this data, for example get the standard deviation
 of theta angle for all the electrons
 
->>> theta_std = eps.stat.standard_deviation('theta')
+>>> theta_std = eps.stat.standard_deviation('theta') #doctest: +SKIP
 
 and get an histogram (Number/degree, bin width = 1 degree) of this quantity
 
->>> theta,Ntheta = eps.hist.h1('theta', bwidth=0.1)
+>>> theta,Ntheta = eps.hist.h1('theta', bwidth=0.1) #doctest: +SKIP
 
 It is also possible to make simple or complicated plot in a elegant way
 
->>> eps.plot.figure(0)
->>> eps.plot.h1('theta', log=True, bwidth=0.1)
->>> eps.plot.figure(1)
+>>> eps.plot.figure(0) #doctest: +SKIP
+>>> eps.plot.h1('theta', log=True, bwidth=0.1) #doctest: +SKIP
+>>> eps.plot.figure(1) #doctest: +SKIP
 >>> eps.plot.h2('theta','ekin',
-...             log=True, polar=True
-...             bwidth1=1.0,bwidth2=0.1,
-...             select={'x':10.0,'t':[0.0,100.0]})
+...             log=True, polar=True,
+...             select={'x':10.0,'t':[0.0,100.0]}) #doctest: +SKIP
 
 Other examples and a more complete documentation can be found at :
 https://github.com/lesnat/p2sat
 
 """
-__version__ = "1.4.2"
+__version__ = "2.0.0"
 
-from .PhaseSpace import PhaseSpace
+from .PhaseSpace import PhaseSpace,ExamplePhaseSpace
 
-def testing(name="all"):
-    from ._tests import run
-    if name=="all":
-        run(name="raw")
-        run(name="hist")
-        run(name="plot")
-        run(name="heritage")
-    else:
-        run(name=name)
+def test():
+    """
+    Launch all the p2sat tests using the pytest library.
+    """
+    import pytest
+    import os
+    path = os.path.abspath(__file__)
+    path = path.replace("p2sat/__init__.py","")
+    pytest.main([path])

@@ -16,7 +16,7 @@ import p2sat
 eps = p2sat.PhaseSpace(particle="electron")
 
 # Import data from a file
-eps.extract.txt("example.csv",sep=",",verbose=False)
+eps.load.txt("example.csv",sep=",",verbose=False)
 
 # Plot spectrum in log scale (Number/MeV, bin width of 0.1 MeV)
 eps.plot.figure(0)

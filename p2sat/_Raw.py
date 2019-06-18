@@ -28,43 +28,50 @@ class _Raw(object):
         self._ps= PhaseSpace
         part_label = self._ps.particle['label']
         if self._ps.particle['name']=="gamma":
-            etot_label = 'E_{\gamma}'
-            ekin_label = 'E_{\gamma}'
+            etot_label = r'E_{\gamma}'
+            ekin_label = r'E_{\gamma}'
         else:
-            etot_label = 'E_{Tot}'
-            ekin_label = 'E_{kin}'
+            etot_label = r'E_{Tot}'
+            ekin_label = r'E_{kin}'
 
         self.labels = {}                ; self.units = {}
         l = self.labels                 ; u = self.units
 
-        l['w'] = 'N_{%s}'%part_label    ; u['w'] = None
-        l['x'] = 'x'                    ; u['x'] = '\mu m'
-        l['y'] = 'y'                    ; u['y'] = '\mu m'
-        l['z'] = 'z'                    ; u['z'] = '\mu m'
-        l['px'] = 'p_x'                 ; u['px'] = 'MeV/c'
-        l['py'] = 'p_y'                 ; u['py'] = 'MeV/c'
-        l['pz'] = 'p_z'                 ; u['pz'] = 'MeV/c'
-        l['t'] = 't'                    ; u['t'] = 'fs'
+        l['w'] = r'N_{%s}'%part_label   ; u['w'] = None
+        l['x'] = r'x'                   ; u['x'] = r'\mu m'
+        l['y'] = r'y'                   ; u['y'] = r'\mu m'
+        l['z'] = r'z'                   ; u['z'] = r'\mu m'
+        l['px'] = r'p_x'                ; u['px'] = r'MeV/c'
+        l['py'] = r'p_y'                ; u['py'] = r'MeV/c'
+        l['pz'] = r'p_z'                ; u['pz'] = r'MeV/c'
+        l['t'] = r't'                   ; u['t'] = r'fs'
 
-        l['r'] = 'r'                    ; u['r'] = '\mu m'
-        l['p'] = 'p'                    ; u['p'] = 'MeV/c'
+        l['r'] = r'r'                   ; u['r'] = r'\mu m'
+        l['p'] = r'p'                   ; u['p'] = r'MeV/c'
 
-        l['etot'] = etot_label          ; u['etot'] = 'MeV'
-        l['ekin'] = ekin_label          ; u['ekin'] = 'MeV'
-        l['gamma'] = '\gamma'           ; u['gamma'] = None
-        l['beta'] = '\\beta'            ; u['beta'] = None
-        l['m'] = 'm'                    ; u['m'] = 'MeV'
-        l['v'] = 'v'                    ; u['v'] = '\mu m/fs'
-        l['ux'] = 'u_x'                 ; u['ux'] = None
-        l['uy'] = 'u_y'                 ; u['uy'] = None
-        l['uz'] = 'u_z'                 ; u['uz'] = None
+        l['etot'] = etot_label          ; u['etot'] = r'MeV'
+        l['ekin'] = ekin_label          ; u['ekin'] = r'MeV'
+        l['gamma'] = r'\gamma'          ; u['gamma'] = None
+        l['beta'] = r'\beta'           ; u['beta'] = None
+        l['m'] = r'm'                   ; u['m'] = r'MeV'
+        l['v'] = r'v'                   ; u['v'] = r'\mu m/fs'
+        l['ux'] = r'u_x'                ; u['ux'] = None
+        l['uy'] = r'u_y'                ; u['uy'] = None
+        l['uz'] = r'u_z'                ; u['uz'] = None
 
-        l['theta'] = '\\theta'          ; u['theta'] = 'deg'
-        l['phi'] = '\\phi'              ; u['phi'] = 'deg'
-        # l['omega'] = '\Omega'           ; u['omega'] = 'sr'
+        l['theta'] = r'\theta'         ; u['theta'] = r'deg'
+        l['phi'] = r'\phi'             ; u['phi'] = r'deg'
+        l['omega'] = r'\Omega'          ; u['omega'] = r'sr'
 
-        l['ekin_density'] = '(N_{%s} %s)'%(part_label,ekin_label)
-        u['ekin_density'] = 'MeV'
+        l['ekin_density'] = r'(N_{%s} %s)'%(part_label,ekin_label)
+        u['ekin_density'] = r'MeV'
+
+    @property
+    def id(self):
+        """
+        Particle index
+        """
+        return np.array(range(len(self.w)))
 
     @property
     def w(self):
@@ -194,26 +201,24 @@ class _Raw(object):
         """
         return np.degrees(np.arctan2(self.pz,self.py))
 
-    # @property
-    # def omega(self):
-    #     """
-    #     Particle solid angle (in sr) ????
-    #
-    #     Notes
-    #     -----
-    #     omega is calculated as follow :
-    #
-    #     .. math::
-    #         ???
-    #
-    #     References
-    #     ----------
-    #     https://en.wikipedia.org/wiki/Solid_angle
-    #     """
-    #     # return np.pi*self.r**2/self.x**2
-    #     theta = np.radians(self.theta)
-    #     phi = np.pi + np.radians(self.phi)
-    #     return np.sin(theta) * theta * phi
+    @property
+    def omega(self):
+        """
+        Minimum solid angle in which the particle is contained (in sr)
+
+        Notes
+        -----
+        omega is calculated as follow :
+
+        .. math::
+            2 \pi (1 - \cos{\\theta})
+
+        References
+        ----------
+        https://en.wikipedia.org/wiki/Solid_angle#Cone,_spherical_cap,_hemisphere
+        """
+        theta = np.radians(self.theta)
+        return 2*np.pi*(1-np.cos(theta))
 
     @property
     def etot(self):

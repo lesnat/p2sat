@@ -12,11 +12,11 @@ import sys
 if p2sat_path not in sys.path:sys.path.insert(0,p2sat_path)
 import p2sat
 
-# Instanciate a PhaseSpace object for electron specie
+# Instanciate a PhaseSpace object for electron specie
 eps = p2sat.PhaseSpace(particle="electron")
 
 # Import data from a file
-eps.extract.txt("example.csv",sep=",",verbose=False)
+eps.load.txt("example.csv",sep=",",verbose=False)
 
 # Get the mean value of theta
 theta_ev = eps.stat.expected_value('theta')

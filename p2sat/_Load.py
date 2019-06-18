@@ -1,7 +1,7 @@
 #coding:utf8
 import numpy as np
 
-class _Extract(object):
+class _Load(object):
     """
     Import data from a file.
 
@@ -61,106 +61,178 @@ class _Extract(object):
         # Save data in PhaseSpace object
         self._ps.data.update(w,x,y,z,px,py,pz,t,verbose=verbose)
 
-    def Smilei_Screen_1d(self,Screen,xnorm,wnorm,tnorm,X=0):
+    def Smilei_Screen_1d(self,path,nb,r,x=0,verbose=True):
         """
-        TODO
+        Extract phase space from Smilei 1D Screen diagnostic.
+
+        Parameters
+        ----------
+        path : str
+            path to the simulation folder
+        nb : int
+            Screen number
+        r : float
+            typical radius to consider in transverse direction (in um)
+        x : float, optional
+            diagnostic position
+        verbose : bool, optional
+
+        Notes
+        -----
+        On a 1D Smilei simulation, a typical DiagScreen must be declared as follows
+        ::
+            DiagScreen(
+                shape               = 'plane',
+                point               = [xtarget[1] - 5*um],
+                vector              = [1.],
+                direction           = 'forward',
+
+                deposited_quantity  = 'weight',
+                species             = ['e'],
+                axes                = [
+                     ['px' , pmin     , pmax     , 301],
+                     ['py' , -pmax/5  , pmax/5   , 301]
+                ],
+
+                every               = every
+            )
         """
+        if verbose: print("Extracting screen data from %s ..."%path)
+
+        # Import Smilei simulation
+        import happi
+        S = happi.Open(path,verbose=False)
+        nl = S.namelist
+
+        # Define physical constants
+        m_e = 9.11e-31
+        epsilon_0 = 8.85e-12
+        e = 1.6e-19
+        c = 2.99792458e8
+        epsilon_0 = 8.854187817e-12
+        # Smilei's unit in SI
+        Wr = nl.Main.reference_angular_frequency_SI
+        Tr = 1/Wr
+        Lr = c/Wr
+        Pr = 0.511 # MeV/c
+        # Calculate normalizations
+        nc = m_e * epsilon_0 * (Wr/e)**2
+        Lx = nl.Main.grid_length[0] * Lr # Use a try/except ?
+        vol = Lx * np.pi * (r * 1e-6)**2
+        wnorm = nc * vol # Weight normalization : Before -> in Nc/Pr/Pr, After -> in Number/Pr/Pr
+        tnorm = 1e-15/Tr
+        xnorm = 1e-6/Lr
+        # Save diag position
+        xdiag = x
+
+        # Initialize phase space lists
         w         = []
         x,y,z     = [],[],[]
         px,py,pz  = [],[],[]
         t         = []
 
-        time= Screen().get()['times']
+        # Retrieve Screen data
+        times = S.Screen(nb).getTimes()
+        timesteps= S.Screen(nb).getTimesteps()
 
-        Px  = Screen().get()['px'] * 0.511
-        Py  = Screen().get()['py'] * 0.511
+        Px  = S.Screen(nb).getAxis("px") * Pr
+        Py  = S.Screen(nb).getAxis("py") * Pr
 
-        wNorm = wnorm/(0.511**2)
-        wNorm *= (max(Px)-min(Px))/len(Px)
-        wNorm *= (max(Py)-min(Py))/len(Py)
+        # Compensate happi correction on weights
+        wnorm /= Pr**2 # Weights are now in Nb/(MeV/c)/(MeV/c) (independant of bin size)
+        wnorm *= (max(Px)-min(Px))/len(Px) # Multiply by bin size : weights are now in Nb/(MeV/c)/bin
+        wnorm *= (max(Py)-min(Py))/len(Py) # Weight are now in Nb/bin/bin (dependant of bin size, it counts number of particles for given conf)
 
+        # Current data is initialized as an empty matrix
         cdata=np.array([[0.]*len(Px)]*len(Py))
 
-        print("Extracting screen data ...")
-        for it,et in enumerate(time):
+        # Loop over times
+        for it,et in enumerate(timesteps):
             ldata = cdata
-            cdata = Screen(timesteps=et).getData()[0]
+            # Retrieve data for given time
+            cdata = S.Screen(nb,timesteps=et).getData()[0]
+            # Loop over px then py
+            if verbose and it % (len(times)//10) == 0: print("Retrieving timestep %i/%i ..."%(et,timesteps[-1]))
             for ipx,epx in enumerate(cdata):
                 for ipy,epy in enumerate(epx):
+                    # Get weight difference for given configuration
                     depy = epy-ldata[ipx][ipy]
+                    # If non-zero, save config
                     if depy!=0.:
-                        w.append(depy*wNorm)
-                        x.append(X)
-                        y.append(0.)
-                        z.append(0.)
+                        w.append(depy * wnorm)
                         px.append(Px[ipx])
                         py.append(Py[ipy])
-                        pz.append(0.)
-                        t.append(et*tnorm)
+                        t.append(times[it] * tnorm)
 
-
+        # Reconstruct missing data
         pz = [0.0] * len(w)
-        x = [X] * len(w)
+        x = [xdiag] * len(w)
+        y = [0.0] * len(w)
         z = [0.0] * len(w)
-        print("Done !")
+
+        # Update current phase space
+        if verbose: print("Done !")
         self._ps.data.update(w,x,y,z,px,py,pz,t)
 
-    def Geant4_csv(self,file_name,nthreads=1,verbose=True):
+    def Smilei_TrackParticles(self,path,species,verbose=True):
         """
-        Extract simulation results from a Geant4 NTuple csv output file
-
-        DEPRECATED
+        Extract phase space from a TrackParticles Smilei diagnostic.
 
         Parameters
         ----------
-        file_name : str
-            name of the output file. If it ends with '*_t0.*', the number '0' will be replaced by the number of the current thread
-        nthreads : int
-            total number of threads to consider
+        path : str
+            path to the simulation folder
+        species : str
+            name of the specie in the Smilei namelist
         verbose : bool, optional
             verbosity
         """
-        raise DeprecationWarning("Deprecated. Use extract.gp3m2_csv")
-        data = []
-        fext = file_name.split('.')[-1]   # File extension
-        fbase= file_name[:-(len(fext)+1)] # File base name
+        if verbose: print("Extracting %s phase space from %s TrackParticles ..."%(self._ps.particle["name"],species))
+        # Open simulation
+        import happi
+        S = happi.Open(path,verbose=False)
+        timesteps = S.TrackParticles(species=species,sort=False).getTimesteps()
+        dt = S.namelist.Main.timestep
 
-        for thread in range(0,nthreads):
-            fname=fbase[:-1]+str(thread)+"."+fext
-            if verbose:print("Extracting %s ..."%fname)
+        # Initialize ps list
+        w         = []
+        x,y,z     = [],[],[]
+        px,py,pz  = [],[],[]
+        t         = []
 
-            if fext=="csv":
-                with open(fname,'r') as f:
-                    for line in f.readlines():
-                        if line[0]!='#':
-                            for e in line.split(','):
-                                data.append(float(e))
-                        elif fext=="xml":
-                            from lxml import etree
-                            with etree.parse(fname) as tree:
-                                for entry in tree.xpath('/aida/tuple/rows/row/entry'):
-                                    data.append(float(entry.get('value')))
-            else:
-                raise NameError("Unknown file extension : %s"%fext)
+        # Get data for each timestep
+        for ts in timesteps:
+            if verbose:print("Timestep %i/%i ..."%(ts,timesteps[-1]))
+            data = S.TrackParticles(species=species,timesteps=ts,sort=False).get()[ts]
+            id = data["Id"]
+            if len(id[id>0]) == 0: continue
+            w += list(data["w"][id>0])
+            x += list(data["x"][id>0])
+            try:
+                y += list(data["y"][id>0])
+            except:
+                y += [0.]
+            try:
+                z += list(data["z"][id>0])
+            except:
+                z += [0.]
+            px += list(data["px"][id>0])
+            py += list(data["py"][id>0])
+            pz += list(data["pz"][id>0])
+            t += [ts/dt]*len(id[id>0])
 
-        w   = data[0::8]
-        x   = data[1::8]
-        y   = data[2::8]
-        z   = data[3::8]
-        px  = data[4::8]
-        py  = data[5::8]
-        pz  = data[6::8]
-        t   = data[7::8]
-        if verbose:print("Done !")
+        if verbose: print("Done !")
 
-        self._ps.data.update(w,x,y,z,px,py,pz,t,verbose)
+        self._ps.data.update(w,x,y,z,px,py,pz,t,verbose=verbose)
 
-    def gp3m2_csv(self,base_name,verbose=True):
+    def gp3m2_csv(self,path,base_name,verbose=True):
         """
         Extract simulation results from a gp3m2 NTuple csv output file
 
         Parameters
         ----------
+        path : str
+            path to the simulation folder
         base_name : str
             base file name
         verbose : bool, optional
@@ -173,7 +245,8 @@ class _Extract(object):
         Assuming a `p2sat.PhaseSpace` object is instanciated for particle `e-` as eps,
         you can import simulation results for all the threads as follows
 
-        >>> eps.extract.gp3m2_csv("Al_target")
+        >>> eps = ExamplePhaseSpace()
+        >>> # eps.extract.gp3m2_csv("Al_target")
         """
         # Get gp3m2 particle name from p2sat particle name
         part = self._ps.particle["name"]
@@ -193,7 +266,7 @@ class _Extract(object):
         # Loop over threads
         i = 0
         while True:
-            fname = fbase + str(i) + fext
+            fname = path + fbase + str(i) + fext
             i    += 1
             try:
                 # Open file for thread i-1
@@ -233,11 +306,6 @@ class _Extract(object):
             simulation path
         verbose : bool, optional
             verbosity
-
-        Examples
-        --------
-        >>> eps = p2sat.PhaseSpace(particle="e-")
-        >>> eps.extract.TrILEns_output("../TrILEns/")
         """
         particle = self._ps.particle["name"]
         if verbose:print("Extracting {} phase space from {}output.txt ...".format(particle,path))
@@ -304,7 +372,14 @@ class _Extract(object):
 
     def TrILEns_prop_ph(self,path,verbose=True):
         """
-        TODO
+        Extract simulation results from a TrILEns prop_ph file
+
+        Parameters
+        ----------
+        path : str
+            simulation path
+        verbose : bool, optional
+            verbosity
         """
         if self._ps.particle["name"]!="gamma":
             raise NameError("prop_ph.t contains informations about gamma photons ! Current particle name is %s"%self._ps.particle["name"])

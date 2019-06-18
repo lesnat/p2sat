@@ -74,8 +74,8 @@ class _Plot(object):
         den_unit = ""
         for i,ax in enumerate(axes):
             if normed[i]:
-                den_label += "d"+ax_label[i]+" \ "
-                den_unit += ax_unit[i]+" \ "
+                den_label += "d"+ax_label[i]+r" \ "
+                den_unit += ax_unit[i]+r" \ "
         # Delete the last spaces if needed
         if den_label !="":
             den_unit = den_unit[:-3]
@@ -267,7 +267,7 @@ class _Plot(object):
         if polar:
             if log:a.set_rscale('log')
         else:
-            a.set_xlim(xmin=min(b),xmax=max(b))
+            #a.set_xlim(xmin=min(b),xmax=max(b))
             a.set_xlabel(labels[0])
             a.set_ylabel(labels[1])
             if log:a.set_yscale('log')
@@ -311,9 +311,9 @@ class _Plot(object):
 
         Examples
         --------
-
+        >>> eps = ExamplePhaseSpace()
         >>> eps.plot.autoclear = False
-        >>> eps.plot.a1('r',t={'min':0,'max':1000,'Nbins':10},bwidth=1.)
+        >>> #eps.plot.a1('r',t={'min':0,'max':1000,'Nbins':10},bwidth=1.)
 
         See Also
         --------
@@ -415,7 +415,7 @@ class _Plot(object):
         Examples
         --------
 
-        >>> eps.plot.a2('x','y',t={'min':0,'max':1000,'Nbins':10},log=True)
+        >>> eps.plot.a2('x','y',t={'min':0,'max':1000,'Nbins':10},log=True) #doctest: +SKIP
 
         See Also
         --------

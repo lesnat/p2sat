@@ -12,11 +12,11 @@ import sys
 if p2sat_path not in sys.path:sys.path.insert(0,p2sat_path)
 import p2sat
 
-# Instanciate a PhaseSpace object for electron specie
+# Instanciate a PhaseSpace object for electron specie
 eps = p2sat.PhaseSpace(particle="electron")
 
 # Import data from a file
-eps.extract.txt("example.csv",sep=",",verbose=False)
+eps.load.txt("example.csv",sep=",",verbose=False)
 
 # Get spectrum (Number/MeV, bin width of 0.1 MeV)
 ekin,spec = eps.hist.h1('ekin',bwidth=0.1)
