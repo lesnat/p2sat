@@ -256,6 +256,8 @@ class _Load(object):
             part_name = "positron"
         elif part=="gamma":
             part_name = "gamma"
+        elif part=="photon":
+            part_name = "OpPhoton"
 
         # Construct file base name
         fbase = base_name+"_nt_"+part_name+"_t"
