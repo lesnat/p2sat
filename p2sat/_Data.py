@@ -370,26 +370,34 @@ class _Data(object):
         # Construct filtering axes and filtering ranges
         faxes = []
         frange= []
-        for key,val in select.items():
-            fax = self.get_axis(key,select=None) # Current filtering axis
+        # For each key of select dictionnary, get the appropriate filtering axis
+        # For each value of select dictionnary, get the appropriate filtering range
+        for key, val in select.items():
+            # Get and save current filtering axis
+            fax = self.get_axis(key,select=None)
             faxes.append(fax)
-            # Convert int or float values into a list
+            # Construct filtering ranges
             if type(val) in (int,float):
+                # Filtering range with int or float are converted into a list with the two same element
                 frange.append([val,val])
             else:
-                fra = list(val) # Current filtering range is a copy of select values
-                # Default ranges are min and max of current filtering axis
+                # Current filtering range is a copy of select values
+                fra = list(val)
+                # Default ranges : min and max of current filtering axis
                 if fra[0] is None: fra[0] = min(fax)
                 if fra[1] is None: fra[1] = max(fax)
+                # Save current filtering range
                 frange.append(fra)
 
-        # Before filtering, consider all the configurations
+        # Before filtering, all the axis configurations are considered
         filtr = np.array([True] * len(axis))
         # Loop over filtering axes
         for i,_ in enumerate(faxes):
             # Then do a boolean AND between last filtr and current one
             # A filtr element is True when the element of filtering axis is contained in filtering range
-            filtr *= np.array([x>frange[i][0]*(1-fpp) and x<frange[i][1]*(1+fpp) for x in faxes[i]])
+            # filtr *= np.array([x>frange[i][0]*(1.-fpp) and x<frange[i][1]*(1.+fpp) for x in faxes[i]]) # This method is not appropriate with negative number (-A * (1-A) > A)
+            filtr *= np.greater_equal(faxes[i], frange[i][0])
+            filtr *= np.less_equal(faxes[i], frange[i][1])
 
         # Finally return the filtered axis
         return axis[filtr]
@@ -669,7 +677,7 @@ class _Data(object):
         deduped_ps = np.transpose(deduped_confs)
         self.update(deduped_w,*deduped_ps,verbose=verbose)
 
-    def rebin_axis(self,axis,nbins=100,update=True,queue=None,verbose=True):
+    def rebin_axis(self,axis,nbins=100,queue=None,verbose=True):
         """
         Rebin the given axis.
 
@@ -707,29 +715,22 @@ class _Data(object):
         else:
             # Initialize with nan
             rebined_axis = np.array([np.nan] * len(axis))
-            # rebined_axis = axis.copy()
             # Create bins array
-            bwidth = (brange[1]-brange[0])/(nbins-1)
+            bwidth = (brange[1]-brange[0])/float(nbins)
             bins = np.linspace(brange[0],brange[1]+bwidth,nbins+1)
             # Loop over all bins
             for i in range(nbins):
-                id = self.filter_axis("id",select={axis_label:[bins[i],bins[i+1]]},fpp=1e-20)
+                # Filter all the particles that have given axis value in the bin
+                id = self.filter_axis("id",select={axis_label:[bins[i],bins[i+1]]},fpp=1e-12)
+                # Replace filtered values by the value of bins[i]
                 rebined_axis[id] = bins[i]
 
-            # Fix min and max
-            id = np.where(np.isclose(axis,min(axis)))
-            rebined_axis[id] = min(axis)
-            id = np.where(np.isclose(axis,max(axis)))
-            rebined_axis[id] = max(axis)
-
         if verbose: print("Done !")
-        if update:
-            pass
+        # Put result into given queue or return the rebined axis
+        if queue is not None:
+            queue.put(rebined_axis)
         else:
-            if queue is not None:
-                queue.put(rebined_axis)
-            else:
-                return rebined_axis
+            return rebined_axis
 
     def rebin_ps(self,nbins=100,MP=False,deduplicate=False,verbose=True):
         """
@@ -760,19 +761,19 @@ class _Data(object):
         w = self._ps.data.raw.w
         if type(nbins) is int: nbins = [nbins] * 7
         # Rebin current configurations
+        ps = []
         if MP:
             import multiprocessing as mp
             q = mp.Manager().Queue()
             processes = []
             for i,ax in enumerate(["x","y","z","px","py","pz","t"]):
-                proc = mp.Process(target=self.rebin_axis, args=(ax,), kwargs=dict(nbins=nbins[i],update=False,queue=q,verbose=verbose))
+                proc = mp.Process(target=self.rebin_axis, args=(ax,), kwargs=dict(nbins=nbins[i],queue=q,verbose=verbose))
                 processes.append(proc)
                 proc.start()
 
             for proc in processes:
                 proc.join()
 
-            ps = []
             while not q.empty():
                 ps.append(q.get())
 
@@ -780,7 +781,7 @@ class _Data(object):
 
         else:
             for i,ax in enumerate(["x","y","z","px","py","pz","t"]):
-                ps.append(self.rebin_axis(ax,nbins=nbins[i],update=False,verbose=verbose))
+                ps.append(self.rebin_axis(ax,nbins=nbins[i],verbose=verbose))
 
             if verbose:print("Done !")
             self.update(w, *ps, verbose=verbose)
