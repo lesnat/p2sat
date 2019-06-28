@@ -267,9 +267,9 @@ class _Data(object):
 
         # Generate phi angle
         if phi is not None:
-            g_phi   = self._generate(phi,Nconf,radians=True)
+            g_phi   = self._generate(phi, Nconf, radians=True)
         else:
-            g_phi = self._generate(dict(law="uni",min=0,max=360),Nconf,radians=True) # FIXME: between 0 and pi ?
+            g_phi   = self._generate(dict(law="uni",min=0,max=360),Nconf,radians=True) # FIXME: between 0 and pi ?
 
         # Generate theta angle
         if theta is not None:
@@ -654,7 +654,7 @@ class _Data(object):
         data_old = self.get_ps() # Python2 compatibility
         w_old, ps_old = data_old[0], data_old[1:]
         confs_old = list(zip(*ps_old))
-        
+
         # Initialize deduplicated confs lists
         w_new = []
         confs_new = []
@@ -665,7 +665,7 @@ class _Data(object):
                 w_new[id_new] += w_old[id_old]
             except ValueError:
                 confs_new.append(conf_old)
-                w_new.append(w_old)
+                w_new.append(w_old[id_old])
 
         if verbose:print("Done !")
 
