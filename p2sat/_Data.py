@@ -396,7 +396,7 @@ class _Data(object):
             # Then do a boolean AND between last filtr and current one
             # A filtr element is True when the element of filtering axis is contained in filtering range
             # filtr *= np.array([x>frange[i][0]*(1.-fpp) and x<frange[i][1]*(1.+fpp) for x in faxes[i]]) # This method is not appropriate with negative number (-A * (1-A) > A)
-            filtr *= np.greater_equal(faxes[i], frange[i][0])
+            filtr *= np.greater_equal(faxes[i], frange[i][0]) # OK with floating point precision ?
             filtr *= np.less_equal(faxes[i], frange[i][1])
 
         # Finally return the filtered axis
@@ -643,39 +643,34 @@ class _Data(object):
         ----------
         verbose : bool, optional
             verbosity
+
+        References
+        ----------
+        https://en.wikipedia.org/wiki/Packing_problems
+        https://en.wikipedia.org/wiki/Set_cover_problem
         """
         if verbose:print("Deduplicating phase space configurations ...")
         # Get current phase space configurations
-        current_data = self.get_ps() # Python2 compatibility
-        current_w, current_ps = current_data[0], current_data[1:]
-        current_confs = list(zip(*current_ps))
-
+        data_old = self.get_ps() # Python2 compatibility
+        w_old, ps_old = data_old[0], data_old[1:]
+        confs_old = list(zip(*ps_old))
+        
         # Initialize deduplicated confs lists
-        deduped_w = []
-        deduped_confs = []
-        already_treated_id = []
-        Nconfs = len(current_confs)
-        # Loop over all confs not already treated
-        for icconf,cconf in enumerate(current_confs):
-            if icconf % (Nconfs//1000) == 0: print(icconf)
-            if icconf not in already_treated_id:
-                # Add current conf
-                deduped_confs.append(cconf)
-                deduped_w.append(w)
-                already_treated_id.append(icconf)
-
-                # Search if there exists twin confs
-                select = dict(id=[icconf+1,None],x=cconf[0],y=cconf[1],z=cconf[2],px=cconf[3],py=cconf[4],pz=cconf[5],t=cconf[6])
-                id = self.filter_axis("id",select=select)
-                if len(id)>0:
-                    # Add weights of twin confs to weight of ref conf
-                    deduped_w[-1] += sum(current_w[id])
-                    already_treated_id += list(id)
+        w_new = []
+        confs_new = []
+        for id_old, conf_old in enumerate(confs_old):
+            if verbose and id_old % (len(confs_old)//100) == 0: print(" %i / %i ..."%(id_old,len(confs_old)))
+            try:
+                id_new = confs_new.index(conf_old)
+                w_new[id_new] += w_old[id_old]
+            except ValueError:
+                confs_new.append(conf_old)
+                w_new.append(w_old)
 
         if verbose:print("Done !")
 
-        deduped_ps = np.transpose(deduped_confs)
-        self.update(deduped_w,*deduped_ps,verbose=verbose)
+        ps_new = np.transpose(confs_new)
+        self.update(w_new,*ps_new,verbose=verbose)
 
     def rebin_axis(self,axis,nbins=100,queue=None,verbose=True):
         """
