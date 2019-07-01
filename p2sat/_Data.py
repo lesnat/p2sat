@@ -635,14 +635,38 @@ class _Data(object):
         if verbose: print("Done !")
         self.update(*ps,verbose=verbose)
 
-    def deduplicate_ps(self,verbose=True):
+    def sort_ps(self, verbose=True):
+        """
+        ...
+        """
+        if verbose:print("Sorting phase space configurations ...")
+        # Get current phase space configurations
+        data_old = self.get_ps() # Python2 compatibility
+        w_old, ps_old = data_old[0], data_old[1:]
+        confs_old = np.array(list(zip(*ps_old)))
+
+        id_sort = np.argsort(confs_old, axis=None)
+
+        ps_new = np.transpose(confs_old[id_sort])
+        w_new = w_old[id_sort]
+        if verbose:print("Done !")
+        self.update(w_new,*ps_new,verbose=verbose)
+
+    def deduplicate_ps(self,algo='bf',verbose=True):
         """
         Eliminate twin configurations by summing their weights.
 
         Parameters
         ----------
+        algo : {'bf','sort'}, optional
+            Algorithm to use.
         verbose : bool, optional
             verbosity
+
+        Notes
+        -----
+        The 'bf' algorithm stands for brute force.
+        The 'sort' algorithm sort the values before merging.
 
         References
         ----------
@@ -658,14 +682,27 @@ class _Data(object):
         # Initialize deduplicated confs lists
         w_new = []
         confs_new = []
-        for id_old, conf_old in enumerate(confs_old):
-            if verbose and id_old % (len(confs_old)//100) == 0: print(" %i / %i ..."%(id_old,len(confs_old)))
-            try:
-                id_new = confs_new.index(conf_old)
-                w_new[id_new] += w_old[id_old]
-            except ValueError:
-                confs_new.append(conf_old)
-                w_new.append(w_old[id_old])
+        if algo == 'bf':
+            for id_old, conf_old in enumerate(confs_old):
+                if verbose and id_old % (len(confs_old)//100) == 0: print(" %i / %i ..."%(id_old,len(confs_old)))
+                try:
+                    id_new = confs_new.index(conf_old)
+                    w_new[id_new] += w_old[id_old]
+                except ValueError:
+                    confs_new.append(conf_old)
+                    w_new.append(w_old[id_old])
+        elif algo == 'sort':
+            if verbose:print("Sorting configurations ...")
+            confs_sort = sorted(confs_old)
+            if verbose:print("Done !")
+            # for id_sort, conf_sort in enumerate(confs_sort):
+            #     if id_sort == 0: continue
+            #     j = 1
+            #     while confs_sort[id_sort-j] == conf_sort:
+            #         w_sort[id_sort-1] +=
+            #         j = j+1
+            #
+            #     confs_new = confs_sorted
 
         if verbose:print("Done !")
 
