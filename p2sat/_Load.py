@@ -265,7 +265,7 @@ class _Load(object):
 
         self._ps.data.update(w,x,y,z,px,py,pz,t,verbose=verbose)
 
-    def gp3m2_csv(self,path,base_name,verbose=True):
+    def gp3m2_csv(self,path,base_name,thread=None,verbose=True):
         """
         Extract simulation results from a gp3m2 NTuple csv output file
 
@@ -275,6 +275,8 @@ class _Load(object):
             path to the simulation folder
         base_name : str
             base file name
+        thread : int, optional
+            number of the thread to import. By default it get the data of all the threads
         verbose : bool, optional
             verbosity
 
@@ -308,8 +310,13 @@ class _Load(object):
         # Loop over threads
         i = 0
         while True:
-            fname = path + fbase + str(i) + fext
-            i    += 1
+            # Construct file name for current thread
+            if thread is not None:
+                fname = path + fbase + str(thread) + fext
+            else:
+                fname = path + fbase + str(i) + fext
+                i    += 1
+            # Try to append data
             try:
                 # Open file for thread i-1
                 with open(fname,'r') as f:
@@ -323,7 +330,10 @@ class _Load(object):
             # If no more thread, break the loop
             except IOError:
                 break
-
+            # If only one thread, break the loop
+            if thread is not None:
+                break
+        
         # Get phase space from data list
         w   = data[0::8]
         x   = data[1::8]
