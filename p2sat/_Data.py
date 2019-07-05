@@ -637,29 +637,35 @@ class _Data(object):
 
     def sort_ps(self, verbose=True):
         """
-        ...
+        Sort the macro-particles to have increasing number on x, then on y, then on z, ...
         """
-        if verbose:print("Sorting phase space configurations ...")
-        # Get current phase space configurations
-        data_old = self.get_ps() # Python2 compatibility
-        w_old, ps_old = data_old[0], data_old[1:]
-        confs_old = np.array(list(zip(*ps_old)))
+        if verbose:print("Sorting macro-particles ...")
+        # Get current macro-particles
+        data_old = self.get_ps()
 
-        id_sort = np.argsort(confs_old, axis=None)
+        # Define type of each axis
+        dtype = [('w',np.float64),('x',np.float64),('y',np.float64),('z',np.float64),
+        ('px',np.float64),('py',np.float64),('pz',np.float64),('t',np.float64)]
 
-        ps_new = np.transpose(confs_old[id_sort])
-        w_new = w_old[id_sort]
+        # weighted configurations
+        wconfs_old = np.array(list(zip(*data_old)), dtype=dtype)
+
+        # Sort confs
+        wconfs_new = np.sort(wconfs_old, order=['x','y','z','px','py','pz','t'])
+
+        # Reconstruct data and update
+        data_new = [wconfs_new[label] for label in ['w','x','y','z','px','py','pz','t']]
         if verbose:print("Done !")
-        self.update(w_new,*ps_new,verbose=verbose)
+        self.update(*data_new,verbose=verbose)
 
-    def deduplicate_ps(self,algo='bf',verbose=True):
+    def deduplicate_ps(self,algo='sort',verbose=True):
         """
         Eliminate twin configurations by summing their weights.
 
         Parameters
         ----------
         algo : {'bf','sort'}, optional
-            Algorithm to use.
+            Algorithm to use. For 'sort' the phase space is assumed to be already sorted.
         verbose : bool, optional
             verbosity
 
@@ -673,8 +679,8 @@ class _Data(object):
         https://en.wikipedia.org/wiki/Packing_problems
         https://en.wikipedia.org/wiki/Set_cover_problem
         """
-        if verbose:print("Deduplicating phase space configurations ...")
-        # Get current phase space configurations
+        if verbose:print("Merging macro-particles ...")
+        # Get current macro-particles
         data_old = self.get_ps() # Python2 compatibility
         w_old, ps_old = data_old[0], data_old[1:]
         confs_old = list(zip(*ps_old))
@@ -692,24 +698,36 @@ class _Data(object):
                     confs_new.append(conf_old)
                     w_new.append(w_old[id_old])
         elif algo == 'sort':
-            if verbose:print("Sorting configurations ...")
-            confs_sort = sorted(confs_old)
-            if verbose:print("Done !")
-            # for id_sort, conf_sort in enumerate(confs_sort):
-            #     if id_sort == 0: continue
-            #     j = 1
-            #     while confs_sort[id_sort-j] == conf_sort:
-            #         w_sort[id_sort-1] +=
-            #         j = j+1
-            #
-            #     confs_new = confs_sorted
+            Nconfs = len(confs_old)
+            # Merge
+            for i, conf_old in enumerate(confs_old):
+                # Continue if already summed
+                if verbose and i % (Nconfs//100) == 0: print(" %i / %i ..."%(i, Nconfs))
+                if np.isclose(w_old[i],0.):
+                    continue
+                else:
+                    # Append current conf to confs_new
+                    w_new.append(w_old[i])
+                    confs_new.append(conf_old)
+                    # Loop over next confs if current conf is not the last one
+                    j=1
+                    while i + j < Nconfs:
+                        if np.allclose(conf_old, confs_old[i+j]):
+                            # If next conf is equal to current conf, add its weight to last new conf
+                            w_new[-1] += w_old[i+j]
+                            # Set old conf weight to 0.
+                            w_old[i+j] = 0.
+                            # Update j to loop over next conf
+                            j += 1
+                        else:
+                            break
 
         if verbose:print("Done !")
 
         ps_new = np.transpose(confs_new)
         self.update(w_new,*ps_new,verbose=verbose)
 
-    def rebin_axis(self,axis,nbins=100,queue=None,verbose=True):
+    def rebin_axis(self,axis,nbins=100,brange=None,queue=None,verbose=True):
         """
         Rebin the given axis.
 
@@ -739,7 +757,9 @@ class _Data(object):
         axis = self.get_axis(axis_label)
 
         # Define bin range
-        brange = [min(axis),max(axis)]
+        if brange is None: brange = [None, None]
+        if brange[0] is None: brange[0] = min(axis)
+        if brange[1] is None: brange[1] = max(axis)
 
         # Rebin only if there is different values on axis
         if brange[0] == brange[1]:
@@ -760,11 +780,11 @@ class _Data(object):
         if verbose: print("Done !")
         # Put result into given queue or return the rebined axis
         if queue is not None:
-            queue.put(rebined_axis)
+            queue.put({axis_label:rebined_axis})
         else:
             return rebined_axis
 
-    def rebin_ps(self,nbins=100,MP=False,deduplicate=False,verbose=True):
+    def rebin_ps(self,nbins=100,MP=False,brange=None,deduplicate=False,verbose=True):
         """
         Rebin all the phase space
 
@@ -792,6 +812,7 @@ class _Data(object):
         if verbose:print("Rebinning phase space ...")
         w = self._ps.data.raw.w
         if type(nbins) is int: nbins = [nbins] * 7
+        if brange is None: brange = [[None,None] for _ in range(7)]
         # Rebin current configurations
         ps = []
         if MP:
@@ -799,21 +820,22 @@ class _Data(object):
             q = mp.Manager().Queue()
             processes = []
             for i,ax in enumerate(["x","y","z","px","py","pz","t"]):
-                proc = mp.Process(target=self.rebin_axis, args=(ax,), kwargs=dict(nbins=nbins[i],queue=q,verbose=verbose))
+                proc = mp.Process(target=self.rebin_axis, args=(ax,), kwargs=dict(nbins=nbins[i],queue=q,brange=brange[i],verbose=verbose))
                 processes.append(proc)
                 proc.start()
 
             for proc in processes:
                 proc.join()
 
+            ps_dict = {}
             while not q.empty():
-                ps.append(q.get())
+                ps_dict.update(q.get())
 
-            self.update(w, *ps, verbose=verbose)
+            self.update(w, ps_dict['x'], ps_dict['y'], ps_dict['z'], ps_dict['px'], ps_dict['py'], ps_dict['pz'], ps_dict['t'], verbose=verbose)
 
         else:
             for i,ax in enumerate(["x","y","z","px","py","pz","t"]):
-                ps.append(self.rebin_axis(ax,nbins=nbins[i],verbose=verbose))
+                ps.append(self.rebin_axis(ax,nbins=nbins[i],brange=brange[i],verbose=verbose))
 
             if verbose:print("Done !")
             self.update(w, *ps, verbose=verbose)
