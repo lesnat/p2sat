@@ -174,7 +174,7 @@ class _Load(object):
         if verbose: print("Done !")
         self._ps.data.update(w,x,y,z,px,py,pz,t)
 
-    def Smilei_TrackParticles(self,path,species,verbose=True):
+    def Smilei_TrackParticles(self,path,species,wscale=1.,verbose=True):
         """
         Extract phase space from a TrackParticles Smilei diagnostic.
 
@@ -191,8 +191,37 @@ class _Load(object):
         # Open simulation
         import happi
         S = happi.Open(path,verbose=False)
-        timesteps = S.TrackParticles(species=species,sort=False).getTimesteps()
-        dt = S.namelist.Main.timestep
+        nl = S.namelist
+
+        # Define physical constants
+        m_e = 9.11e-31
+        epsilon_0 = 8.85e-12
+        e = 1.6e-19
+        c = 2.99792458e8
+        epsilon_0 = 8.854187817e-12
+
+        # Smilei's unit in SI
+        Wr = nl.Main.reference_angular_frequency_SI
+        Tr = 1/Wr
+        Lr = c/Wr
+        Pr = 0.511 # MeV/c
+
+        # Calculate normalizations
+        geom = nl.Main.geometry
+        nc = m_e * epsilon_0 * (Wr/e)**2
+        if geom == "1Dcartesian":
+            wnorm = nc * Lr * np.pi * wscale**2
+        elif geom == "2Dcartesian":
+            wnorm = nc * Lr**2 * wscale
+        elif geom == "AMCylindrical":
+            raise NotImplementedError("TODO ...")
+        elif geom == "3Dcartesian":
+            wnorm = nc * Lr**3
+        else:
+            raise NameError("Unknown geometry profile.")
+        tnorm = Tr/1e-15    # in fs
+        xnorm = Lr/1e-6     # in um
+        pnorm = Pr          # in MeV/c
 
         # Initialize ps list
         w         = []
@@ -200,32 +229,43 @@ class _Load(object):
         px,py,pz  = [],[],[]
         t         = []
 
-        # Get data for each timestep
+        # Get timesteps
+        timesteps = S.TrackParticles(species=species,sort=False).getTimesteps()
+        dt = nl.Main.timestep
+
+        # Loop over timesteps
         for ts in timesteps:
             if verbose:print("Timestep %i/%i ..."%(ts,timesteps[-1]))
+            # Get data from current timestep
             data = S.TrackParticles(species=species,timesteps=ts,sort=False).get()[ts]
+            # Get macro-particle's id. id == 0 means the macro-particle have already been exported
             id = data["Id"]
+            # If no positive id, continue to the next iteration
             if len(id[id>0]) == 0: continue
-            w += list(data["w"][id>0])
-            x += list(data["x"][id>0])
-            try:
-                y += list(data["y"][id>0])
-            except:
-                y += [0.]
-            try:
-                z += list(data["z"][id>0])
-            except:
-                z += [0.]
-            px += list(data["px"][id>0])
-            py += list(data["py"][id>0])
-            pz += list(data["pz"][id>0])
-            t += [ts/dt]*len(id[id>0])
+            # Append phase space data of current timestep
+            w += list(data["w"][id>0] * wnorm)
+            x += list(data["x"][id>0] * xnorm)
+            if geom == "1Dcartesian":
+                y += [0.] * len(id>0)
+                z += [0.] * len(id>0)
+            elif geom == "2Dcartesian":
+                y += list(data["y"][id>0] * xnorm)
+                z += [0.] * len(id>0)
+            elif geom == "AMCylindrical":
+                raise NotImplementedError("TODO ...")
+            elif geom == "3Dcartesian":
+                y += list(data["y"][id>0] * xnorm)
+                z += list(data["z"][id>0] * xnorm)
+            px += list(data["px"][id>0] * pnorm)
+            py += list(data["py"][id>0] * pnorm)
+            pz += list(data["pz"][id>0] * pnorm)
+            t += [ts*dt * tnorm] * len(id[id>0])
 
         if verbose: print("Done !")
 
         self._ps.data.update(w,x,y,z,px,py,pz,t,verbose=verbose)
 
-    def gp3m2_csv(self,path,base_name,verbose=True):
+    def gp3m2_csv(self,path,base_name,thread=None,verbose=True):
         """
         Extract simulation results from a gp3m2 NTuple csv output file
 
@@ -235,6 +275,8 @@ class _Load(object):
             path to the simulation folder
         base_name : str
             base file name
+        thread : int, optional
+            number of the thread to import. By default it get the data of all the threads
         verbose : bool, optional
             verbosity
 
@@ -268,8 +310,13 @@ class _Load(object):
         # Loop over threads
         i = 0
         while True:
-            fname = path + fbase + str(i) + fext
-            i    += 1
+            # Construct file name for current thread
+            if thread is not None:
+                fname = path + fbase + str(thread) + fext
+            else:
+                fname = path + fbase + str(i) + fext
+                i    += 1
+            # Try to append data
             try:
                 # Open file for thread i-1
                 with open(fname,'r') as f:
@@ -283,7 +330,10 @@ class _Load(object):
             # If no more thread, break the loop
             except IOError:
                 break
-
+            # If only one thread, break the loop
+            if thread is not None:
+                break
+        
         # Get phase space from data list
         w   = data[0::8]
         x   = data[1::8]

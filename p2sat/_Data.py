@@ -267,9 +267,9 @@ class _Data(object):
 
         # Generate phi angle
         if phi is not None:
-            g_phi   = self._generate(phi,Nconf,radians=True)
+            g_phi   = self._generate(phi, Nconf, radians=True)
         else:
-            g_phi = self._generate(dict(law="uni",min=0,max=360),Nconf,radians=True) # FIXME: between 0 and pi ?
+            g_phi   = self._generate(dict(law="uni",min=0,max=360),Nconf,radians=True) # FIXME: between 0 and pi ?
 
         # Generate theta angle
         if theta is not None:
@@ -370,26 +370,34 @@ class _Data(object):
         # Construct filtering axes and filtering ranges
         faxes = []
         frange= []
-        for key,val in select.items():
-            fax = self.get_axis(key,select=None) # Current filtering axis
+        # For each key of select dictionnary, get the appropriate filtering axis
+        # For each value of select dictionnary, get the appropriate filtering range
+        for key, val in select.items():
+            # Get and save current filtering axis
+            fax = self.get_axis(key,select=None)
             faxes.append(fax)
-            # Convert int or float values into a list
+            # Construct filtering ranges
             if type(val) in (int,float):
+                # Filtering range with int or float are converted into a list with the two same element
                 frange.append([val,val])
             else:
-                fra = list(val) # Current filtering range is a copy of select values
-                # Default ranges are min and max of current filtering axis
+                # Current filtering range is a copy of select values
+                fra = list(val)
+                # Default ranges : min and max of current filtering axis
                 if fra[0] is None: fra[0] = min(fax)
                 if fra[1] is None: fra[1] = max(fax)
+                # Save current filtering range
                 frange.append(fra)
 
-        # Before filtering, consider all the configurations
+        # Before filtering, all the axis configurations are considered
         filtr = np.array([True] * len(axis))
         # Loop over filtering axes
         for i,_ in enumerate(faxes):
             # Then do a boolean AND between last filtr and current one
             # A filtr element is True when the element of filtering axis is contained in filtering range
-            filtr *= np.array([x>frange[i][0]*(1-fpp) and x<frange[i][1]*(1+fpp) for x in faxes[i]])
+            # filtr *= np.array([x>frange[i][0]*(1.-fpp) and x<frange[i][1]*(1.+fpp) for x in faxes[i]]) # This method is not appropriate with negative number (-A * (1-A) > A)
+            filtr *= np.greater_equal(faxes[i], frange[i][0]) # OK with floating point precision ?
+            filtr *= np.less_equal(faxes[i], frange[i][1])
 
         # Finally return the filtered axis
         return axis[filtr]
@@ -627,49 +635,99 @@ class _Data(object):
         if verbose: print("Done !")
         self.update(*ps,verbose=verbose)
 
-    def deduplicate_ps(self,verbose=True):
+    def sort_ps(self, verbose=True):
+        """
+        Sort the macro-particles to have increasing number on x, then on y, then on z, ...
+        """
+        if verbose:print("Sorting macro-particles ...")
+        # Get current macro-particles
+        data_old = self.get_ps()
+
+        # Define type of each axis
+        dtype = [('w',np.float64),('x',np.float64),('y',np.float64),('z',np.float64),
+        ('px',np.float64),('py',np.float64),('pz',np.float64),('t',np.float64)]
+
+        # weighted configurations
+        wconfs_old = np.array(list(zip(*data_old)), dtype=dtype)
+
+        # Sort confs
+        wconfs_new = np.sort(wconfs_old, order=['x','y','z','px','py','pz','t'])
+
+        # Reconstruct data and update
+        data_new = [wconfs_new[label] for label in ['w','x','y','z','px','py','pz','t']]
+        if verbose:print("Done !")
+        self.update(*data_new,verbose=verbose)
+
+    def deduplicate_ps(self,algo='sort',verbose=True):
         """
         Eliminate twin configurations by summing their weights.
 
         Parameters
         ----------
+        algo : {'bf','sort'}, optional
+            Algorithm to use. For 'sort' the phase space is assumed to be already sorted.
         verbose : bool, optional
             verbosity
+
+        Notes
+        -----
+        The 'bf' algorithm stands for brute force.
+        The 'sort' algorithm sort the values before merging.
+
+        References
+        ----------
+        https://en.wikipedia.org/wiki/Packing_problems
+        https://en.wikipedia.org/wiki/Set_cover_problem
         """
-        if verbose:print("Deduplicating phase space configurations ...")
-        # Get current phase space configurations
-        current_data = self.get_ps() # Python2 compatibility
-        current_w, current_ps = current_data[0], current_data[1:]
-        current_confs = list(zip(*current_ps))
+        if verbose:print("Merging macro-particles ...")
+        # Get current macro-particles
+        data_old = self.get_ps() # Python2 compatibility
+        w_old, ps_old = data_old[0], data_old[1:]
+        confs_old = list(zip(*ps_old))
 
         # Initialize deduplicated confs lists
-        deduped_w = []
-        deduped_confs = []
-        already_treated_id = []
-        Nconfs = len(current_confs)
-        # Loop over all confs not already treated
-        for icconf,cconf in enumerate(current_confs):
-            if icconf % (Nconfs//1000) == 0: print(icconf)
-            if icconf not in already_treated_id:
-                # Add current conf
-                deduped_confs.append(cconf)
-                deduped_w.append(w)
-                already_treated_id.append(icconf)
-
-                # Search if there exists twin confs
-                select = dict(id=[icconf+1,None],x=cconf[0],y=cconf[1],z=cconf[2],px=cconf[3],py=cconf[4],pz=cconf[5],t=cconf[6])
-                id = self.filter_axis("id",select=select)
-                if len(id)>0:
-                    # Add weights of twin confs to weight of ref conf
-                    deduped_w[-1] += sum(current_w[id])
-                    already_treated_id += list(id)
+        w_new = []
+        confs_new = []
+        if algo == 'bf':
+            for id_old, conf_old in enumerate(confs_old):
+                if verbose and id_old % (len(confs_old)//100) == 0: print(" %i / %i ..."%(id_old,len(confs_old)))
+                try:
+                    id_new = confs_new.index(conf_old)
+                    w_new[id_new] += w_old[id_old]
+                except ValueError:
+                    confs_new.append(conf_old)
+                    w_new.append(w_old[id_old])
+        elif algo == 'sort':
+            Nconfs = len(confs_old)
+            # Merge
+            for i, conf_old in enumerate(confs_old):
+                # Continue if already summed
+                if verbose and i % (Nconfs//100) == 0: print(" %i / %i ..."%(i, Nconfs))
+                if np.isclose(w_old[i],0.):
+                    continue
+                else:
+                    # Append current conf to confs_new
+                    w_new.append(w_old[i])
+                    confs_new.append(conf_old)
+                    # Loop over next confs if current conf is not the last one
+                    j=1
+                    while i + j < Nconfs:
+                        if np.allclose(conf_old, confs_old[i+j]):
+                            # If next conf is equal to current conf, add its weight to last new conf
+                            w_new[-1] += w_old[i+j]
+                            # Set old conf weight to 0.
+                            w_old[i+j] = 0.
+                            # Update j to loop over next conf
+                            j += 1
+                        else:
+                            break
 
         if verbose:print("Done !")
 
-        deduped_ps = np.transpose(deduped_confs)
-        self.update(deduped_w,*deduped_ps,verbose=verbose)
+        ps_new = np.transpose(confs_new)
+        self.update(w_new,*ps_new,verbose=verbose)
 
-    def rebin_axis(self,axis,nbins=100,update=True,queue=None,verbose=True):
+    def rebin_axis(self,axis,nbins=100,brange=None,queue=None,verbose=True):
         """
         Rebin the given axis.
 
@@ -699,7 +757,9 @@ class _Data(object):
         axis = self.get_axis(axis_label)
 
         # Define bin range
-        brange = [min(axis),max(axis)]
+        if brange is None: brange = [None, None]
+        if brange[0] is None: brange[0] = min(axis)
+        if brange[1] is None: brange[1] = max(axis)
 
         # Rebin only if there is different values on axis
         if brange[0] == brange[1]:
@@ -707,31 +767,24 @@ class _Data(object):
         else:
             # Initialize with nan
             rebined_axis = np.array([np.nan] * len(axis))
-            # rebined_axis = axis.copy()
             # Create bins array
-            bwidth = (brange[1]-brange[0])/(nbins-1)
+            bwidth = (brange[1]-brange[0])/float(nbins)
             bins = np.linspace(brange[0],brange[1]+bwidth,nbins+1)
             # Loop over all bins
             for i in range(nbins):
-                id = self.filter_axis("id",select={axis_label:[bins[i],bins[i+1]]},fpp=1e-20)
+                # Filter all the particles that have given axis value in the bin
+                id = self.filter_axis("id",select={axis_label:[bins[i],bins[i+1]]},fpp=1e-12)
+                # Replace filtered values by the value of bins[i]
                 rebined_axis[id] = bins[i]
 
-            # Fix min and max
-            id = np.where(np.isclose(axis,min(axis)))
-            rebined_axis[id] = min(axis)
-            id = np.where(np.isclose(axis,max(axis)))
-            rebined_axis[id] = max(axis)
-
         if verbose: print("Done !")
-        if update:
-            pass
+        # Put result into given queue or return the rebined axis
+        if queue is not None:
+            queue.put({axis_label:rebined_axis})
         else:
-            if queue is not None:
-                queue.put(rebined_axis)
-            else:
-                return rebined_axis
+            return rebined_axis
 
-    def rebin_ps(self,nbins=100,MP=False,deduplicate=False,verbose=True):
+    def rebin_ps(self,nbins=100,MP=False,brange=None,deduplicate=False,verbose=True):
         """
         Rebin all the phase space
 
@@ -759,28 +812,30 @@ class _Data(object):
         if verbose:print("Rebinning phase space ...")
         w = self._ps.data.raw.w
         if type(nbins) is int: nbins = [nbins] * 7
+        if brange is None: brange = [[None,None] for _ in range(7)]
         # Rebin current configurations
+        ps = []
         if MP:
             import multiprocessing as mp
             q = mp.Manager().Queue()
             processes = []
             for i,ax in enumerate(["x","y","z","px","py","pz","t"]):
-                proc = mp.Process(target=self.rebin_axis, args=(ax,), kwargs=dict(nbins=nbins[i],update=False,queue=q,verbose=verbose))
+                proc = mp.Process(target=self.rebin_axis, args=(ax,), kwargs=dict(nbins=nbins[i],queue=q,brange=brange[i],verbose=verbose))
                 processes.append(proc)
                 proc.start()
 
             for proc in processes:
                 proc.join()
 
-            ps = []
+            ps_dict = {}
             while not q.empty():
-                ps.append(q.get())
+                ps_dict.update(q.get())
 
-            self.update(w, *ps, verbose=verbose)
+            self.update(w, ps_dict['x'], ps_dict['y'], ps_dict['z'], ps_dict['px'], ps_dict['py'], ps_dict['pz'], ps_dict['t'], verbose=verbose)
 
         else:
             for i,ax in enumerate(["x","y","z","px","py","pz","t"]):
-                ps.append(self.rebin_axis(ax,nbins=nbins[i],update=False,verbose=verbose))
+                ps.append(self.rebin_axis(ax,nbins=nbins[i],brange=brange[i],verbose=verbose))
 
             if verbose:print("Done !")
             self.update(w, *ps, verbose=verbose)

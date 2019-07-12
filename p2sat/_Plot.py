@@ -334,6 +334,20 @@ class _Plot(object):
 
         return a
 
+    def h1h1(self, axis1, axis2, log1=False, log2=False, sharex=False, **kargs):
+        """
+        Plot 2 one-dimension histogram on the same plot
+        """
+        kargs['log'] = False
+        plt.subplots(2,1,sharex=sharex)
+        plt.subplots_adjust(wspace=.15)
+        plt.subplot(211)
+        self.h1(axis1, **kargs)
+        if log1 : plt.yscale('log')
+        plt.subplot(212)
+        self.h1(axis2, **kargs)
+        if log2 : plt.yscale('log')
+
     def h2(self,axis1,axis2,log=False,polar=False,**kargs):
         """
         Plot the 2d histogram of given axes.
