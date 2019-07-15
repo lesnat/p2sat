@@ -109,7 +109,7 @@ class _Save(object):
             # Write data
             for i in range(len(d.w)):
                 if with_time:
-                    data=[d.w[i],d.x[i],d.y[i],d.z[i],d.px[i],d.py[i],d.pz[i],1.+d.ekin[i]/0.511,d.t[i]]
+                    data=[d.w[i],d.x[i],d.y[i],d.z[i],d.px[i],d.py[i],d.pz[i],1.+d.ekin[i]/0.511,d.t[i]*1e-3]
                 else:
                     data=[d.w[i],d.x[i],d.y[i],d.z[i],d.px[i],d.py[i],d.pz[i],1.+d.ekin[i]/0.511]
 

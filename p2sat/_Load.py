@@ -333,7 +333,7 @@ class _Load(object):
             # If only one thread, break the loop
             if thread is not None:
                 break
-        
+
         # Get phase space from data list
         w   = data[0::8]
         x   = data[1::8]
@@ -406,7 +406,7 @@ class _Load(object):
                         x.append(float(X))     ; y.append(float(Y))   ; z.append(float(Z))
                         px.append(float(Px)*0.511)   ; py.append(float(Py)*0.511) ; pz.append(float(Pz)*0.511)
                         if chi_to_t:
-                            t.append(float(Chi))
+                            t.append(float(Chi)*1e3) # convert ps to fs
                         else:
                             t.append(0.)
 
@@ -462,7 +462,7 @@ class _Load(object):
                 x.append(float(data[1]))  ; y.append(float(data[2]))  ; z.append(float(data[3]))
                 px.append(float(data[4])) ; py.append(float(data[5])) ; pz.append(float(data[6]))
                 if with_time:
-                    t.append(float(data[8]))
+                    t.append(float(data[8])*1e3)
                 else:
                     t.append(0.)
 
