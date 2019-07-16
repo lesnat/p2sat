@@ -150,7 +150,7 @@ class _Plot(object):
             self.figure(number,clear=False)
         plt.title(title)
 
-    def h1(self,axis,where='post',log=False,polar=False,reverse=False,**kargs):
+    def h1(self,axis,where='post',log=False,polar=False,reverse=False,clear=False,**kargs):
         """
         Plot the 1d histogram of given axis.
 
@@ -166,6 +166,8 @@ class _Plot(object):
             True to use a polar plot. axis must be an angle
         reverse : bool, optional
             True to plot axis against number instead of number against axis
+        clear: bool, optional
+            Clear or not the figure before plotting
         kargs : dict, optional
             Dictionnary to pass to the hist.h1 method
 
@@ -173,7 +175,7 @@ class _Plot(object):
         --------
         hist.h1
         """
-        if self.autoclear : self.clear()
+        if self.autoclear or clear: self.clear()
         if polar:
             a=plt.gca(polar=True)
         else:
@@ -218,7 +220,7 @@ class _Plot(object):
 
         return a
 
-    def f1(self,axis,func_name,log=False,polar=False,reverse=False,**kargs):
+    def f1(self,axis,func_name,log=False,polar=False,reverse=False,clear=False,**kargs):
         """
         Plot the 1d fit of given axis.
 
@@ -234,6 +236,8 @@ class _Plot(object):
             True to use a polar plot. axis must be an angle
         reverse : bool, optional
             True to plot axis against number instead of number against axis
+        clear: bool, optional
+            Clear or not the figure before plotting
         kargs : dict, optional
             Dictionnary to pass to the hist.h1 method
 
@@ -241,7 +245,7 @@ class _Plot(object):
         --------
         hist.f1
         """
-        if self.autoclear : self.clear()
+        if self.autoclear or clear: self.clear()
         if polar:
             a=plt.gca(polar=True)
         else:
@@ -334,11 +338,14 @@ class _Plot(object):
 
         return a
 
-    def h1h1(self, axis1, axis2, log1=False, log2=False, sharex=False, **kargs):
+    def h1h1(self, axis1, axis2, log1=False, log2=False, sharex=False, clear=False, **kargs):
         """
         Plot 2 one-dimension histogram on the same plot
         """
         kargs['log'] = False
+        if self.autoclear or clear:
+            self.clear()
+            kargs['clear'] = False
         plt.subplots(2,1,sharex=sharex)
         plt.subplots_adjust(wspace=.15)
         plt.subplot(211)
@@ -348,7 +355,7 @@ class _Plot(object):
         self.h1(axis2, **kargs)
         if log2 : plt.yscale('log')
 
-    def h2(self,axis1,axis2,log=False,polar=False,**kargs):
+    def h2(self,axis1,axis2,log=False,polar=False,clear=False,**kargs):
         """
         Plot the 2d histogram of given axes.
 
@@ -360,6 +367,8 @@ class _Plot(object):
             True to set log scale on y axis
         polar : bool, optional
             True to use a polar plot. axis1 must be an angle
+        clear: bool, optional
+            Clear or not the figure before plotting
         kargs : dict, optional
             Dictionnary to pass to the hist.h2 method
 
@@ -367,7 +376,7 @@ class _Plot(object):
         --------
         hist.h2
         """
-        if self.autoclear : self.clear()
+        if self.autoclear or clear: self.clear()
         if polar:
             a=plt.gca(polar=True)
         else:
@@ -449,7 +458,7 @@ class _Plot(object):
 
         return a
 
-    def c2(self,axis1,axis2,log=False,polar=False,gfilter=0.0,**kargs):
+    def c2(self,axis1,axis2,log=False,polar=False,gfilter=0.0,clear=False,**kargs):
         """
         Plot the 2d contour of given axes.
 
@@ -463,6 +472,8 @@ class _Plot(object):
             True to use a polar plot. axis1 must be an angle
         gfilter : float, optional
             Filtering scipy.ndimage.filters.gaussian_filter
+        clear: bool, optional
+            Clear or not the figure before plotting
         kargs : dict, optional
             Dictionnary to pass to the hist.h2 method
 
@@ -470,7 +481,7 @@ class _Plot(object):
         --------
         hist.h2
         """
-        if self.autoclear : self.clear()
+        if self.autoclear or clear: self.clear()
         if polar:
             a=plt.gca(polar=True)
         else:
@@ -507,7 +518,7 @@ class _Plot(object):
 
         return a
 
-    def s2(self,axis1,axis2,weight='w',snorm=1.,log=False,polar=False,select=None):
+    def s2(self,axis1,axis2,weight='w',snorm=1.,log=False,polar=False,clear=False,select=None):
         """
         Plot the 2d scattering plot of given axes.
 
@@ -523,10 +534,12 @@ class _Plot(object):
             True to set log scale on y axis
         polar : bool, optional
             True to use a polar plot. axis1 must be an angle
+        clear: bool, optional
+            Clear or not the figure before plotting
         select : dict, optional
             select dictionnary as in the hist.h2 method
         """
-        if self.autoclear : self.clear()
+        if self.autoclear or clear: self.clear()
         if polar:
             a=plt.gca(polar=True)
         else:
@@ -563,7 +576,7 @@ class _Plot(object):
 
         return a
 
-    def h2h1(self,axis1,axis2,log=False,**kargs):
+    def h2h1(self,axis1,axis2,log=False,clear=False,**kargs):
         """
         TODO
         """
@@ -605,13 +618,13 @@ class _Plot(object):
         # plt.show()
         pass
 
-    def s2h1(self,axis1,axis2,log=False):
+    def s2h1(self,axis1,axis2,log=False,clear=False):
         """
         TODO
         """
         pass
 
-    def h3(self,axis1,axis2,axis3,s=5,wmin=0,log=False,**kargs):
+    def h3(self,axis1,axis2,axis3,s=5,wmin=0,log=False,clear=False,**kargs):
         """
         Plot the 3d histogram of given axes.
 
@@ -625,6 +638,8 @@ class _Plot(object):
             minimum weight to plot. Default is 0
         log : bool, optional
             log color scale. Default is False
+        clear: bool, optional
+            Clear or not the figure before plotting
         kargs : dict, optional
             Dictionnary to pass to the hist.h3 method
 
@@ -632,6 +647,7 @@ class _Plot(object):
         --------
         hist.h3
         """
+        if self.autoclear or clear: self.clear()
         from mpl_toolkits.mplot3d import Axes3D
         # https://codereview.stackexchange.com/questions/62180/colorbar-for-matplotlib-3d-patch-plot
         from matplotlib import cm
@@ -686,7 +702,7 @@ class _Plot(object):
         return a
 
 
-    def s3(self,axis1,axis2,axis3,weight="w",snorm=1.0,log=False,select=None):
+    def s3(self,axis1,axis2,axis3,weight="w",snorm=1.0,log=False,clear=False,select=None):
         """
         Plot the 3d histogram of given axes.
 
@@ -700,9 +716,12 @@ class _Plot(object):
             dots size normalization. Default is 1
         log : bool, optional
             log color scale. Default is False
+        clear: bool, optional
+            Clear or not the figure before plotting
         select : dict, optional
             filtering dictionnary
         """
+        if self.autoclear or clear: self.clear()
         from mpl_toolkits.mplot3d import Axes3D
         from matplotlib import cm
 
