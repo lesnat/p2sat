@@ -34,7 +34,7 @@ class _Load(object):
 
         See Also
         --------
-        export.txt
+        save.txt
         """
         if verbose: print("Extracting %s phase space from %s ..."%(self._ps.particle["name"],file_name))
 
@@ -55,6 +55,13 @@ class _Load(object):
                     x.append(float(data[1]))  ; y.append(float(data[2]))  ; z.append(float(data[3]))
                     px.append(float(data[4])) ; py.append(float(data[5])) ; pz.append(float(data[6]))
                     t.append(float(data[7]))
+
+        # w, x, y, z, px, py, pz, t = np.loadtxt(file_name, delimiter = sep, unpack=True, **kargs)
+
+        if verbose: print('Done !')
+
+        # Save data in PhaseSpace object
+        self._ps.data.update(w,x,y,z,px,py,pz,t,verbose=verbose)
 
         if verbose: print('Done !')
 
@@ -265,7 +272,7 @@ class _Load(object):
 
         self._ps.data.update(w,x,y,z,px,py,pz,t,verbose=verbose)
 
-    def gp3m2_csv(self,path,base_name,thread=None,verbose=True):
+    def gp3m2_csv(self,path,base_name,thread=None,multiprocessing=False,verbose=True):
         """
         Extract simulation results from a gp3m2 NTuple csv output file
 
@@ -277,6 +284,8 @@ class _Load(object):
             base file name
         thread : int, optional
             number of the thread to import. By default it get the data of all the threads
+        multiprocessing : bool, optional
+            use or not the multiprocessing to paralelize import. Incompatible with thread != None.
         verbose : bool, optional
             verbosity
 
@@ -305,34 +314,69 @@ class _Load(object):
         fbase = base_name+"_nt_"+part_name+"_t"
         fext = ".csv"
 
-        # Initialize data list
-        data = []
-        # Loop over threads
-        i = 0
-        while True:
-            # Construct file name for current thread
-            if thread is not None:
-                fname = path + fbase + str(thread) + fext
-            else:
-                fname = path + fbase + str(i) + fext
-                i    += 1
-            # Try to append data
-            try:
-                # Open file for thread i-1
-                with open(fname,'r') as f:
+        if multiprocessing:
+            # Import modules
+            import os
+            import multiprocessing as mp
+
+            # Create the queue
+            q = mp.Manager().Queue()
+            # Create the loading function, that putting data in the queue
+            loader = lambda fname: q.put(np.loadtxt(fname, delimiter=","))
+
+            # Initialize thread id, data array and list of all processes
+            id = 0
+            data = np.array([])
+            processes = []
+            # Loop over threads
+            while True:
+                fname = path + fbase + str(id) + fext
+                # Check if the file name is in the given folder
+                if os.path.isfile(fname):
                     if verbose:print("Extracting %s ..."%fname)
-                    # Loop over lines
-                    for line in f.readlines():
-                        # Save data if current line is not a comment
-                        if line[0]!='#':
-                            for e in line.split(','):
-                                data.append(float(e))
-            # If no more thread, break the loop
-            except IOError:
-                break
-            # If only one thread, break the loop
-            if thread is not None:
-                break
+                    # Call the loader function for each thread
+                    proc = mp.Process(target=loader, args=(fname,))
+                    processes.append(proc)
+                    proc.start()
+                    id += 1
+                else:
+                    break
+
+            # Retrieve data
+            for proc in processes:
+                proc.join()
+
+            while not q.empty():
+                data = np.append(data, q.get())
+        else:
+            # Initialize data list
+            data = []
+            # Loop over threads
+            id = 0
+            while True:
+                # Construct file name for current thread
+                if thread is not None:
+                    fname = path + fbase + str(thread) + fext
+                else:
+                    fname = path + fbase + str(id) + fext
+                    id    += 1
+                # Try to append data
+                try:
+                    # Open file for thread id-1
+                    with open(fname,'r') as f:
+                        if verbose:print("Extracting %s ..."%fname)
+                        # Loop over lines
+                        for line in f.readlines():
+                            # Save data if current line is not a comment
+                            if line[0]!='#':
+                                for e in line.split(','):
+                                    data.append(float(e))
+                # If no more thread, break the loop
+                except IOError:
+                    break
+                # If only one thread, break the loop
+                if thread is not None:
+                    break
 
         # Get phase space from data list
         w   = data[0::8]

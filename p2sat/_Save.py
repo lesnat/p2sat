@@ -65,6 +65,8 @@ class _Save(object):
                     f.write("%-16s"%tmp) # the chain is placed under 16 characters
                 f.write("\n")
 
+        # np.savetxt(file_name,list(zip(d.w,d.x,d.y,d.z,d.px,d.py,d.pz,d.t)))
+
         if verbose: print('Done !')
 
     def gp3m2_input(self,file_name,title="",verbose=True):
