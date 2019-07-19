@@ -355,7 +355,7 @@ class _Plot(object):
         self.h1(axis2, **kargs)
         if log2 : plt.yscale('log')
 
-    def h2(self,axis1,axis2,log=False,polar=False,clear=False,**kargs):
+    def h2(self,axis1,axis2,log=False,polar=False,clear=False,spherical=False,**kargs):
         """
         Plot the 2d histogram of given axes.
 
@@ -367,8 +367,10 @@ class _Plot(object):
             True to set log scale on y axis
         polar : bool, optional
             True to use a polar plot. axis1 must be an angle
-        clear: bool, optional
+        clear : bool, optional
             Clear or not the figure before plotting
+        spherical : bool, optional
+            Plot the projection on the unit sphere. Must be done with (axis1, axis2) = (theta,phi)
         kargs : dict, optional
             Dictionnary to pass to the hist.h2 method
 
@@ -379,6 +381,9 @@ class _Plot(object):
         if self.autoclear or clear: self.clear()
         if polar:
             a=plt.gca(polar=True)
+        elif spherical:
+            from mpl_toolkits.mplot3d import Axes3D
+            a=plt.gca(projection='3d')
         else:
             a=plt.gca()
         labels=self.get_labels([axis1,axis2],kargs.get('weight','w'),kargs.get('normed',True))
@@ -390,19 +395,73 @@ class _Plot(object):
             from matplotlib.colors import LogNorm
             norm=LogNorm()
         else:
+            from matplotlib.colors import Normalize
+            # norm=Normalize(vmin=np.min(h),vmax=np.max(h))
             norm=None
 
         if polar:
             a2=a.pcolormesh(np.radians(g1),g2,h,norm=norm,cmap=self.cmap)
+            plt.colorbar(a2,label=labels[2])
+        elif spherical:
+            # https://stackoverflow.com/questions/6539944/color-matplotlib-plot-surface-command-with-surface-gradient/6543777#6543777
+            from matplotlib import cm
+            # # filtr = np.nonzero(h)
+            # # g1 = np.radians(g1[filtr])
+            # # g2 = np.radians(g2[filtr])
+            # # h = h[filtr]
+            # # g1 = np.radians(g1)
+            # # g2 = np.radians(g2)
+            # x = np.sin(g1) * np.cos(g2)
+            # y = np.sin(g1) * np.sin(g2)
+            # z = np.cos(g1)
+            # print(x)
+            # print(z)
+            # # a2 = a.plot_surface(x, y, z, facecolors=cm.viridis(h/h.max()), color='c', alpha=0.6, norm=norm, linewidth=0)
+            # # a2 = a.plot_surface(x, y, z, cmap=cm.viridis(h), color='c', alpha=0.6, norm=norm, linewidth=0)
+            # # a2 = a.plot_trisurf(x, y, z, facecolors=cm.viridis(h/h.max()), color='c', alpha=0.6, norm=norm, linewidth=0)
+            # # a2 = a.contourf(x, y, z, facecolors=cm.viridis(h/h.max()), color='c', alpha=0.6, norm=norm, linewidth=0)
+            # a2 = a.contourf(x, y, z, facecolors=cm.viridis(h/h.max()), color='c', alpha=0.6, norm=norm, linewidth=0)
+            # a.set_xlim([-1,1])
+            # a.set_ylim([-1,1])
+            # a.set_zlim([-1,1])
+            # m = cm.ScalarMappable(cmap=plt.cm.viridis, norm=norm)
+            # m.set_array([])
+            # plt.colorbar(m)
+            # a.set_xlabel(r"$\sin \theta \cos \phi$")
+            # a.set_ylabel(r"$\sin \theta \sin \phi$")
+            # a.set_zlabel(r"$\cos \theta$")
+            xs,ys,zs,w = [],[],[],[]
+
+            for i1,e1 in enumerate(h):
+                for i2,e2 in enumerate(e1):
+                    if e2>0.:
+                        xs.append(np.sin(np.radians(b1[i1])) * np.cos(np.radians(b2[i2])))
+                        ys.append(np.sin(np.radians(b1[i1])) * np.sin(np.radians(b2[i2])))
+                        zs.append(np.cos(np.radians(b1[i1])))
+                        w.append(h[i1][i2])
+
+            if log:
+                c = np.log10(w)
+            else:
+                c = w
+
+            a.scatter(xs=xs,ys=ys,zs=zs,c=cm.viridis(np.array(w)/max(w)),marker='s')
+
+            a.set_xlim(min(xs),max(xs))
+            a.set_ylim(min(ys),max(ys))
+            a.set_zlim(min(zs),max(zs))
+
+            # m = cm.ScalarMappable(cmap=self.cmap)
+            # m.set_array([min(w),max(w)])
         else:
             a2=a.pcolormesh(g1,g2,h,norm=norm,cmap=self.cmap)
             a.set_xlim(xmin=min(b1),xmax=max(b1))
             a.set_ylim(ymin=min(b2),ymax=max(b2))
             a.set_xlabel(labels[0])
             a.set_ylabel(labels[1])
+            plt.colorbar(a2,label=labels[2])
 
         a.grid(True)
-        plt.colorbar(a2,label=labels[2])
 
         plt.show()
 
@@ -704,7 +763,7 @@ class _Plot(object):
 
     def s3(self,axis1,axis2,axis3,weight="w",snorm=1.0,log=False,clear=False,select=None):
         """
-        Plot the 3d histogram of given axes.
+        Plot the 3d scatter plot of given axes.
 
         Parameters
         ----------
