@@ -150,7 +150,7 @@ class _Plot(object):
             self.figure(number,clear=False)
         plt.title(title)
 
-    def h1(self,axis,where='post',log=False,polar=False,reverse=False,**kargs):
+    def h1(self,axis,where='post',log=False,polar=False,reverse=False,clear=False,**kargs):
         """
         Plot the 1d histogram of given axis.
 
@@ -166,6 +166,8 @@ class _Plot(object):
             True to use a polar plot. axis must be an angle
         reverse : bool, optional
             True to plot axis against number instead of number against axis
+        clear: bool, optional
+            Clear or not the figure before plotting
         kargs : dict, optional
             Dictionnary to pass to the hist.h1 method
 
@@ -173,7 +175,7 @@ class _Plot(object):
         --------
         hist.h1
         """
-        if self.autoclear : self.clear()
+        if self.autoclear or clear: self.clear()
         if polar:
             a=plt.gca(polar=True)
         else:
@@ -218,7 +220,7 @@ class _Plot(object):
 
         return a
 
-    def f1(self,axis,func_name,log=False,polar=False,reverse=False,**kargs):
+    def f1(self,axis,func_name,log=False,polar=False,reverse=False,clear=False,**kargs):
         """
         Plot the 1d fit of given axis.
 
@@ -234,6 +236,8 @@ class _Plot(object):
             True to use a polar plot. axis must be an angle
         reverse : bool, optional
             True to plot axis against number instead of number against axis
+        clear: bool, optional
+            Clear or not the figure before plotting
         kargs : dict, optional
             Dictionnary to pass to the hist.h1 method
 
@@ -241,7 +245,7 @@ class _Plot(object):
         --------
         hist.f1
         """
-        if self.autoclear : self.clear()
+        if self.autoclear or clear: self.clear()
         if polar:
             a=plt.gca(polar=True)
         else:
@@ -334,11 +338,14 @@ class _Plot(object):
 
         return a
 
-    def h1h1(self, axis1, axis2, log1=False, log2=False, sharex=False, **kargs):
+    def h1h1(self, axis1, axis2, log1=False, log2=False, sharex=False, clear=False, **kargs):
         """
         Plot 2 one-dimension histogram on the same plot
         """
         kargs['log'] = False
+        if self.autoclear or clear:
+            self.clear()
+            kargs['clear'] = False
         plt.subplots(2,1,sharex=sharex)
         plt.subplots_adjust(wspace=.15)
         plt.subplot(211)
@@ -348,7 +355,7 @@ class _Plot(object):
         self.h1(axis2, **kargs)
         if log2 : plt.yscale('log')
 
-    def h2(self,axis1,axis2,log=False,polar=False,**kargs):
+    def h2(self,axis1,axis2,log=False,polar=False,clear=False,**kargs):
         """
         Plot the 2d histogram of given axes.
 
@@ -360,6 +367,8 @@ class _Plot(object):
             True to set log scale on y axis
         polar : bool, optional
             True to use a polar plot. axis1 must be an angle
+        clear : bool, optional
+            Clear or not the figure before plotting
         kargs : dict, optional
             Dictionnary to pass to the hist.h2 method
 
@@ -367,7 +376,7 @@ class _Plot(object):
         --------
         hist.h2
         """
-        if self.autoclear : self.clear()
+        if self.autoclear or clear: self.clear()
         if polar:
             a=plt.gca(polar=True)
         else:
@@ -379,21 +388,111 @@ class _Plot(object):
 
         if log:
             from matplotlib.colors import LogNorm
-            norm=LogNorm()
+            norm=LogNorm(vmax=h.max())
         else:
+            from matplotlib.colors import Normalize
+            norm=Normalize(vmax=np.max(h))
             norm=None
 
         if polar:
             a2=a.pcolormesh(np.radians(g1),g2,h,norm=norm,cmap=self.cmap)
+            plt.colorbar(a2,label=labels[2])
         else:
             a2=a.pcolormesh(g1,g2,h,norm=norm,cmap=self.cmap)
             a.set_xlim(xmin=min(b1),xmax=max(b1))
             a.set_ylim(ymin=min(b2),ymax=max(b2))
             a.set_xlabel(labels[0])
             a.set_ylabel(labels[1])
+            plt.colorbar(a2,label=labels[2])
 
         a.grid(True)
-        plt.colorbar(a2,label=labels[2])
+
+        plt.show()
+
+        return a
+
+    def t2(self,axis1,axis2,log=False,polar=False,clear=False,spherical=False,**kargs):
+        """
+        Plot the 2d triangulated surface of given axes.
+
+        Parameters
+        ----------
+        axis1,axis2 : str
+            Name of the axes to plot
+        log : bool, optional
+            True to set log scale on y axis
+        polar : bool, optional
+            True to use a polar plot. axis1 must be an angle
+        clear : bool, optional
+            Clear or not the figure before plotting
+        spherical : bool, optional
+            Plot the projection on the unit sphere. Must be done with (axis1, axis2) = (theta,phi)
+        kargs : dict, optional
+            Dictionnary to pass to the hist.h2 method
+
+        See Also
+        --------
+        hist.h2
+        """
+        if self.autoclear or clear: self.clear()
+
+        from mpl_toolkits.mplot3d import Axes3D
+        a=plt.gca(projection='3d')
+
+        labels=self.get_labels([axis1,axis2],kargs.get('weight','w'),kargs.get('normed',True))
+
+        b1,b2,h=self._h.h2(axis1,axis2,**kargs)
+        g1,g2=np.meshgrid(b1,b2,indexing='ij')
+
+        if log:
+            from matplotlib.colors import LogNorm
+            norm=LogNorm(vmax=h.max())
+        else:
+            from matplotlib.colors import Normalize
+            norm=Normalize(vmax=np.max(h))
+            norm=None
+
+        # https://stackoverflow.com/questions/6539944/color-matplotlib-plot-surface-command-with-surface-gradient/6543777#6543777
+        from matplotlib import cm
+        # r = self._ps.data.raw
+        #
+        # btheta = 1./np.degrees(np.sin(list(reversed(np.linspace(1e-5,np.pi/2.-1e-5,100)))))
+        # bphi = np.linspace(1e-5,2*180-1e-5,100)
+        #
+        # h, theta, phi = np.histogram2d(r.theta, r.phi, weights=r.w, bins=(btheta,bphi))
+        # g1,g2=np.meshgrid(theta,phi,indexing='ij')
+
+        g1 = np.radians(g1)
+        g2 = np.radians(g2)
+        h = h/np.sin(g1[1:,1:])
+        # filtr = np.nonzero(h)
+        # h = h[filtr]
+        # Delete extreme values
+        # g1 = np.radians(g1[1:-1,1:-1])
+        # g2 = np.radians(g2[1:-1,1:-1])
+        # h = h[1:,1:]/np.sin(g1)
+        # # We choose to delete theta=180
+        # h = h[:-1,:-1]
+
+        x = np.sin(g1) * np.cos(g2)
+        y = np.sin(g1) * np.sin(g2)
+        z = np.cos(g1)
+
+        # a2 = a.plot_trisurf(x[filtr], y[filtr], z[filtr], facecolors=cm.viridis(h/h.max()), color='c', alpha=0.6, norm=norm, linewidth=0)
+        a2 = a.contourf(x, y, z, facecolors=cm.viridis(h/h.max()), color='c', alpha=0.6, norm=norm, linewidth=0)
+        # a2 = a.contour3D(x, y, z, facecolors=cm.viridis(h/h.max()), color='c', alpha=0.6, norm=norm, linewidth=0)
+
+        a.set_xlim([-1,1])
+        a.set_ylim([-1,1])
+        a.set_zlim([-1,1])
+        m = cm.ScalarMappable(cmap=plt.cm.viridis, norm=norm)
+        m.set_array([])
+        plt.colorbar(m)
+        a.set_xlabel(r"$\sin \theta \cos \phi$")
+        a.set_ylabel(r"$\sin \theta \sin \phi$")
+        a.set_zlabel(r"$\cos \theta$")
+
+        a.grid(True)
 
         plt.show()
 
@@ -449,7 +548,7 @@ class _Plot(object):
 
         return a
 
-    def c2(self,axis1,axis2,log=False,polar=False,gfilter=0.0,**kargs):
+    def c2(self,axis1,axis2,log=False,polar=False,gfilter=0.0,clear=False,**kargs):
         """
         Plot the 2d contour of given axes.
 
@@ -463,6 +562,8 @@ class _Plot(object):
             True to use a polar plot. axis1 must be an angle
         gfilter : float, optional
             Filtering scipy.ndimage.filters.gaussian_filter
+        clear: bool, optional
+            Clear or not the figure before plotting
         kargs : dict, optional
             Dictionnary to pass to the hist.h2 method
 
@@ -470,7 +571,7 @@ class _Plot(object):
         --------
         hist.h2
         """
-        if self.autoclear : self.clear()
+        if self.autoclear or clear: self.clear()
         if polar:
             a=plt.gca(polar=True)
         else:
@@ -507,7 +608,7 @@ class _Plot(object):
 
         return a
 
-    def s2(self,axis1,axis2,weight='w',snorm=1.,log=False,polar=False,select=None):
+    def s2(self,axis1,axis2,weight='w',snorm=1.,log=False,polar=False,clear=False,select=None):
         """
         Plot the 2d scattering plot of given axes.
 
@@ -523,10 +624,12 @@ class _Plot(object):
             True to set log scale on y axis
         polar : bool, optional
             True to use a polar plot. axis1 must be an angle
+        clear: bool, optional
+            Clear or not the figure before plotting
         select : dict, optional
             select dictionnary as in the hist.h2 method
         """
-        if self.autoclear : self.clear()
+        if self.autoclear or clear: self.clear()
         if polar:
             a=plt.gca(polar=True)
         else:
@@ -563,7 +666,30 @@ class _Plot(object):
 
         return a
 
-    def h2h1(self,axis1,axis2,log=False,**kargs):
+    def angles(self, btheta=5., bphi=5., log=False):
+        a=plt.gca()
+        labels=self.get_labels(["theta","phi"],"w",normed=True)
+
+        bintheta = np.linspace(0,180,int(180./btheta))
+        binphi = np.linspace(0,360,int(360./bphi))
+
+        r = self._ps.data.raw
+        h, bt, bp = np.histogram2d(r.theta, r.phi, weights=r.w/np.sin(r.theta), bins=(bintheta,binphi))
+
+        if log:
+            from matplotlib.colors import LogNorm
+            norm = LogNorm()
+        else:
+            norm = None
+
+        gtheta, gphi = np.meshgrid(bt, bp, indexing='ij')
+        a2 = plt.pcolormesh(gtheta, gphi, h, norm=norm)
+        a.set_xlabel(labels[0])
+        a.set_ylabel(labels[1])
+        plt.colorbar(a2,label=r"$d N / d\Omega$ [a.u.]")
+        plt.show()
+
+    def h2h1(self,axis1,axis2,log=False,clear=False,**kargs):
         """
         TODO
         """
@@ -605,13 +731,13 @@ class _Plot(object):
         # plt.show()
         pass
 
-    def s2h1(self,axis1,axis2,log=False):
+    def s2h1(self,axis1,axis2,log=False,clear=False):
         """
         TODO
         """
         pass
 
-    def h3(self,axis1,axis2,axis3,s=5,wmin=0,log=False,**kargs):
+    def h3(self,axis1,axis2,axis3,s=5,wmin=0,log=False,clear=False,**kargs):
         """
         Plot the 3d histogram of given axes.
 
@@ -625,6 +751,8 @@ class _Plot(object):
             minimum weight to plot. Default is 0
         log : bool, optional
             log color scale. Default is False
+        clear: bool, optional
+            Clear or not the figure before plotting
         kargs : dict, optional
             Dictionnary to pass to the hist.h3 method
 
@@ -632,6 +760,7 @@ class _Plot(object):
         --------
         hist.h3
         """
+        if self.autoclear or clear: self.clear()
         from mpl_toolkits.mplot3d import Axes3D
         # https://codereview.stackexchange.com/questions/62180/colorbar-for-matplotlib-3d-patch-plot
         from matplotlib import cm
@@ -686,9 +815,9 @@ class _Plot(object):
         return a
 
 
-    def s3(self,axis1,axis2,axis3,weight="w",snorm=1.0,log=False,select=None):
+    def s3(self,axis1,axis2,axis3,weight="w",snorm=1.0,log=False,clear=False,select=None):
         """
-        Plot the 3d histogram of given axes.
+        Plot the 3d scatter plot of given axes.
 
         Parameters
         ----------
@@ -700,9 +829,12 @@ class _Plot(object):
             dots size normalization. Default is 1
         log : bool, optional
             log color scale. Default is False
+        clear: bool, optional
+            Clear or not the figure before plotting
         select : dict, optional
             filtering dictionnary
         """
+        if self.autoclear or clear: self.clear()
         from mpl_toolkits.mplot3d import Axes3D
         from matplotlib import cm
 

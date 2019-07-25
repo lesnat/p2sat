@@ -106,9 +106,18 @@ class _Hist(object):
         # Calculate bins
         bins=[]
         for i,_ in enumerate(axis):
-            # Default bin range
+            # Default bin range are min and max values
             if brange[i][0] is None: brange[i][0] = min(axis[i])
             if brange[i][1] is None: brange[i][1] = max(axis[i])
+            # If min == max, change brange to make an histogram anyway
+            if brange[i][0] == brange[i][1]:
+                # If the values are 0, the last bin will be 0.1. It will be 2 times the axis value otherwise.
+                if brange[i][0] == 0.:
+                    brange[i][1] = 0.1
+                else:
+                    brange[i][0] = 0.
+                    brange[i][1] *= 2.
+
             # Default bin width
             if bwidth[i] is None: bwidth[i] = (brange[i][1] - brange[i][0])/100
 

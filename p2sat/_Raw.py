@@ -199,7 +199,7 @@ class _Raw(object):
 
         https://en.wikipedia.org/wiki/Atan2
         """
-        return np.degrees(np.arctan2(self.pz,self.py))
+        return np.degrees(np.arctan2(self.pz,self.py) + np.pi)
 
     @property
     def omega(self):
