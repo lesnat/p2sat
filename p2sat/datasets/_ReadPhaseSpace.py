@@ -356,7 +356,7 @@ class _ReadPhaseSpace(object):
         """
         px = self.px * self.metadata.unit["momentum"]["conv"] # Convert to code unit
         p = self.p * self.metadata.unit["momentum"]["conv"] # Convert to code unit
-        costhetax = (px/p) / self.metadata.unit["dimless"]["conv"] # Convert to user unit
+        costhetax = px/p # Dimensionless
         return costhetax
 
     @property
@@ -379,7 +379,7 @@ class _ReadPhaseSpace(object):
         """
         py = self.py * self.metadata.unit["momentum"]["conv"] # Convert to code unit
         p = self.p * self.metadata.unit["momentum"]["conv"] # Convert to code unit
-        costhetay = (py/p) / self.metadata.unit["dimless"]["conv"] # Convert to user unit
+        costhetay = py/p # Dimensionless
         return costhetay
 
     @property
@@ -402,7 +402,7 @@ class _ReadPhaseSpace(object):
         """
         pz = self.pz * self.metadata.unit["momentum"]["conv"] # Convert to code unit
         p = self.p * self.metadata.unit["momentum"]["conv"] # Convert to code unit
-        costhetaz = (pz/p) / self.metadata.unit["dimless"]["conv"] # Convert to user unit
+        costhetaz = pz/p # Dimensionless
         return costhetaz
 
     @property
@@ -891,7 +891,7 @@ class _MetadataReadPhaseSpace:
         elif specie in ("photon","hv","omega"):
             self.specie = dict(name = "photon", label = r"\omega",  mass = 0.)
         else:
-            self.specie = dict(name = "unknown", label = r"unknown",mass = 0.)
+            self.specie = dict(name = "unknown",label = r"unknown", mass = 0.)
             print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
             print("!!!                  Unknown specie.                     !!!")
             print("!!!        Please define specie's mass (in eV)           !!!")

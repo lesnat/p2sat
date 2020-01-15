@@ -75,12 +75,12 @@ def get_labels(ds, qties, weight, normed):
     weight_unit  = r.metadata.unit[weight_dim]["label"]
 
     # Construct "title" label
-    title_unit  = " ".join(qties_units)
+    title_unit  = " ~".join(qties_units)
     if normed == False:
         title_label = "${label}$".format(label=weight_label)
     else:
         numerator_label = "d" + weight_label
-        denominator_label = "d" + " d".join(qties_labels)
+        denominator_label = "d" + " ~d".join(qties_labels)
         if title_unit.strip() == "":
             title_label = "$%s/%s$"%(numerator_label, denominator_label)
         else:
@@ -88,7 +88,7 @@ def get_labels(ds, qties, weight, normed):
 
     return [*axis_labels, title_label]
 
-def figure(number=None,clear=True):
+def figure(number=None,clear=False):
     r"""
     Creates a new figure with given number.
 
@@ -182,10 +182,10 @@ def hist1d(ds, qty, where='post', legend="", log=False, polar=False, reverse=Fal
         labels[1]=tmp[0]
 
     if legend != "":
-        a.step(b,h,'.',where=where, label=legend)
+        a.step(b,h,'.-',where=where, label=legend)
         _plt.legend()
     else:
-        a.step(b,h,'.',where=where)
+        a.step(b,h,'.-',where=where)
 
     if polar:
         if log:a.set_rscale('log')
@@ -347,7 +347,7 @@ def hist2d(ds, qty1, qty2, log=False, polar=False, clear=False, **kargs):
         a=_plt.gca()
     labels=get_labels(ds, [qty1,qty2],kargs.get('weight','w'),kargs.get('normed',True))
 
-    b1,b2,h=hist.hist2d(qty1,qty2,**kargs)
+    b1,b2,h=_hist.hist2d(ds,qty1,qty2,**kargs)
     g1,g2=_np.meshgrid(b1,b2,indexing='ij')
 
     if log:
@@ -359,10 +359,10 @@ def hist2d(ds, qty1, qty2, log=False, polar=False, clear=False, **kargs):
         norm=None
 
     if polar:
-        a2=a.pcolormesh(_np.radians(g1),g2,h,norm=norm,cmap=ds.cmap)
+        a2=a.pcolormesh(_np.radians(g1),g2,h,norm=norm,cmap=cmap)
         _plt.colorbar(a2,label=labels[2])
     else:
-        a2=a.pcolormesh(g1,g2,h,norm=norm,cmap=ds.cmap)
+        a2=a.pcolormesh(g1,g2,h,norm=norm,cmap=cmap)
         a.set_xlim(xmin=min(b1),xmax=max(b1))
         a.set_ylim(ymin=min(b2),ymax=max(b2))
         a.set_xlabel(labels[0])
@@ -405,7 +405,7 @@ def trisurf2d(ds,qty1,qty2,log=False,polar=False,clear=False,spherical=False,**k
 
     labels=get_labels(ds, [qty1,qty2],kargs.get('weight','w'),kargs.get('normed',True))
 
-    b1,b2,h=hist.hist2d(qty1,qty2,**kargs)
+    b1,b2,h=_hist.hist2d(ds,qty1,qty2,**kargs)
     g1,g2=_np.meshgrid(b1,b2,indexing='ij')
 
     if log:
@@ -548,7 +548,7 @@ def contour2d(ds,qty1,qty2,log=False,polar=False,gfilter=0.0,clear=False,**kargs
     else:
         norm=None
 
-    b1,b2,h=hist.hist2d(qty1,qty2,**kargs)
+    b1,b2,h=_hist.hist2d(ds,qty1,qty2,**kargs)
 
     if polar: b1 = _np.radians(b1)
 
