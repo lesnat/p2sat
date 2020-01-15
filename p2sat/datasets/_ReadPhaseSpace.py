@@ -337,6 +337,75 @@ class _ReadPhaseSpace(object):
         return thetaz
 
     @property
+    def costhetax(self):
+        r"""
+        Particle polar angle for reference axis x (angle between px and the plane (py,pz)).
+
+        Notes
+        -----
+        costhetax is calculated as follow :
+
+        .. math::
+            \cos(\theta_x) = p_x/p
+
+        References
+        ----------
+        https://en.wikipedia.org/wiki/List_of_common_coordinate_transformations#To_spherical_coordinates
+        with switching (x->py, y->pz, z->px).
+        A figure can be found at https://en.wikipedia.org/wiki/Spherical_coordinate_system
+        """
+        px = self.px * self.metadata.unit["momentum"]["conv"] # Convert to code unit
+        p = self.p * self.metadata.unit["momentum"]["conv"] # Convert to code unit
+        costhetax = (px/p) / self.metadata.unit["dimless"]["conv"] # Convert to user unit
+        return costhetax
+
+    @property
+    def costhetay(self):
+        r"""
+        Particle polar angle for reference axis y (angle between py and the plane (pz,px)).
+
+        Notes
+        -----
+        costhetay is calculated as follow :
+
+        .. math::
+            \cos(\theta_y) = p_y/p
+
+        References
+        ----------
+        https://en.wikipedia.org/wiki/List_of_common_coordinate_transformations#To_spherical_coordinates
+        with switching (x->pz, y->px, z->py).
+        A figure can be found at https://en.wikipedia.org/wiki/Spherical_coordinate_system
+        """
+        py = self.py * self.metadata.unit["momentum"]["conv"] # Convert to code unit
+        p = self.p * self.metadata.unit["momentum"]["conv"] # Convert to code unit
+        costhetay = (py/p) / self.metadata.unit["dimless"]["conv"] # Convert to user unit
+        return costhetay
+
+    @property
+    def costhetaz(self):
+        r"""
+        Particle polar angle for reference axis z (angle between px and the plane (py,pz)).
+
+        Notes
+        -----
+        costhetaz is calculated as follow :
+
+        .. math::
+            \cos(\theta_z) = p_z/p
+
+        References
+        ----------
+        https://en.wikipedia.org/wiki/List_of_common_coordinate_transformations#To_spherical_coordinates
+        with switching (x->px, y->py, z->pz).
+        A figure can be found at https://en.wikipedia.org/wiki/Spherical_coordinate_system
+        """
+        pz = self.pz * self.metadata.unit["momentum"]["conv"] # Convert to code unit
+        p = self.p * self.metadata.unit["momentum"]["conv"] # Convert to code unit
+        costhetaz = (pz/p) / self.metadata.unit["dimless"]["conv"] # Convert to user unit
+        return costhetaz
+
+    @property
     def phix(self):
         r"""
         Particle azimutal angle for reference axis x (angle between py and pz).
@@ -833,48 +902,51 @@ class _MetadataReadPhaseSpace:
         r"""
         """
         self.quantity = {}
-        self.quantity["id"]     = dict(label = r"id",       dimension = "dimless")
-        self.quantity["w"]      = dict(label = r"N",        dimension = "dimless")
-        self.quantity["x"]      = dict(label = r"x",        dimension = "length")
-        self.quantity["y"]      = dict(label = r"y",        dimension = "length")
-        self.quantity["z"]      = dict(label = r"z",        dimension = "length")
-        self.quantity["px"]     = dict(label = r"p_x",      dimension = "momentum")
-        self.quantity["py"]     = dict(label = r"p_y",      dimension = "momentum")
-        self.quantity["pz"]     = dict(label = r"p_z",      dimension = "momentum")
-        self.quantity["t"]      = dict(label = r"t",        dimension = "time")
-        self.quantity["rx"]     = dict(label = r"r_x",      dimension = "length")
-        self.quantity["ry"]     = dict(label = r"r_y",      dimension = "length")
-        self.quantity["rz"]     = dict(label = r"r_z",      dimension = "length")
-        self.quantity["R"]      = dict(label = r"R",        dimension = "length")
-        self.quantity["p"]      = dict(label = r"p",        dimension = "momentum")
-        self.quantity["thetax"] = dict(label = r"\theta_x", dimension = "angle")
-        self.quantity["thetay"] = dict(label = r"\theta_y", dimension = "angle")
-        self.quantity["thetaz"] = dict(label = r"\theta_z", dimension = "angle")
-        self.quantity["phix"]   = dict(label = r"\phi_x",   dimension = "angle")
-        self.quantity["phiy"]   = dict(label = r"\phi_y",   dimension = "angle")
-        self.quantity["phiz"]   = dict(label = r"\phi_z",   dimension = "angle")
-        self.quantity["omegax"] = dict(label = r"\Omega_x", dimension = "solid_angle")
-        self.quantity["omegay"] = dict(label = r"\Omega_y", dimension = "solid_angle")
-        self.quantity["omegaz"] = dict(label = r"\Omega_z", dimension = "solid_angle")
-        self.quantity["etot"]   = dict(label = r"E_{tot}",  dimension = "energy")
-        self.quantity["ekin"]   = dict(label = r"E_{kin}",  dimension = "energy")
-        self.quantity["gamma"]  = dict(label = r"\gamma",   dimension = "dimless")
-        self.quantity["gammax"] = dict(label = r"\gamma_x", dimension = "dimless")
-        self.quantity["gammay"] = dict(label = r"\gamma_y", dimension = "dimless")
-        self.quantity["gammaz"] = dict(label = r"\gamma_z", dimension = "dimless")
-        self.quantity["beta"]   = dict(label = r"\beta",    dimension = "dimless")
-        self.quantity["betax"]  = dict(label = r"\beta_x",  dimension = "dimless")
-        self.quantity["betay"]  = dict(label = r"\beta_y",  dimension = "dimless")
-        self.quantity["betaz"]  = dict(label = r"\beta_z",  dimension = "dimless")
-        self.quantity["v"]      = dict(label = r"v",        dimension = "length/time")
-        self.quantity["vx"]     = dict(label = r"v_x",      dimension = "length/time")
-        self.quantity["vy"]     = dict(label = r"v_y",      dimension = "length/time")
-        self.quantity["vz"]     = dict(label = r"v_z",      dimension = "length/time")
-        self.quantity["ux"]     = dict(label = r"u_x",      dimension = "dimless")
-        self.quantity["uy"]     = dict(label = r"u_y",      dimension = "dimless")
-        self.quantity["uz"]     = dict(label = r"u_z",      dimension = "dimless")
-        self.quantity["m"]      = dict(label = r"m",        dimension = "energy")
-        self.quantity["wekin"]  = dict(label = r"(N \times E_{kin})", dimension = "energy")
+        self.quantity["id"]         = dict(label = r"id",               dimension = "dimless")
+        self.quantity["w"]          = dict(label = r"N",                dimension = "dimless")
+        self.quantity["x"]          = dict(label = r"x",                dimension = "length")
+        self.quantity["y"]          = dict(label = r"y",                dimension = "length")
+        self.quantity["z"]          = dict(label = r"z",                dimension = "length")
+        self.quantity["px"]         = dict(label = r"p_x",              dimension = "momentum")
+        self.quantity["py"]         = dict(label = r"p_y",              dimension = "momentum")
+        self.quantity["pz"]         = dict(label = r"p_z",              dimension = "momentum")
+        self.quantity["t"]          = dict(label = r"t",                dimension = "time")
+        self.quantity["rx"]         = dict(label = r"r_x",              dimension = "length")
+        self.quantity["ry"]         = dict(label = r"r_y",              dimension = "length")
+        self.quantity["rz"]         = dict(label = r"r_z",              dimension = "length")
+        self.quantity["R"]          = dict(label = r"R",                dimension = "length")
+        self.quantity["p"]          = dict(label = r"p",                dimension = "momentum")
+        self.quantity["thetax"]     = dict(label = r"\theta_x",         dimension = "angle")
+        self.quantity["thetay"]     = dict(label = r"\theta_y",         dimension = "angle")
+        self.quantity["thetaz"]     = dict(label = r"\theta_z",         dimension = "angle")
+        self.quantity["costhetax"]  = dict(label = r"cos(\theta_x)",    dimension = "dimless")
+        self.quantity["costhetay"]  = dict(label = r"cos(\theta_y)",    dimension = "dimless")
+        self.quantity["costhetaz"]  = dict(label = r"cos(\theta_z)",    dimension = "dimless")
+        self.quantity["phix"]       = dict(label = r"\phi_x",           dimension = "angle")
+        self.quantity["phiy"]       = dict(label = r"\phi_y",           dimension = "angle")
+        self.quantity["phiz"]       = dict(label = r"\phi_z",           dimension = "angle")
+        self.quantity["omegax"]     = dict(label = r"\Omega_x",         dimension = "solid_angle")
+        self.quantity["omegay"]     = dict(label = r"\Omega_y",         dimension = "solid_angle")
+        self.quantity["omegaz"]     = dict(label = r"\Omega_z",         dimension = "solid_angle")
+        self.quantity["etot"]       = dict(label = r"E_{tot}",          dimension = "energy")
+        self.quantity["ekin"]       = dict(label = r"E_{kin}",          dimension = "energy")
+        self.quantity["gamma"]      = dict(label = r"\gamma",           dimension = "dimless")
+        self.quantity["gammax"]     = dict(label = r"\gamma_x",         dimension = "dimless")
+        self.quantity["gammay"]     = dict(label = r"\gamma_y",         dimension = "dimless")
+        self.quantity["gammaz"]     = dict(label = r"\gamma_z",         dimension = "dimless")
+        self.quantity["beta"]       = dict(label = r"\beta",            dimension = "dimless")
+        self.quantity["betax"]      = dict(label = r"\beta_x",          dimension = "dimless")
+        self.quantity["betay"]      = dict(label = r"\beta_y",          dimension = "dimless")
+        self.quantity["betaz"]      = dict(label = r"\beta_z",          dimension = "dimless")
+        self.quantity["v"]          = dict(label = r"v",                dimension = "length/time")
+        self.quantity["vx"]         = dict(label = r"v_x",              dimension = "length/time")
+        self.quantity["vy"]         = dict(label = r"v_y",              dimension = "length/time")
+        self.quantity["vz"]         = dict(label = r"v_z",              dimension = "length/time")
+        self.quantity["ux"]         = dict(label = r"u_x",              dimension = "dimless")
+        self.quantity["uy"]         = dict(label = r"u_y",              dimension = "dimless")
+        self.quantity["uz"]         = dict(label = r"u_z",              dimension = "dimless")
+        self.quantity["m"]          = dict(label = r"m",                dimension = "energy")
+        self.quantity["wekin"]      = dict(label = r"(N \times E_{kin})", dimension = "energy")
 
     def _set_unit_system(self, unit_system):
         r"""
@@ -889,7 +961,7 @@ class _MetadataReadPhaseSpace:
             self.unit["angle"]       = dict(label=r"\pi rad",   conv=np.pi)
             self.unit["solid_angle"] = dict(label=r"\pi sr",    conv=np.pi)
             self.unit["length/time"] = dict(label=r"m/s",       conv=1.)
-            self.unit["dimless"]     = dict(label=None,         conv=1.)
+            self.unit["dimless"]     = dict(label="",           conv=1.)
         elif unit_system == "SI-keV":
             self.unit["length"]      = dict(label=r"m",         conv=1.)
             self.unit["momentum"]    = dict(label=r"keV/c",     conv=1e3)
@@ -898,7 +970,7 @@ class _MetadataReadPhaseSpace:
             self.unit["angle"]       = dict(label=r"\pi rad",   conv=np.pi)
             self.unit["solid_angle"] = dict(label=r"\pi sr",    conv=np.pi)
             self.unit["length/time"] = dict(label=r"m/s",       conv=1.)
-            self.unit["dimless"]     = dict(label=None,         conv=1.)
+            self.unit["dimless"]     = dict(label="",           conv=1.)
         elif unit_system == "SI-MeV":
             self.unit["length"]      = dict(label=r"m",         conv=1.)
             self.unit["momentum"]    = dict(label=r"MeV/c",     conv=1e6)
@@ -907,7 +979,7 @@ class _MetadataReadPhaseSpace:
             self.unit["angle"]       = dict(label=r"\pi rad",   conv=np.pi)
             self.unit["solid_angle"] = dict(label=r"\pi sr",    conv=np.pi)
             self.unit["length/time"] = dict(label=r"m/s",       conv=1.)
-            self.unit["dimless"]     = dict(label=None,         conv=1.)
+            self.unit["dimless"]     = dict(label="",           conv=1.)
         elif unit_system == "SI-GeV":
             self.unit["length"]      = dict(label=r"m",         conv=1.)
             self.unit["momentum"]    = dict(label=r"GeV/c",     conv=1e9)
@@ -916,7 +988,7 @@ class _MetadataReadPhaseSpace:
             self.unit["angle"]       = dict(label=r"\pi rad",   conv=np.pi)
             self.unit["solid_angle"] = dict(label=r"\pi sr",    conv=np.pi)
             self.unit["length/time"] = dict(label=r"m/s",       conv=1.)
-            self.unit["dimless"]     = dict(label=None,         conv=1.)
+            self.unit["dimless"]     = dict(label="",           conv=1.)
         elif unit_system == "cgs-eV":
             self.unit["length"]      = dict(label=r"cm",        conv=1e-2)
             self.unit["momentum"]    = dict(label=r"eV/c",      conv=1.)
@@ -925,7 +997,7 @@ class _MetadataReadPhaseSpace:
             self.unit["angle"]       = dict(label=r"\pi rad",   conv=np.pi)
             self.unit["solid_angle"] = dict(label=r"\pi sr",    conv=np.pi)
             self.unit["length/time"] = dict(label=r"cm/s",      conv=1e-2)
-            self.unit["dimless"]     = dict(label=None,         conv=1.)
+            self.unit["dimless"]     = dict(label="",           conv=1.)
         elif unit_system == "cgs-keV":
             self.unit["length"]      = dict(label=r"cm",        conv=1e-2)
             self.unit["momentum"]    = dict(label=r"keV/c",     conv=1e3)
@@ -934,7 +1006,7 @@ class _MetadataReadPhaseSpace:
             self.unit["angle"]       = dict(label=r"\pi rad",   conv=np.pi)
             self.unit["solid_angle"] = dict(label=r"\pi sr",    conv=np.pi)
             self.unit["length/time"] = dict(label=r"cm/s",      conv=1e-2)
-            self.unit["dimless"]     = dict(label=None,         conv=1.)
+            self.unit["dimless"]     = dict(label="",           conv=1.)
         elif unit_system == "cgs-MeV":
             self.unit["length"]      = dict(label=r"cm",        conv=1e-2)
             self.unit["momentum"]    = dict(label=r"MeV/c",     conv=1e6)
@@ -943,7 +1015,7 @@ class _MetadataReadPhaseSpace:
             self.unit["angle"]       = dict(label=r"\pi rad",   conv=np.pi)
             self.unit["solid_angle"] = dict(label=r"\pi sr",    conv=np.pi)
             self.unit["length/time"] = dict(label=r"cm/s",      conv=1e-2)
-            self.unit["dimless"]     = dict(label=None,         conv=1.)
+            self.unit["dimless"]     = dict(label="",           conv=1.)
         elif unit_system == "cgs-GeV":
             self.unit["length"]      = dict(label=r"cm",        conv=1e-2)
             self.unit["momentum"]    = dict(label=r"GeV/c",     conv=1e9)
@@ -952,7 +1024,7 @@ class _MetadataReadPhaseSpace:
             self.unit["angle"]       = dict(label=r"\pi rad",   conv=np.pi)
             self.unit["solid_angle"] = dict(label=r"\pi sr",    conv=np.pi)
             self.unit["length/time"] = dict(label=r"cm/s",      conv=1e-2)
-            self.unit["dimless"]     = dict(label=None,         conv=1.)
+            self.unit["dimless"]     = dict(label="",           conv=1.)
         elif unit_system == "UHI":
             self.unit["length"]      = dict(label=r"\mu m",     conv=1e-6)
             self.unit["momentum"]    = dict(label=r"MeV/c",     conv=1e6)
@@ -961,6 +1033,6 @@ class _MetadataReadPhaseSpace:
             self.unit["angle"]       = dict(label=r"\pi rad",   conv=np.pi)
             self.unit["solid_angle"] = dict(label=r"\pi sr",    conv=np.pi)
             self.unit["length/time"] = dict(label=r"um/ps",     conv=1e-6/1e-12)
-            self.unit["dimless"]     = dict(label=None,         conv=1.)
+            self.unit["dimless"]     = dict(label="",           conv=1.)
         else:
             raise NameError("Unknow unit system %s "%unit_system)
