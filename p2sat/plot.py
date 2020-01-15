@@ -50,72 +50,43 @@ def get_labels(ds, qties, weight, normed):
         Labels of given qty and label of weight
     """
     # Initialization
-    r = ds.read
-    labels  = []
-    qty_label=[]
-    qty_unit =[]
-    w_label =[]
-    w_unit  =[]
+    r           = ds.read
+    labels      = []
 
     # Get qty labels and units
+    qties_labels   = []
+    qties_units    = []
     for qty in qties:
-        if type(qty) is not str:
-            qty_label.append("")
-            qty_unit.append("")
+        qties_labels.append(r.metadata.quantity[qty]["label"])
+        qty_dim = r.metadata.quantity[qty]["dimension"]
+        qties_units.append(r.metadata.unit[qty_dim]["label"])
+
+    # Construct axis labels
+    axis_labels = []
+    for qty_label, qty_unit in zip(qties_labels, qties_units):
+        if qty_unit=="":
+            axis_labels.append("${label}$".format(label=qty_label))
         else:
-            qty_label.append(r.metadata.quantity[qty]["label"])
-            dim = r.metadata.quantity[qty]["dimension"]
-            qty_unit.append(r.metadata.unit[dim]["label"])
+            axis_labels.append("${label}$ [${unit}$]".format(label=qty_label,unit=qty_unit))
 
-    # Get normalization bool list
-    if type(normed) is bool:
-        if normed:
-            normed=[True]*len(qties)
+    # Get weight label and unit
+    weight_label = r.metadata.quantity[weight]["label"]
+    weight_dim   = r.metadata.quantity[weight]["dimension"]
+    weight_unit  = r.metadata.unit[weight_dim]["label"]
+
+    # Construct "title" label
+    title_unit  = " ".join(qties_units)
+    if normed == False:
+        title_label = "${label}$".format(label=weight_label)
+    else:
+        numerator_label = "d" + weight_label
+        denominator_label = "d" + " d".join(qties_labels)
+        if title_unit.strip() == "":
+            title_label = "$%s/%s$"%(numerator_label, denominator_label)
         else:
-            normed=[False]*len(qties)
+            title_label = "$%s/%s$ [$(%s)^{-1}$]"%(numerator_label, denominator_label, title_unit)
 
-    # Construct denominator of weight label and unit
-    den_label = ""
-    den_unit = ""
-    for i,qty in enumerate(qties):
-        if normed[i]:
-            den_label += "d"+qty_label[i]+r" \ "
-            den_unit += qty_unit[i]+r" \ "
-    # Delete the last spaces if needed
-    if den_label !="":
-        den_unit = den_unit[:-3]
-        # den_label = den_label[:-3]
-
-    # Construct weight label
-    if den_label == "":
-        w_label = "$%s$"%r.metadata.quantity[weight]["label"]
-    else:
-        w_label = "$d%s/%s$"%(r.metadata.quantity[weight]["label"],den_label)
-
-    # Construct weight unit
-    dim = r.metadata.quantity[qty]["dimension"]
-    if den_unit == "" and dim is None:
-        w_unit  = ""
-
-    if den_unit == "" and dim is not None:
-        w_unit = "$%s$"%r.metadata.unit[dim]["label"]
-
-    if den_unit != "" and dim is None:
-        w_unit  = "$(%s)^{-1}$"%(den_unit)
-
-    if den_unit != "" and dim is not None:
-        w_unit  = "$(%s)/(%s)$"%(r.metadata.unit[dim]["label"],den_unit)
-
-    # Construct and return labels list
-    for i,_ in enumerate(qties):
-        labels.append("$%s$ [$%s$]"%(qty_label[i],qty_unit[i]))
-
-    if w_unit == "":
-        labels.append(w_label)
-    else:
-        labels.append("%s [%s]"%(w_label,w_unit))
-
-    return labels
+    return [*axis_labels, title_label]
 
 def figure(number=None,clear=True):
     r"""
