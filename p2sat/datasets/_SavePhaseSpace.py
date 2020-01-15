@@ -1,8 +1,7 @@
 #coding:utf8
 import numpy as np
-import matplotlib.pyplot as plt
 
-class _Save(object):
+class _SavePhaseSpace(object):
     """
     Export phase space into several file format.
     """
@@ -42,9 +41,9 @@ class _Save(object):
 
         Some text can be written if the first character of the line is a '#'.
         """
-        if verbose: print("Exporting %s phase space in %s ..."%(self._ps.particle["name"],file_name))
+        if verbose: print("Exporting %s phase space in %s ..."%(self._ps.read.metadata.specie["name"],file_name))
 
-        d=self._ps.data.raw
+        d=self._ps.read
 
         # Opening the output file
         with open(file_name,'w') as f:
@@ -95,9 +94,9 @@ class _Save(object):
         verbose : bool, optional
             verbosity of the function. If True, a message is displayed when the data is exported
         """
-        if verbose: print("Exporting %s phase space in %s ..."%(self._ps.particle["name"],path+"prop_ph.t"))
+        if verbose: print("Exporting %s phase space in %s ..."%(self._ps.read.metadata.specie["name"],path+"prop_ph.t"))
 
-        d=self._ps.data.raw
+        d=self._ps.read
 
         # Opening the output file
         with open(path+'prop_ph.t','w') as f:
@@ -200,8 +199,8 @@ class _Save(object):
         f.write("{0} {1} {2}\n".format(threshold_merging, lvl_spatial, lvl_momentum))
         # ...
         f.write("--------number of likely beams and their main momentum and gamma-factor:\n{0}\n".format(2))
-        f.write("{0} {1} {2} {3}\n".format(s1.data.raw.px.mean(), s1.data.raw.py.mean(), s1.data.raw.pz.mean(), 1. + s1.data.raw.ekin.mean()/0.511))
-        f.write("{0} {1} {2} {3}\n".format(s2.data.raw.px.mean(), s2.data.raw.py.mean(), s2.data.raw.pz.mean(), 1. + s2.data.raw.ekin.mean()/0.511))
+        f.write("{0} {1} {2} {3}\n".format(s1.read.px.mean(), s1.read.py.mean(), s1.read.pz.mean(), 1. + s1.read.ekin.mean()/0.511))
+        f.write("{0} {1} {2} {3}\n".format(s2.read.px.mean(), s2.read.py.mean(), s2.read.pz.mean(), 1. + s2.read.ekin.mean()/0.511))
         # Restart simulation
         #Important for Reruning simulations. MakeResumepoints makes the simulation create points from which a Simulation can be resumed. ResumepointPeriod defines the period of
         #those points in simulation steps. RestartRun makes a simulation use one of such points. Input.txt is still necessary!
