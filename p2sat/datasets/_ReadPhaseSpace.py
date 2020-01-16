@@ -64,7 +64,7 @@ class _ReadPhaseSpace(object):
             # For each value of select dictionnary, get the appropriate filtering range
             for key, val in select.items():
                 # Get current filtering quantity
-                fqty = self.values(key, select=None)
+                fqty = self.quantity(key, select=None)
 
                 # Construct filtering range of current quantity
                 if type(val) in (int,float):
