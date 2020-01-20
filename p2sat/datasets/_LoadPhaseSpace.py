@@ -2,7 +2,7 @@
 import numpy as np
 
 class _LoadPhaseSpace(object):
-    """
+    r"""
     Import data from a file.
 
     Notes
@@ -20,7 +20,7 @@ class _LoadPhaseSpace(object):
         self._ps=PhaseSpace
 
     def txt(self, file_name, in_code_units, sep=",", verbose=True):
-        """
+        r"""
         Load particle phase space from a text file.
 
         Parameters
@@ -65,7 +65,7 @@ class _LoadPhaseSpace(object):
 
 
     def Smilei_Screen_1d(self,path,nb,r,x=0,verbose=True):
-        """
+        r"""
         Extract phase space from Smilei 1D Screen diagnostic.
 
         Parameters
@@ -178,7 +178,7 @@ class _LoadPhaseSpace(object):
         self._ps.edit.update(w,x,y,z,px,py,pz,t,in_code_units=True,verbose=verbose)
 
     def Smilei_TrackParticles(self,path,species,wscale=1.,verbose=True):
-        """
+        r"""
         Extract phase space from a TrackParticles Smilei diagnostic.
 
         Parameters
@@ -268,16 +268,16 @@ class _LoadPhaseSpace(object):
 
         self._ps.edit.update(w,x,y,z,px,py,pz,t,in_code_units=True,verbose=verbose)
 
-    def gp3m2_csv(self,path,base_name,thread=None,multiprocessing=False,verbose=True):
-        """
+    def gp3m2_csv(self,base_name,path="./",thread=None,multiprocessing=False,verbose=True):
+        r"""
         Extract simulation results from a gp3m2 NTuple csv output file
 
         Parameters
         ----------
-        path : str
-            path to the simulation folder
         base_name : str
             base file name
+        path : str
+            path to the simulation folder
         thread : int, optional
             number of the thread to import. By default it get the data of all the threads
         multiprocessing : bool, optional
@@ -310,7 +310,7 @@ class _LoadPhaseSpace(object):
         fbase = base_name+"_nt_"+part_name+"_t"
         fext = ".csv"
 
-        if multiprocessing:
+        if multiprocessing and thread is None:
             # Import modules
             import os
             import multiprocessing as mp
@@ -389,7 +389,7 @@ class _LoadPhaseSpace(object):
         self._ps.edit.update(w,x,y,z,px,py,pz,t,in_code_units=True,verbose=verbose)
 
     def TrILEns_output(self,path,verbose=True):
-        """
+        r"""
         Extract simulation results from a TrILEns output.txt file
 
         Parameters
@@ -463,7 +463,7 @@ class _LoadPhaseSpace(object):
         self._ps.edit.update(w,x,y,z,px,py,pz,t,in_code_units=True,verbose=verbose)
 
     def TrILEns_prop_ph(self,path,verbose=True):
-        """
+        r"""
         Extract simulation results from a TrILEns prop_ph file
 
         Parameters

@@ -11,7 +11,7 @@ class _EditCommon(object):
         raise NotImplementedError()
 
     def normalize(self, norm=1., verbose=True):
-        """
+        r"""
         Normalize the weights to a given value.
 
         Parameters
@@ -30,7 +30,7 @@ class _EditCommon(object):
         self.update(w, *self._ds.read.dataset[1:], in_code_units=False, verbose=verbose)
 
     def round_quantity(self, qty, decimals=8,verbose=True):
-        """
+        r"""
         Round the given quantity.
 
         Parameters

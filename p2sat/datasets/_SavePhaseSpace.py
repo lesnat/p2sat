@@ -2,14 +2,14 @@
 import numpy as np
 
 class _SavePhaseSpace(object):
-    """
+    r"""
     Export phase space into several file format.
     """
     def __init__(self,PhaseSpace):
         self._ps=PhaseSpace
 
     def txt(self,file_name,header=True,title="",sep=",",verbose=True):
-        """
+        r"""
         Export particle phase space in a text file.
 
         Parameters
@@ -69,7 +69,7 @@ class _SavePhaseSpace(object):
         if verbose: print('Done !')
 
     def gp3m2_input(self,file_name,title="",verbose=True):
-        """
+        r"""
         Export particle phase space in a gp3m2 input file
 
         Parameters
@@ -84,7 +84,7 @@ class _SavePhaseSpace(object):
         self.txt(file_name,header=True,title=title,sep=" ",verbose=verbose)
 
     def TrILEns_prop_ph(self,path,with_time=True,verbose=True):
-        """
+        r"""
         Export particle phase space in a TrILEns input file.
 
         Parameters
@@ -129,7 +129,7 @@ class _SavePhaseSpace(object):
                     threshold_merging=10, lvl_spatial=5, lvl_momentum=5,
                     maillage_spatial=None, nb_max_par_espece=2000000,
                     verbose=True):
-        """
+        r"""
         Write default input file and export particle phase space in a TrILEns input file.
 
         Parameters

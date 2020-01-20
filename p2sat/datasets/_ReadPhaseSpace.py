@@ -2,7 +2,7 @@
 import numpy as np
 
 class _ReadPhaseSpace(object):
-    """
+    r"""
     Read the dataset.
 
     Attributes

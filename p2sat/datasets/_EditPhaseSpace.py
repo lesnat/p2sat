@@ -3,7 +3,7 @@ import numpy as np
 from ._EditCommon import _EditCommon
 
 class _EditPhaseSpace(_EditCommon):
-    """
+    r"""
     Edit the dataset.
 
     Notes
@@ -27,7 +27,7 @@ class _EditPhaseSpace(_EditCommon):
         self.update(None,None,None,None,None,None,None,None,in_code_units=True,verbose=False)
 
     def update(self, w, x, y, z, px, py, pz, t, in_code_units, verbose=True):
-        """
+        r"""
         Update class attributes with new values.
 
         Parameters
@@ -107,7 +107,7 @@ class _EditPhaseSpace(_EditCommon):
         self.update(g_w,g_x,g_y,g_z,g_px,g_py,g_pz,g_t, in_code_units=False, verbose=verbose)
 
     def filter(self, select, verbose=True):
-        """
+        r"""
         Filter all the phase space with given condition
 
         Parameters
@@ -139,7 +139,7 @@ class _EditPhaseSpace(_EditCommon):
         self.update(*dataset_filtered,verbose=verbose)
 
     def translate(self, Tx=0., Ty=0., Tz=0.,verbose=True):
-        """
+        r"""
         Translate the particle phase space.
 
         Parameters
@@ -157,7 +157,7 @@ class _EditPhaseSpace(_EditCommon):
         self.update(*dataset_translated, in_code_units=False, verbose=verbose)
 
     def rotate_x(self, angle, verbose=True):
-        """
+        r"""
         Rotate the particle phase space along axis x.
 
         Parameters
@@ -204,7 +204,7 @@ class _EditPhaseSpace(_EditCommon):
         self.update(W,X,Y,Z,Px,Py,Pz,T, in_code_units=False, verbose=verbose)
 
     def rotate_y(self, angle, verbose=True):
-        """
+        r"""
         Rotate the particle phase space along axis y.
 
         Parameters
@@ -251,7 +251,7 @@ class _EditPhaseSpace(_EditCommon):
         self.update(W,X,Y,Z,Px,Py,Pz,T, in_code_units=False, verbose=verbose)
 
     def rotate_z(self, angle, verbose=True):
-        """
+        r"""
         Rotate the particle phase space along axis z.
 
         Parameters
@@ -298,7 +298,7 @@ class _EditPhaseSpace(_EditCommon):
         self.update(W,X,Y,Z,Px,Py,Pz,T, in_code_units=False, verbose=verbose)
 
     def propagate(self,x=None,t=None,update=True,verbose=True):
-        """
+        r"""
         Propagate the phase space to a given position or time.
 
         Parameters
@@ -348,7 +348,7 @@ class _EditPhaseSpace(_EditCommon):
             return W,X,Y,Z,Px,Py,Pz,T
 
     def sort(self, verbose=True):
-        """
+        r"""
         Sort the particles to have increasing number on x, then on y, then on z, ...
         """
         if verbose:print("Sorting macro-particles ...")
@@ -373,7 +373,7 @@ class _EditPhaseSpace(_EditCommon):
         self.update(*dataset_sorted, in_code_units=False, verbose=verbose)
 
     def _rebin_axis(self,qty,nbins=100,brange=None,queue=None,verbose=True):
-        """
+        r"""
         Rebin the given qty.
 
         Parameters
@@ -430,7 +430,7 @@ class _EditPhaseSpace(_EditCommon):
             return rebined_axis
 
     def rebin(self, Dx, Dy, Dz, Dpx, Dpy, Dpz, Dt, nbins=100,MP=False,brange=None,deduplicate=False,verbose=True):
-        """
+        r"""
         Rebin all the phase space
 
         Parameters
@@ -516,7 +516,7 @@ class _EditPhaseSpace(_EditCommon):
                         break
 
     def merge(self,method='hist',verbose=True,**kargs):
-        """
+        r"""
         Eliminate twin configurations by summing their weights.
 
         merge ? compress ? merge_particles ?

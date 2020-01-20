@@ -9,7 +9,7 @@ from . import datasets as _datasets
 import numpy as _np
 
 def expected_value(ds,qty,select=None):
-    """
+    r"""
     Returns expected value of given quantity.
 
     Parameters
@@ -37,7 +37,7 @@ def expected_value(ds,qty,select=None):
         raise NotImplementedError()
 
 def variance(ds,qty,select=None):
-    """
+    r"""
     Returns variance of given quantity.
 
     Parameters
@@ -67,7 +67,7 @@ def variance(ds,qty,select=None):
         raise NotImplementedError()
 
 def standard_deviation(ds,qty,select=None):
-    """
+    r"""
     Returns standard deviation of given quantity.
 
     Parameters
@@ -86,7 +86,7 @@ def standard_deviation(ds,qty,select=None):
     return _np.sqrt(variance(ds, qty, select=select))
 
 def covariance(ds,qty1,qty2,select=None):
-    """
+    r"""
     Returns covariance of given quantities.
 
     Parameters
@@ -118,7 +118,7 @@ def covariance(ds,qty1,qty2,select=None):
         raise NotImplementedError()
 
 def correlation_coefficient(ds,qty1,qty2,select=None):
-    """
+    r"""
     Returns correlation coefficient of given quantities.
 
     Parameters
@@ -143,7 +143,7 @@ def correlation_coefficient(ds,qty1,qty2,select=None):
     return cc
 
 def total_energy(ds,unit="J",select=None):
-    """
+    r"""
     Return total energy contained in the dataset.
 
     Parameters

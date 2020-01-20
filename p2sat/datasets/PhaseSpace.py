@@ -9,7 +9,7 @@ from ._LoadPhaseSpace import _LoadPhaseSpace
 
 
 class PhaseSpace(_Dataset):
-    """
+    r"""
     Dataset for specie phase-space analysis.
 
     Parameters
@@ -45,7 +45,7 @@ class PhaseSpace(_Dataset):
         self.save     = _SavePhaseSpace(self)
 
     def __add__(self,other):
-        """
+        r"""
         Return a new PhaseSpace object, combination of the 2 previous.
         """
         part1 = self.read.metadata.specie
@@ -75,7 +75,7 @@ class PhaseSpace(_Dataset):
         return ps
 
     def __str__(self):
-        """
+        r"""
         Returns informations about current `PhaseSpace` object.
         """
         txt  = "\n"
@@ -96,7 +96,7 @@ class PhaseSpace(_Dataset):
         return txt
 
     def copy(self,verbose=False):
-        """
+        r"""
         Return a copy of the current PhaseSpace object.
 
         Parameters
