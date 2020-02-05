@@ -268,7 +268,7 @@ class _LoadPhaseSpace(object):
 
         self._ps.edit.update(w,x,y,z,px,py,pz,t,in_code_units=True,verbose=verbose)
 
-    def gp3m2_csv(self,base_name,path="./",thread=None,multiprocessing=False,verbose=True):
+    def gp3m2_csv(self,base_name,path="./",thread=None,multiprocessing=False,in_code_units=False,verbose=True):
         r"""
         Extract simulation results from a gp3m2 NTuple csv output file
 
@@ -298,9 +298,9 @@ class _LoadPhaseSpace(object):
         # Get gp3m2 particle name from p2sat particle name
         part = self._ps.read.metadata.specie["name"]
         if part=="e-":
-            part_name = "electron"
+            part_name = "e-"
         elif part=="e+":
-            part_name = "positron"
+            part_name = "e+"
         elif part=="gamma":
             part_name = "gamma"
         elif part=="photon":
@@ -386,7 +386,7 @@ class _LoadPhaseSpace(object):
         if verbose:print("Done !")
 
         # Save phase space data in PhaseSpace object
-        self._ps.edit.update(w,x,y,z,px,py,pz,t,in_code_units=True,verbose=verbose)
+        self._ps.edit.update(w,x,y,z,px,py,pz,t,in_code_units=in_code_units,verbose=verbose)
 
     def TrILEns_output(self,path,verbose=True):
         r"""
