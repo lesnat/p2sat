@@ -67,44 +67,97 @@ class _EditPhaseSpace(_EditCommon):
         self._ds.read._t  = t
         if verbose: print("Done !")
 
-    def generate(self,Nconf,Npart,
-                ekin,phi=None,theta=None,omega=None,x=None,y=None,z=None,r=None,t=None,
-                seed=None,verbose=True):
+    def generate(self, Nmp, Np, propagation_axis,
+                ekin, phi=None, costheta=None,
+                x=None, y=None, z=None, t=None,
+                seed=None, verbose=True):
         r"""
-        Generate a particle phase space from given laws.
+        Generate a particle phase space from given functions.
 
+        Parameters
+        ----------
+        Nmp: int
+            Number of macro-particles (number of lines in output file).
+        Np: float
+            Total number of particles to represent (sum of all the weights).
+        propagation_axis: str
+            Propagation axis. Must be 'x', 'y' or 'z'.
+        ekin: function
+            Function to call to generate the kinetic energy of macro-particles.
+        costheta: function, optional
+            Function to call to generate the cosinus of theta angle of macro-particles. Default is 1 (along propagation_axis).
+        phi: function, optional
+            Function to call to generate the phi angle (in radians) of macro-particles. Default is uniform between 0 and 2*pi (isotropic).
+        x, y, z: function, optional
+            Function to call to generate the positions of macro-particles. Default is 0.
+        t: function, optional
+            Function to call to generate the time of macro-particles. Default is 0.
+
+        Notes
+        -----
+        All the functions must return values in user units.
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> eps = ExamplePhaseSpace()
+        >>> eps.edit.generate(Nmp=1000, Np=1e12, propagation_axis="x", ekin=lambda:np.random.exponential(scale=2.))
+        Generating phase space ...
+        Done !
+        Updating raw values ...
+        Done !
 
         """
         # Print a starting message
-        if verbose:
-            print("Generate %s phase-space ..."%(self._ds.particle["name"]))
-            print("    ekin  : %s"%ekin)
-            print("    omega : %s"%omega)
-            print("    theta : %s"%theta)
-            print("    phi   : %s"%phi)
-            if x is not None: print("    x     : %s"%x)
-            if y is not None: print("    y     : %s"%y)
-            if z is not None: print("    z     : %s"%z)
-            if r is not None: print("    r     : %s"%r)
-            if t is not None: print("    t     : %s"%t)
+        if verbose: print("Generating phase space ...")
 
         # Set the random seed
         np.random.seed(seed)
 
-        # Ensure that Nconf is of type int (for values such as 1e6)
-        Nconf = int(Nconf)
+        # Ensure that Nmp is of type int (for values such as 1e6)
+        Nmp = int(Nmp)
+
+        # Define default behaviour
+        if costheta is None: costheta = lambda: 1.
+        if phi is None: phi = lambda: np.random.uniform(0, 2*np.pi)
+        if x is None: x = lambda: 0.
+        if y is None: y = lambda: 0.
+        if z is None: z = lambda: 0.
+        if t is None: t = lambda: 0.
 
         # Generate weights
-        weight  = float(Npart)/Nconf
-        g_w     = self._generate(dict(law="dirac",center=weight),Nconf)
+        g_w         = np.array([float(Np)/Nmp] * Nmp)
+        # Generate energy and angles
+        g_ekin      = np.array([ekin() for _ in range(Nmp)])
+        g_costheta  = np.array([costheta() for _ in range(Nmp)])
+        g_phi       = np.array([phi() for _ in range(Nmp)])
+        # Generate positions and times
+        g_x         = np.array([x() for _ in range(Nmp)])
+        g_y         = np.array([y() for _ in range(Nmp)])
+        g_z         = np.array([z() for _ in range(Nmp)])
+        g_t         = np.array([t() for _ in range(Nmp)])
 
-        # Generate energy
-        pass
+        # Reconstruct momentum from energy and angle distributions
+        mass    = self._ds.read.metadata.specie["mass"] / self._ds.read.metadata.unit["energy"]["conv"]
+        g_p     = np.sqrt(g_ekin**2 + 2*g_ekin*mass)
+        # g_px    = g_p * np.cos(g_theta)
+        g_px    = g_p * g_costheta
+        g_py_sign = 2 * np.random.randint(0, 2, size = Nmp) - 1
+        g_py    = g_py_sign * np.sqrt((g_p**2 - g_px**2)/(1. + np.tan(g_phi)**2))
+        g_pz    = g_py*np.tan(g_phi)
 
         if verbose: print("Done !")
 
         # Update current object
-        self.update(g_w,g_x,g_y,g_z,g_px,g_py,g_pz,g_t, in_code_units=False, verbose=verbose)
+        if propagation_axis == "x":
+            # x y z
+            self.update(g_w,g_x,g_y,g_z,g_px,g_py,g_pz,g_t, in_code_units=False, verbose=verbose)
+        elif propagation_axis == "y":
+            # y z x
+            self.update(g_w,g_x,g_y,g_z,g_py,g_pz,g_px,g_t, in_code_units=False, verbose=verbose)
+        elif propagation_axis == "z":
+            # z x y
+            self.update(g_w,g_x,g_y,g_z,g_pz,g_px,g_py,g_t, in_code_units=False, verbose=verbose)
 
     def filter(self, select, verbose=True):
         r"""
@@ -120,7 +173,7 @@ class _EditPhaseSpace(_EditCommon):
         Examples
         --------
         >>> eps = ExamplePhaseSpace()
-        >>> eps.edit.filter(select={'x':[-5.,5.],'r':[0,10],'t':[150,None]}, update=True)
+        >>> eps.edit.filter(select={'x':[-5.,5.],'r':[0,10],'t':[150,None]})
         Filtering e- phase space with axes ['x', 'r', 't'] ...
         Done !
         Updating raw values ...
@@ -491,11 +544,11 @@ class _EditPhaseSpace(_EditCommon):
     def _merge_hist(self):
         r"""
         """
-        Nconfs = len(confs_old)
+        Nmps = len(confs_old)
         # Merge
         for i, conf_old in enumerate(confs_old):
             # Continue if already summed
-            if verbose and i % (Nconfs//100) == 0: print(" %i / %i ..."%(i, Nconfs))
+            if verbose and i % (Nmps//100) == 0: print(" %i / %i ..."%(i, Nmps))
             if np.isclose(w_old[i],0.):
                 continue
             else:
@@ -504,7 +557,7 @@ class _EditPhaseSpace(_EditCommon):
                 confs_new.append(conf_old)
                 # Loop over next confs if current conf is not the last one
                 j=1
-                while i + j < Nconfs:
+                while i + j < Nmps:
                     if np.allclose(conf_old, confs_old[i+j]):
                         # If next conf is equal to current conf, add its weight to last new conf
                         w_new[-1] += w_old[i+j]
@@ -557,11 +610,11 @@ class _EditPhaseSpace(_EditCommon):
                     confs_new.append(conf_old)
                     w_new.append(w_old[id_old])
         elif algo == 'sort':
-            Nconfs = len(confs_old)
+            Nmps = len(confs_old)
             # Merge
             for i, conf_old in enumerate(confs_old):
                 # Continue if already summed
-                if verbose and i % (Nconfs//100) == 0: print(" %i / %i ..."%(i, Nconfs))
+                if verbose and i % (Nmps//100) == 0: print(" %i / %i ..."%(i, Nmps))
                 if np.isclose(w_old[i],0.):
                     continue
                 else:
@@ -570,7 +623,7 @@ class _EditPhaseSpace(_EditCommon):
                     confs_new.append(conf_old)
                     # Loop over next confs if current conf is not the last one
                     j=1
-                    while i + j < Nconfs:
+                    while i + j < Nmps:
                         if np.allclose(conf_old, confs_old[i+j]):
                             # If next conf is equal to current conf, add its weight to last new conf
                             w_new[-1] += w_old[i+j]
