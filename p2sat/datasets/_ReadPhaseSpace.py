@@ -502,9 +502,9 @@ class _ReadPhaseSpace(object):
         ----------
         https://en.wikipedia.org/wiki/Solid_angle#Cone,_spherical_cap,_hemisphere
         """
-        theta_x = self.theta_x * self.metadata.unit["angle"]["conv"] # Convert to code unit
-        omega_x = 2*np.pi*(1-np.cos(theta_x)) / self.metadata.unit["solid_angle"]["conv"] # Convert to user unit
-        return omega_x
+        thetax = self.thetax * self.metadata.unit["angle"]["conv"] # Convert to code unit
+        omegax = 2*np.pi*(1-np.cos(thetax)) / self.metadata.unit["solid_angle"]["conv"] # Convert to user unit
+        return omegax
 
     @property
     def omegay(self):
@@ -522,9 +522,9 @@ class _ReadPhaseSpace(object):
         ----------
         https://en.wikipedia.org/wiki/Solid_angle#Cone,_spherical_cap,_hemisphere
         """
-        theta_y = self.theta_y * self.metadata.unit["angle"]["conv"] # Convert to code unit
-        omega_y = 2*np.pi*(1-np.cos(theta_y)) / self.metadata.unit["solid_angle"]["conv"] # Convert to user unit
-        return omega_y
+        thetay = self.thetay * self.metadata.unit["angle"]["conv"] # Convert to code unit
+        omegay = 2*np.pi*(1-np.cos(thetay)) / self.metadata.unit["solid_angle"]["conv"] # Convert to user unit
+        return omegay
 
     @property
     def omegaz(self):
@@ -542,9 +542,9 @@ class _ReadPhaseSpace(object):
         ----------
         https://en.wikipedia.org/wiki/Solid_angle#Cone,_spherical_cap,_hemisphere
         """
-        theta_z = self.theta_z * self.metadata.unit["angle"]["conv"] # Convert to code unit
-        omega_z = 2*np.pi*(1-np.cos(theta_z)) / self.metadata.unit["solid_angle"]["conv"] # Convert to user unit
-        return omega_z
+        thetaz = self.thetaz * self.metadata.unit["angle"]["conv"] # Convert to code unit
+        omegaz = 2*np.pi*(1-np.cos(thetaz)) / self.metadata.unit["solid_angle"]["conv"] # Convert to user unit
+        return omegaz
 
     @property
     def etot(self):
@@ -566,7 +566,7 @@ class _ReadPhaseSpace(object):
         """
         mass = self.metadata.specie["mass"] # Already in code unit
         p = self.p * self.metadata.unit["momentum"]["conv"] # Convert to code unit
-        etot = np.sqrt(p**2 + mass**2) * self.metadata.unit["angle"]["conv"] # Convert to user unit
+        etot = np.sqrt(p**2 + mass**2) / self.metadata.unit["energy"]["conv"] # Convert to user unit
         return etot
 
     @property
@@ -589,7 +589,7 @@ class _ReadPhaseSpace(object):
         """
         mass = self.metadata.specie["mass"] # Already in code unit
         etot = self.etot * self.metadata.unit["energy"]["conv"] # Convert to code unit
-        ekin = (self.etot - mass) / self.metadata.unit["energy"]["conv"] # Convert to user unit
+        ekin = (etot - mass) / self.metadata.unit["energy"]["conv"] # Convert to user unit
         return ekin
 
     @property
