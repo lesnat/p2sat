@@ -26,9 +26,8 @@ class _ReadPhaseSpace(object):
     of the quantity, only the `self` parameter and with the decorator `@property`.
     Please also add label and unit definition of this new quantity in `__init__`.
     """
-    def __init__(self, PhaseSpace, specie, unit_system):
-        self._ps      = PhaseSpace
-        self.metadata = _MetadataReadPhaseSpace(specie, unit_system)
+    def __init__(self, PhaseSpace):
+        self._ds      = PhaseSpace
 
     def quantity(self, qty, select=None):
         r"""
@@ -129,7 +128,7 @@ class _ReadPhaseSpace(object):
         r"""
         Particle position in axis x.
         """
-        x = self._x / self.metadata.unit["length"]["conv"] # Convert to user unit
+        x = self._x / self._ds.metadata.unit["length"]["conv"] # Convert to user unit
         return x
 
     @property
@@ -137,7 +136,7 @@ class _ReadPhaseSpace(object):
         r"""
         Particle position in axis y.
         """
-        y = self._y / self.metadata.unit["length"]["conv"] # Convert to user unit
+        y = self._y / self._ds.metadata.unit["length"]["conv"] # Convert to user unit
         return y
 
     @property
@@ -145,7 +144,7 @@ class _ReadPhaseSpace(object):
         r"""
         Particle position in axis z.
         """
-        z = self._z / self.metadata.unit["length"]["conv"] # Convert to user unit
+        z = self._z / self._ds.metadata.unit["length"]["conv"] # Convert to user unit
         return z
 
     @property
@@ -153,7 +152,7 @@ class _ReadPhaseSpace(object):
         r"""
         Particle momentum in direction x.
         """
-        px = self._px / self.metadata.unit["momentum"]["conv"] # Convert to user unit
+        px = self._px / self._ds.metadata.unit["momentum"]["conv"] # Convert to user unit
         return px
 
     @property
@@ -161,7 +160,7 @@ class _ReadPhaseSpace(object):
         r"""
         Particle momentum in direction y.
         """
-        py = self._py / self.metadata.unit["momentum"]["conv"] # Convert to user unit
+        py = self._py / self._ds.metadata.unit["momentum"]["conv"] # Convert to user unit
         return py
 
     @property
@@ -169,7 +168,7 @@ class _ReadPhaseSpace(object):
         r"""
         Particle momentum in direction z.
         """
-        pz = self._pz / self.metadata.unit["momentum"]["conv"] # Convert to user unit
+        pz = self._pz / self._ds.metadata.unit["momentum"]["conv"] # Convert to user unit
         return pz
 
     @property
@@ -177,7 +176,7 @@ class _ReadPhaseSpace(object):
         r"""
         Particle time (in fs).
         """
-        t = self._t / self.metadata.unit["time"]["conv"] # Convert to user unit
+        t = self._t / self._ds.metadata.unit["time"]["conv"] # Convert to user unit
         return t
 
     @property
@@ -192,9 +191,9 @@ class _ReadPhaseSpace(object):
         .. math::
             r_x = \sqrt{y^2+z^2}
         """
-        y = self.y * self.metadata.unit["length"]["conv"] # Convert to code unit
-        z = self.z * self.metadata.unit["length"]["conv"] # Convert to code unit
-        rx = np.sqrt(y**2 + z**2) / self.metadata.unit["length"]["conv"] # Convert to user unit
+        y = self.y * self._ds.metadata.unit["length"]["conv"] # Convert to code unit
+        z = self.z * self._ds.metadata.unit["length"]["conv"] # Convert to code unit
+        rx = np.sqrt(y**2 + z**2) / self._ds.metadata.unit["length"]["conv"] # Convert to user unit
         return rx
 
     @property
@@ -209,9 +208,9 @@ class _ReadPhaseSpace(object):
         .. math::
             r_y = \sqrt{x^2+z^2}
         """
-        x = self.x * self.metadata.unit["length"]["conv"] # Convert to code unit
-        z = self.z * self.metadata.unit["length"]["conv"] # Convert to code unit
-        ry = np.sqrt(x**2 + z**2) / self.metadata.unit["length"]["conv"] # Convert to user unit
+        x = self.x * self._ds.metadata.unit["length"]["conv"] # Convert to code unit
+        z = self.z * self._ds.metadata.unit["length"]["conv"] # Convert to code unit
+        ry = np.sqrt(x**2 + z**2) / self._ds.metadata.unit["length"]["conv"] # Convert to user unit
         return ry
 
     @property
@@ -226,9 +225,9 @@ class _ReadPhaseSpace(object):
         .. math::
             r_z = \sqrt{x^2+y^2}
         """
-        x = self.x * self.metadata.unit["length"]["conv"] # Convert to code unit
-        y = self.y * self.metadata.unit["length"]["conv"] # Convert to code unit
-        rz = np.sqrt(x**2 + y**2) / self.metadata.unit["length"]["conv"] # Convert to user unit
+        x = self.x * self._ds.metadata.unit["length"]["conv"] # Convert to code unit
+        y = self.y * self._ds.metadata.unit["length"]["conv"] # Convert to code unit
+        rz = np.sqrt(x**2 + y**2) / self._ds.metadata.unit["length"]["conv"] # Convert to user unit
         return rz
 
     @property
@@ -243,10 +242,10 @@ class _ReadPhaseSpace(object):
         .. math::
             R = \sqrt{x^2+y^2+z^2}
         """
-        x = self.x * self.metadata.unit["length"]["conv"] # Convert to code unit
-        y = self.y * self.metadata.unit["length"]["conv"] # Convert to code unit
-        z = self.z * self.metadata.unit["length"]["conv"] # Convert to code unit
-        R = np.sqrt(x**2 + y**2 + z**2) / self.metadata.unit["length"]["conv"] # Convert to user unit
+        x = self.x * self._ds.metadata.unit["length"]["conv"] # Convert to code unit
+        y = self.y * self._ds.metadata.unit["length"]["conv"] # Convert to code unit
+        z = self.z * self._ds.metadata.unit["length"]["conv"] # Convert to code unit
+        R = np.sqrt(x**2 + y**2 + z**2) / self._ds.metadata.unit["length"]["conv"] # Convert to user unit
         return R
 
     @property
@@ -261,10 +260,10 @@ class _ReadPhaseSpace(object):
         .. math::
             p = \sqrt{p_x^2+p_y^2+p_z^2}
         """
-        px = self.px * self.metadata.unit["momentum"]["conv"] # Convert to code unit
-        py = self.py * self.metadata.unit["momentum"]["conv"] # Convert to code unit
-        pz = self.pz * self.metadata.unit["momentum"]["conv"] # Convert to code unit
-        p = np.sqrt(px**2 + py**2 + pz**2) / self.metadata.unit["momentum"]["conv"] # Convert to user unit
+        px = self.px * self._ds.metadata.unit["momentum"]["conv"] # Convert to code unit
+        py = self.py * self._ds.metadata.unit["momentum"]["conv"] # Convert to code unit
+        pz = self.pz * self._ds.metadata.unit["momentum"]["conv"] # Convert to code unit
+        p = np.sqrt(px**2 + py**2 + pz**2) / self._ds.metadata.unit["momentum"]["conv"] # Convert to user unit
         return p
 
     @property
@@ -285,9 +284,9 @@ class _ReadPhaseSpace(object):
         with switching (x->py, y->pz, z->px).
         A figure can be found at https://en.wikipedia.org/wiki/Spherical_coordinate_system
         """
-        px = self.px * self.metadata.unit["momentum"]["conv"] # Convert to code unit
-        p = self.p * self.metadata.unit["momentum"]["conv"] # Convert to code unit
-        thetax = np.arccos(px/p) / self.metadata.unit["angle"]["conv"] # Convert to user unit
+        px = self.px * self._ds.metadata.unit["momentum"]["conv"] # Convert to code unit
+        p = self.p * self._ds.metadata.unit["momentum"]["conv"] # Convert to code unit
+        thetax = np.arccos(px/p) / self._ds.metadata.unit["angle"]["conv"] # Convert to user unit
         return thetax
 
     @property
@@ -308,9 +307,9 @@ class _ReadPhaseSpace(object):
         with switching (x->pz, y->px, z->py).
         A figure can be found at https://en.wikipedia.org/wiki/Spherical_coordinate_system
         """
-        py = self.py * self.metadata.unit["momentum"]["conv"] # Convert to code unit
-        p = self.p * self.metadata.unit["momentum"]["conv"] # Convert to code unit
-        thetay = np.arccos(py/p) / self.metadata.unit["angle"]["conv"] # Convert to user unit
+        py = self.py * self._ds.metadata.unit["momentum"]["conv"] # Convert to code unit
+        p = self.p * self._ds.metadata.unit["momentum"]["conv"] # Convert to code unit
+        thetay = np.arccos(py/p) / self._ds.metadata.unit["angle"]["conv"] # Convert to user unit
         return  thetay
 
     @property
@@ -331,9 +330,9 @@ class _ReadPhaseSpace(object):
         with switching (x->px, y->py, z->pz).
         A figure can be found at https://en.wikipedia.org/wiki/Spherical_coordinate_system
         """
-        pz = self.pz * self.metadata.unit["momentum"]["conv"] # Convert to code unit
-        p = self.p * self.metadata.unit["momentum"]["conv"] # Convert to code unit
-        thetaz = np.arccos(pz/p) / self.metadata.unit["angle"]["conv"] # Convert to user unit
+        pz = self.pz * self._ds.metadata.unit["momentum"]["conv"] # Convert to code unit
+        p = self.p * self._ds.metadata.unit["momentum"]["conv"] # Convert to code unit
+        thetaz = np.arccos(pz/p) / self._ds.metadata.unit["angle"]["conv"] # Convert to user unit
         return thetaz
 
     @property
@@ -354,8 +353,8 @@ class _ReadPhaseSpace(object):
         with switching (x->py, y->pz, z->px).
         A figure can be found at https://en.wikipedia.org/wiki/Spherical_coordinate_system
         """
-        px = self.px * self.metadata.unit["momentum"]["conv"] # Convert to code unit
-        p = self.p * self.metadata.unit["momentum"]["conv"] # Convert to code unit
+        px = self.px * self._ds.metadata.unit["momentum"]["conv"] # Convert to code unit
+        p = self.p * self._ds.metadata.unit["momentum"]["conv"] # Convert to code unit
         costhetax = px/p # Dimensionless
         return costhetax
 
@@ -377,8 +376,8 @@ class _ReadPhaseSpace(object):
         with switching (x->pz, y->px, z->py).
         A figure can be found at https://en.wikipedia.org/wiki/Spherical_coordinate_system
         """
-        py = self.py * self.metadata.unit["momentum"]["conv"] # Convert to code unit
-        p = self.p * self.metadata.unit["momentum"]["conv"] # Convert to code unit
+        py = self.py * self._ds.metadata.unit["momentum"]["conv"] # Convert to code unit
+        p = self.p * self._ds.metadata.unit["momentum"]["conv"] # Convert to code unit
         costhetay = py/p # Dimensionless
         return costhetay
 
@@ -400,8 +399,8 @@ class _ReadPhaseSpace(object):
         with switching (x->px, y->py, z->pz).
         A figure can be found at https://en.wikipedia.org/wiki/Spherical_coordinate_system
         """
-        pz = self.pz * self.metadata.unit["momentum"]["conv"] # Convert to code unit
-        p = self.p * self.metadata.unit["momentum"]["conv"] # Convert to code unit
+        pz = self.pz * self._ds.metadata.unit["momentum"]["conv"] # Convert to code unit
+        p = self.p * self._ds.metadata.unit["momentum"]["conv"] # Convert to code unit
         costhetaz = pz/p # Dimensionless
         return costhetaz
 
@@ -427,9 +426,9 @@ class _ReadPhaseSpace(object):
 
         https://en.wikipedia.org/wiki/Atan2
         """
-        pz = self.pz * self.metadata.unit["momentum"]["conv"] # Convert to code unit
-        py = self.py * self.metadata.unit["momentum"]["conv"] # Convert to code unit
-        phix = (np.arctan2(pz,py) + np.pi) / self.metadata.unit["angle"]["conv"] # Convert to user unit
+        pz = self.pz * self._ds.metadata.unit["momentum"]["conv"] # Convert to code unit
+        py = self.py * self._ds.metadata.unit["momentum"]["conv"] # Convert to code unit
+        phix = (np.arctan2(pz,py) + np.pi) / self._ds.metadata.unit["angle"]["conv"] # Convert to user unit
         return phix
 
     @property
@@ -454,9 +453,9 @@ class _ReadPhaseSpace(object):
 
         https://en.wikipedia.org/wiki/Atan2
         """
-        px = self.px * self.metadata.unit["momentum"]["conv"] # Convert to code unit
-        pz = self.pz * self.metadata.unit["momentum"]["conv"] # Convert to code unit
-        phiy = (np.arctan2(px,pz) + np.pi) / self.metadata.unit["angle"]["conv"] # Convert to user unit
+        px = self.px * self._ds.metadata.unit["momentum"]["conv"] # Convert to code unit
+        pz = self.pz * self._ds.metadata.unit["momentum"]["conv"] # Convert to code unit
+        phiy = (np.arctan2(px,pz) + np.pi) / self._ds.metadata.unit["angle"]["conv"] # Convert to user unit
         return phiy
 
     @property
@@ -481,9 +480,9 @@ class _ReadPhaseSpace(object):
 
         https://en.wikipedia.org/wiki/Atan2
         """
-        py = self.py * self.metadata.unit["momentum"]["conv"] # Convert to code unit
-        px = self.px * self.metadata.unit["momentum"]["conv"] # Convert to code unit
-        phiz = (np.arctan2(py,px) + np.pi) / self.metadata.unit["angle"]["conv"] # Convert to user unit
+        py = self.py * self._ds.metadata.unit["momentum"]["conv"] # Convert to code unit
+        px = self.px * self._ds.metadata.unit["momentum"]["conv"] # Convert to code unit
+        phiz = (np.arctan2(py,px) + np.pi) / self._ds.metadata.unit["angle"]["conv"] # Convert to user unit
         return phiz
 
     @property
@@ -502,8 +501,8 @@ class _ReadPhaseSpace(object):
         ----------
         https://en.wikipedia.org/wiki/Solid_angle#Cone,_spherical_cap,_hemisphere
         """
-        thetax = self.thetax * self.metadata.unit["angle"]["conv"] # Convert to code unit
-        omegax = 2*np.pi*(1-np.cos(thetax)) / self.metadata.unit["solid_angle"]["conv"] # Convert to user unit
+        thetax = self.thetax * self._ds.metadata.unit["angle"]["conv"] # Convert to code unit
+        omegax = 2*np.pi*(1-np.cos(thetax)) / self._ds.metadata.unit["solid_angle"]["conv"] # Convert to user unit
         return omegax
 
     @property
@@ -522,8 +521,8 @@ class _ReadPhaseSpace(object):
         ----------
         https://en.wikipedia.org/wiki/Solid_angle#Cone,_spherical_cap,_hemisphere
         """
-        thetay = self.thetay * self.metadata.unit["angle"]["conv"] # Convert to code unit
-        omegay = 2*np.pi*(1-np.cos(thetay)) / self.metadata.unit["solid_angle"]["conv"] # Convert to user unit
+        thetay = self.thetay * self._ds.metadata.unit["angle"]["conv"] # Convert to code unit
+        omegay = 2*np.pi*(1-np.cos(thetay)) / self._ds.metadata.unit["solid_angle"]["conv"] # Convert to user unit
         return omegay
 
     @property
@@ -542,8 +541,8 @@ class _ReadPhaseSpace(object):
         ----------
         https://en.wikipedia.org/wiki/Solid_angle#Cone,_spherical_cap,_hemisphere
         """
-        thetaz = self.thetaz * self.metadata.unit["angle"]["conv"] # Convert to code unit
-        omegaz = 2*np.pi*(1-np.cos(thetaz)) / self.metadata.unit["solid_angle"]["conv"] # Convert to user unit
+        thetaz = self.thetaz * self._ds.metadata.unit["angle"]["conv"] # Convert to code unit
+        omegaz = 2*np.pi*(1-np.cos(thetaz)) / self._ds.metadata.unit["solid_angle"]["conv"] # Convert to user unit
         return omegaz
 
     @property
@@ -564,9 +563,9 @@ class _ReadPhaseSpace(object):
         ----------
         https://en.wikipedia.org/wiki/Energy-momentum_relation
         """
-        mass = self.metadata.specie["mass"] # Already in code unit
-        p = self.p * self.metadata.unit["momentum"]["conv"] # Convert to code unit
-        etot = np.sqrt(p**2 + mass**2) / self.metadata.unit["energy"]["conv"] # Convert to user unit
+        mass = self._ds.metadata.specie["mass"] # Already in code unit
+        p = self.p * self._ds.metadata.unit["momentum"]["conv"] # Convert to code unit
+        etot = np.sqrt(p**2 + mass**2) / self._ds.metadata.unit["energy"]["conv"] # Convert to user unit
         return etot
 
     @property
@@ -587,9 +586,9 @@ class _ReadPhaseSpace(object):
         ----------
         https://en.wikipedia.org/wiki/Energy-momentum_relation
         """
-        mass = self.metadata.specie["mass"] # Already in code unit
-        etot = self.etot * self.metadata.unit["energy"]["conv"] # Convert to code unit
-        ekin = (etot - mass) / self.metadata.unit["energy"]["conv"] # Convert to user unit
+        mass = self._ds.metadata.specie["mass"] # Already in code unit
+        etot = self.etot * self._ds.metadata.unit["energy"]["conv"] # Convert to code unit
+        ekin = (etot - mass) / self._ds.metadata.unit["energy"]["conv"] # Convert to user unit
         return ekin
 
     @property
@@ -610,8 +609,8 @@ class _ReadPhaseSpace(object):
         ----------
         https://en.wikipedia.org/wiki/Lorentz_factor
         """
-        mass = self.metadata.specie["mass"] # Already in code unit
-        etot = self.etot * self.metadata.unit["energy"]["conv"] # Convert to code unit
+        mass = self._ds.metadata.specie["mass"] # Already in code unit
+        etot = self.etot * self._ds.metadata.unit["energy"]["conv"] # Convert to code unit
         gamma = self.etot/mass # Dimensionless
         return gamma
 
@@ -633,8 +632,8 @@ class _ReadPhaseSpace(object):
         ----------
         https://en.wikipedia.org/wiki/Lorentz_factor
         """
-        mass = self.metadata.specie["mass"] # Already in code unit
-        px = self.px * self.metadata.unit["momentum"]["conv"] # Convert to code unit
+        mass = self._ds.metadata.specie["mass"] # Already in code unit
+        px = self.px * self._ds.metadata.unit["momentum"]["conv"] # Convert to code unit
         gammax = np.sqrt(1+(self.px/mass)**2) # Dimensionless
         return gammax
 
@@ -656,8 +655,8 @@ class _ReadPhaseSpace(object):
         ----------
         https://en.wikipedia.org/wiki/Lorentz_factor
         """
-        mass = self.metadata.specie["mass"] # Already in code unit
-        py = self.py * self.metadata.unit["momentum"]["conv"] # Convert to code unit
+        mass = self._ds.metadata.specie["mass"] # Already in code unit
+        py = self.py * self._ds.metadata.unit["momentum"]["conv"] # Convert to code unit
         gammay = np.sqrt(1+(self.py/mass)**2) # Dimensionless
         return gammay
 
@@ -679,8 +678,8 @@ class _ReadPhaseSpace(object):
         ----------
         https://en.wikipedia.org/wiki/Lorentz_factor
         """
-        mass = self.metadata.specie["mass"] # Already in code unit
-        pz = self.pz * self.metadata.unit["momentum"]["conv"] # Convert to code unit
+        mass = self._ds.metadata.specie["mass"] # Already in code unit
+        pz = self.pz * self._ds.metadata.unit["momentum"]["conv"] # Convert to code unit
         gammaz = np.sqrt(1+(self.pz/mass)**2) # Dimensionless
         return gammaz
 
@@ -772,8 +771,8 @@ class _ReadPhaseSpace(object):
         .. math::
             u_x = \frac{p_x}{p}
         """
-        px = self.px * self.metadata.unit["momentum"]["conv"] # Convert to code unit
-        p = self.p * self.metadata.unit["momentum"]["conv"] # Convert to code unit
+        px = self.px * self._ds.metadata.unit["momentum"]["conv"] # Convert to code unit
+        p = self.p * self._ds.metadata.unit["momentum"]["conv"] # Convert to code unit
         ux = px/p # Dimensionless
         return ux
 
@@ -789,8 +788,8 @@ class _ReadPhaseSpace(object):
         .. math::
             u_y = \frac{p_y}{p}
         """
-        py = self.py * self.metadata.unit["momentum"]["conv"] # Convert to code unit
-        p = self.p * self.metadata.unit["momentum"]["conv"] # Convert to code unit
+        py = self.py * self._ds.metadata.unit["momentum"]["conv"] # Convert to code unit
+        p = self.p * self._ds.metadata.unit["momentum"]["conv"] # Convert to code unit
         uy = py/p # Dimensionless
         return uy
 
@@ -806,8 +805,8 @@ class _ReadPhaseSpace(object):
         .. math::
             u_z = \frac{p_z}{p}
         """
-        pz = self.pz * self.metadata.unit["momentum"]["conv"] # Convert to code unit
-        p = self.p * self.metadata.unit["momentum"]["conv"] # Convert to code unit
+        pz = self.pz * self._ds.metadata.unit["momentum"]["conv"] # Convert to code unit
+        p = self.p * self._ds.metadata.unit["momentum"]["conv"] # Convert to code unit
         uz = pz/p # Dimensionless
         return uz
 
@@ -829,9 +828,9 @@ class _ReadPhaseSpace(object):
         ----------
         https://en.wikipedia.org/wiki/Lorentz_factor
         """
-        mass = self.metadata.specie["mass"] # Already in code unit
+        mass = self._ds.metadata.specie["mass"] # Already in code unit
         gamma = self.gamma # Dimensionless
-        m = gamma * m / self.metadata.unit["momentum"]["conv"] # Convert to user unit
+        m = gamma * m / self._ds.metadata.unit["momentum"]["conv"] # Convert to user unit
         return m
 
     @property
@@ -862,177 +861,3 @@ class _ReadPhaseSpace(object):
     #         E_{kin} \times w
     #     """
     #     return self.w * self.ekin
-
-class _MetadataReadPhaseSpace:
-    r"""
-    """
-    def __init__(self, specie, unit_system):
-        self._set_unit_system(unit_system)
-        self._set_specie_metadata(specie)
-        self._set_quantities_metadata()
-
-    def _set_specie_metadata(self, specie):
-        r"""
-        """
-        if specie in ("gamma","g"):
-            self.specie = dict(name = "gamma",  label = r"\gamma",  mass = 0.)
-        elif specie in ("positron","e+"):
-            self.specie = dict(name = "e+",     label = r"e^+",     mass = 511e3)
-        elif specie in ("electron","e-"):
-            self.specie = dict(name = "e-",     label = r"e^-",     mass = 511e3)
-        elif specie in ("muon+","mu+"):
-            self.specie = dict(name = "mu+",    label = r"\mu^+",   mass = 105.6e6)
-        elif specie in ("muon-","mu-"):
-            self.specie = dict(name = "mu-",    label = r"\mu^-",   mass = 105.6e6)
-        elif specie in ("proton","p","H+"):
-            self.specie = dict(name = "H+",     label = r"H^+",     mass = 938.3e6)
-        elif specie in ("neutron","n"):
-            self.specie = dict(name = "n",      label = r"n",       mass = 939.6e6)
-        elif specie in ("photon","hv","omega"):
-            self.specie = dict(name = "photon", label = r"\omega",  mass = 0.)
-        else:
-            self.specie = dict(name = "unknown",label = r"unknown", mass = 0.)
-            print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-            print("!!!                  Unknown specie.                     !!!")
-            print("!!!        Please define specie's mass (in eV)           !!!")
-            print("!!!      in dataset.read.metadata.specie['mass']         !!!")
-            print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-
-    def _set_quantities_metadata(self):
-        r"""
-        """
-        self.quantity = {}
-        self.quantity["id"]         = dict(label = r"id",               dimension = "dimless")
-        self.quantity["w"]          = dict(label = r"N",                dimension = "dimless")
-        self.quantity["x"]          = dict(label = r"x",                dimension = "length")
-        self.quantity["y"]          = dict(label = r"y",                dimension = "length")
-        self.quantity["z"]          = dict(label = r"z",                dimension = "length")
-        self.quantity["px"]         = dict(label = r"p_x",              dimension = "momentum")
-        self.quantity["py"]         = dict(label = r"p_y",              dimension = "momentum")
-        self.quantity["pz"]         = dict(label = r"p_z",              dimension = "momentum")
-        self.quantity["t"]          = dict(label = r"t",                dimension = "time")
-        self.quantity["rx"]         = dict(label = r"r_x",              dimension = "length")
-        self.quantity["ry"]         = dict(label = r"r_y",              dimension = "length")
-        self.quantity["rz"]         = dict(label = r"r_z",              dimension = "length")
-        self.quantity["R"]          = dict(label = r"R",                dimension = "length")
-        self.quantity["p"]          = dict(label = r"p",                dimension = "momentum")
-        self.quantity["thetax"]     = dict(label = r"\theta_x",         dimension = "angle")
-        self.quantity["thetay"]     = dict(label = r"\theta_y",         dimension = "angle")
-        self.quantity["thetaz"]     = dict(label = r"\theta_z",         dimension = "angle")
-        self.quantity["costhetax"]  = dict(label = r"cos(\theta_x)",    dimension = "dimless")
-        self.quantity["costhetay"]  = dict(label = r"cos(\theta_y)",    dimension = "dimless")
-        self.quantity["costhetaz"]  = dict(label = r"cos(\theta_z)",    dimension = "dimless")
-        self.quantity["phix"]       = dict(label = r"\phi_x",           dimension = "angle")
-        self.quantity["phiy"]       = dict(label = r"\phi_y",           dimension = "angle")
-        self.quantity["phiz"]       = dict(label = r"\phi_z",           dimension = "angle")
-        self.quantity["omegax"]     = dict(label = r"\Omega_x",         dimension = "solid_angle")
-        self.quantity["omegay"]     = dict(label = r"\Omega_y",         dimension = "solid_angle")
-        self.quantity["omegaz"]     = dict(label = r"\Omega_z",         dimension = "solid_angle")
-        self.quantity["etot"]       = dict(label = r"E_{tot}",          dimension = "energy")
-        self.quantity["ekin"]       = dict(label = r"E_{kin}",          dimension = "energy")
-        self.quantity["gamma"]      = dict(label = r"\gamma",           dimension = "dimless")
-        self.quantity["gammax"]     = dict(label = r"\gamma_x",         dimension = "dimless")
-        self.quantity["gammay"]     = dict(label = r"\gamma_y",         dimension = "dimless")
-        self.quantity["gammaz"]     = dict(label = r"\gamma_z",         dimension = "dimless")
-        self.quantity["beta"]       = dict(label = r"\beta",            dimension = "dimless")
-        self.quantity["betax"]      = dict(label = r"\beta_x",          dimension = "dimless")
-        self.quantity["betay"]      = dict(label = r"\beta_y",          dimension = "dimless")
-        self.quantity["betaz"]      = dict(label = r"\beta_z",          dimension = "dimless")
-        self.quantity["v"]          = dict(label = r"v",                dimension = "length/time")
-        self.quantity["vx"]         = dict(label = r"v_x",              dimension = "length/time")
-        self.quantity["vy"]         = dict(label = r"v_y",              dimension = "length/time")
-        self.quantity["vz"]         = dict(label = r"v_z",              dimension = "length/time")
-        self.quantity["ux"]         = dict(label = r"u_x",              dimension = "dimless")
-        self.quantity["uy"]         = dict(label = r"u_y",              dimension = "dimless")
-        self.quantity["uz"]         = dict(label = r"u_z",              dimension = "dimless")
-        self.quantity["m"]          = dict(label = r"m",                dimension = "energy")
-        self.quantity["wekin"]      = dict(label = r"(N \times E_{kin})", dimension = "energy")
-
-    def _set_unit_system(self, unit_system):
-        r"""
-        """
-        self.unit = {}
-        self.unit["unit_system"] = unit_system
-        if unit_system == "SI-eV":
-            self.unit["length"]      = dict(label=r"m",         conv=1.)
-            self.unit["momentum"]    = dict(label=r"eV/c",      conv=1.)
-            self.unit["energy"]      = dict(label=r"eV",        conv=1.)
-            self.unit["time"]        = dict(label=r"s",         conv=1.)
-            self.unit["angle"]       = dict(label=r"\pi rad",   conv=np.pi)
-            self.unit["solid_angle"] = dict(label=r"\pi sr",    conv=np.pi)
-            self.unit["length/time"] = dict(label=r"m/s",       conv=1.)
-            self.unit["dimless"]     = dict(label="",           conv=1.)
-        elif unit_system == "SI-keV":
-            self.unit["length"]      = dict(label=r"m",         conv=1.)
-            self.unit["momentum"]    = dict(label=r"keV/c",     conv=1e3)
-            self.unit["energy"]      = dict(label=r"keV",       conv=1e3)
-            self.unit["time"]        = dict(label=r"s",         conv=1.)
-            self.unit["angle"]       = dict(label=r"\pi rad",   conv=np.pi)
-            self.unit["solid_angle"] = dict(label=r"\pi sr",    conv=np.pi)
-            self.unit["length/time"] = dict(label=r"m/s",       conv=1.)
-            self.unit["dimless"]     = dict(label="",           conv=1.)
-        elif unit_system == "SI-MeV":
-            self.unit["length"]      = dict(label=r"m",         conv=1.)
-            self.unit["momentum"]    = dict(label=r"MeV/c",     conv=1e6)
-            self.unit["energy"]      = dict(label=r"MeV",       conv=1e6)
-            self.unit["time"]        = dict(label=r"s",         conv=1.)
-            self.unit["angle"]       = dict(label=r"\pi rad",   conv=np.pi)
-            self.unit["solid_angle"] = dict(label=r"\pi sr",    conv=np.pi)
-            self.unit["length/time"] = dict(label=r"m/s",       conv=1.)
-            self.unit["dimless"]     = dict(label="",           conv=1.)
-        elif unit_system == "SI-GeV":
-            self.unit["length"]      = dict(label=r"m",         conv=1.)
-            self.unit["momentum"]    = dict(label=r"GeV/c",     conv=1e9)
-            self.unit["energy"]      = dict(label=r"GeV",       conv=1e9)
-            self.unit["time"]        = dict(label=r"s",         conv=1.)
-            self.unit["angle"]       = dict(label=r"\pi rad",   conv=np.pi)
-            self.unit["solid_angle"] = dict(label=r"\pi sr",    conv=np.pi)
-            self.unit["length/time"] = dict(label=r"m/s",       conv=1.)
-            self.unit["dimless"]     = dict(label="",           conv=1.)
-        elif unit_system == "cgs-eV":
-            self.unit["length"]      = dict(label=r"cm",        conv=1e-2)
-            self.unit["momentum"]    = dict(label=r"eV/c",      conv=1.)
-            self.unit["energy"]      = dict(label=r"eV",        conv=1.)
-            self.unit["time"]        = dict(label=r"s",         conv=1.)
-            self.unit["angle"]       = dict(label=r"\pi rad",   conv=np.pi)
-            self.unit["solid_angle"] = dict(label=r"\pi sr",    conv=np.pi)
-            self.unit["length/time"] = dict(label=r"cm/s",      conv=1e-2)
-            self.unit["dimless"]     = dict(label="",           conv=1.)
-        elif unit_system == "cgs-keV":
-            self.unit["length"]      = dict(label=r"cm",        conv=1e-2)
-            self.unit["momentum"]    = dict(label=r"keV/c",     conv=1e3)
-            self.unit["energy"]      = dict(label=r"keV",       conv=1e3)
-            self.unit["time"]        = dict(label=r"s",         conv=1.)
-            self.unit["angle"]       = dict(label=r"\pi rad",   conv=np.pi)
-            self.unit["solid_angle"] = dict(label=r"\pi sr",    conv=np.pi)
-            self.unit["length/time"] = dict(label=r"cm/s",      conv=1e-2)
-            self.unit["dimless"]     = dict(label="",           conv=1.)
-        elif unit_system == "cgs-MeV":
-            self.unit["length"]      = dict(label=r"cm",        conv=1e-2)
-            self.unit["momentum"]    = dict(label=r"MeV/c",     conv=1e6)
-            self.unit["energy"]      = dict(label=r"MeV",       conv=1e6)
-            self.unit["time"]        = dict(label=r"s",         conv=1.)
-            self.unit["angle"]       = dict(label=r"\pi rad",   conv=np.pi)
-            self.unit["solid_angle"] = dict(label=r"\pi sr",    conv=np.pi)
-            self.unit["length/time"] = dict(label=r"cm/s",      conv=1e-2)
-            self.unit["dimless"]     = dict(label="",           conv=1.)
-        elif unit_system == "cgs-GeV":
-            self.unit["length"]      = dict(label=r"cm",        conv=1e-2)
-            self.unit["momentum"]    = dict(label=r"GeV/c",     conv=1e9)
-            self.unit["energy"]      = dict(label=r"GeV",       conv=1e9)
-            self.unit["time"]        = dict(label=r"s",         conv=1.)
-            self.unit["angle"]       = dict(label=r"\pi rad",   conv=np.pi)
-            self.unit["solid_angle"] = dict(label=r"\pi sr",    conv=np.pi)
-            self.unit["length/time"] = dict(label=r"cm/s",      conv=1e-2)
-            self.unit["dimless"]     = dict(label="",           conv=1.)
-        elif unit_system == "UHI":
-            self.unit["length"]      = dict(label=r"\mu m",     conv=1e-6)
-            self.unit["momentum"]    = dict(label=r"MeV/c",     conv=1e6)
-            self.unit["energy"]      = dict(label=r"MeV",       conv=1e6)
-            self.unit["time"]        = dict(label=r"ps",        conv=1e-12)
-            self.unit["angle"]       = dict(label=r"\pi rad",   conv=np.pi)
-            self.unit["solid_angle"] = dict(label=r"\pi sr",    conv=np.pi)
-            self.unit["length/time"] = dict(label=r"um/ps",     conv=1e-6/1e-12)
-            self.unit["dimless"]     = dict(label="",           conv=1.)
-        else:
-            raise NameError("Unknow unit system %s "%unit_system)

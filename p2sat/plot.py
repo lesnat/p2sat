@@ -52,16 +52,15 @@ def get_labels(ds, qties, weight, normed):
         Labels of given qty and label of weight
     """
     # Initialization
-    r           = ds.read
     labels      = []
 
     # Get qty labels and units
     qties_labels   = []
     qties_units    = []
     for qty in qties:
-        qties_labels.append(r.metadata.quantity[qty]["label"])
-        qty_dim = r.metadata.quantity[qty]["dimension"]
-        qties_units.append(r.metadata.unit[qty_dim]["label"])
+        qties_labels.append(ds.metadata.quantity[qty]["label"])
+        qty_dim = ds.metadata.quantity[qty]["dimension"]
+        qties_units.append(ds.metadata.unit[qty_dim]["label"])
 
     # Construct axis labels
     axis_labels = []
@@ -72,9 +71,9 @@ def get_labels(ds, qties, weight, normed):
             axis_labels.append("${label}$ [${unit}$]".format(label=qty_label,unit=qty_unit))
 
     # Get weight label and unit
-    weight_label = r.metadata.quantity[weight]["label"]
-    weight_dim   = r.metadata.quantity[weight]["dimension"]
-    weight_unit  = r.metadata.unit[weight_dim]["label"]
+    weight_label = ds.metadata.quantity[weight]["label"]
+    weight_dim   = ds.metadata.quantity[weight]["dimension"]
+    weight_unit  = ds.metadata.unit[weight_dim]["label"]
 
     # Construct "title" label
     title_unit  = " ~".join(qties_units)

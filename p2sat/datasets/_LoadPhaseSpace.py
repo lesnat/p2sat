@@ -11,13 +11,13 @@ class _LoadPhaseSpace(object):
 
     - Add a method to this object, with the name of your code. It must contains the keyword `self` as a first argument (because of object-oriented paradigm), and all the other parameters you need
     - Get the data from your file and put it in lists or numpy arrays, one line describing one particle
-    - Call the `update` method of `data` sub-object (access via `self._ps.edit.update`)
+    - Call the `update` method of `data` sub-object (access via `self._ds.edit.update`)
     - Please write a documentation and share !
 
     You can copy-paste the `txt` method to have a basic example of file import.
     """
     def __init__(self,PhaseSpace):
-        self._ps=PhaseSpace
+        self._ds=PhaseSpace
 
     def txt(self, file_name, in_code_units, sep=",", verbose=True):
         r"""
@@ -36,7 +36,7 @@ class _LoadPhaseSpace(object):
         --------
         save.txt
         """
-        if verbose: print("Extracting %s phase space from %s ..."%(self._ps.read.metadata.specie["name"],file_name))
+        if verbose: print("Extracting %s phase space from %s ..."%(self._ds.metadata.specie["name"],file_name))
 
         # Initialize data lists
         w         = []
@@ -61,7 +61,7 @@ class _LoadPhaseSpace(object):
         if verbose: print('Done !')
 
         # Save data in PhaseSpace object
-        self._ps.edit.update(w,x,y,z,px,py,pz,t,in_code_units=in_code_units,verbose=verbose)
+        self._ds.edit.update(w,x,y,z,px,py,pz,t,in_code_units=in_code_units,verbose=verbose)
 
 
     def Smilei_Screen_1d(self,path,nb,r,x=0,verbose=True):
@@ -175,7 +175,7 @@ class _LoadPhaseSpace(object):
 
         # Update current phase space
         if verbose: print("Done !")
-        self._ps.edit.update(w,x,y,z,px,py,pz,t,in_code_units=True,verbose=verbose)
+        self._ds.edit.update(w,x,y,z,px,py,pz,t,in_code_units=True,verbose=verbose)
 
     def Smilei_TrackParticles(self,path,species,wscale=1.,verbose=True):
         r"""
@@ -190,7 +190,7 @@ class _LoadPhaseSpace(object):
         verbose : bool, optional
             verbosity
         """
-        if verbose: print("Extracting %s phase space from %s TrackParticles ..."%(self._ps.read.metadata.specie["name"],species))
+        if verbose: print("Extracting %s phase space from %s TrackParticles ..."%(self._ds.metadata.specie["name"],species))
         # Open simulation
         import happi
         S = happi.Open(path,verbose=False)
@@ -266,7 +266,7 @@ class _LoadPhaseSpace(object):
 
         if verbose: print("Done !")
 
-        self._ps.edit.update(w,x,y,z,px,py,pz,t,in_code_units=True,verbose=verbose)
+        self._ds.edit.update(w,x,y,z,px,py,pz,t,in_code_units=True,verbose=verbose)
 
     def gp3m2_csv(self,base_name,path="./",thread=None,multiprocessing=False,in_code_units=False,verbose=True):
         r"""
@@ -296,7 +296,7 @@ class _LoadPhaseSpace(object):
         >>> # eps.extract.gp3m2_csv("Al_target")
         """
         # Get gp3m2 particle name from p2sat particle name
-        part = self._ps.read.metadata.specie["name"]
+        part = self._ds.metadata.specie["name"]
         if part=="e-":
             part_name = "e-"
         elif part=="e+":
@@ -386,7 +386,7 @@ class _LoadPhaseSpace(object):
         if verbose:print("Done !")
 
         # Save phase space data in PhaseSpace object
-        self._ps.edit.update(w,x,y,z,px,py,pz,t,in_code_units=in_code_units,verbose=verbose)
+        self._ds.edit.update(w,x,y,z,px,py,pz,t,in_code_units=in_code_units,verbose=verbose)
 
     def TrILEns_output(self,path,verbose=True):
         r"""
@@ -399,7 +399,7 @@ class _LoadPhaseSpace(object):
         verbose : bool, optional
             verbosity
         """
-        particle = self._ps.read.metadata.specie["name"]
+        particle = self._ds.metadata.specie["name"]
         if verbose:print("Extracting {} phase space from {}output.txt ...".format(particle,path))
 
         # Get TrILEns particle label from p2sat particle name
@@ -460,7 +460,7 @@ class _LoadPhaseSpace(object):
         if verbose:print("Done !")
 
         # Save data in PhaseSpace object
-        self._ps.edit.update(w,x,y,z,px,py,pz,t,in_code_units=True,verbose=verbose)
+        self._ds.edit.update(w,x,y,z,px,py,pz,t,in_code_units=True,verbose=verbose)
 
     def TrILEns_prop_ph(self,path,verbose=True):
         r"""
@@ -473,9 +473,9 @@ class _LoadPhaseSpace(object):
         verbose : bool, optional
             verbosity
         """
-        if self._ps.read.metadata.specie["name"]!="gamma":
-            raise NameError("prop_ph.t contains informations about gamma photons ! Current particle name is %s"%self._ps.read.metadata.specie["name"])
-        if verbose: print("Extracting %s phase space from %s ..."%(self._ps.read.metadata.specie["name"],path+"prop_ph.t"))
+        if self._ds.metadata.specie["name"]!="gamma":
+            raise NameError("prop_ph.t contains informations about gamma photons ! Current particle name is %s"%self._ds.metadata.specie["name"])
+        if verbose: print("Extracting %s phase space from %s ..."%(self._ds.metadata.specie["name"],path+"prop_ph.t"))
 
         # Initialize data lists
         w         = []
@@ -508,4 +508,4 @@ class _LoadPhaseSpace(object):
 
         if verbose: print('Done !')
 
-        self._ps.edit.update(w,x,y,z,px,py,pz,t,in_code_units=True,verbose=verbose)
+        self._ds.edit.update(w,x,y,z,px,py,pz,t,in_code_units=True,verbose=verbose)

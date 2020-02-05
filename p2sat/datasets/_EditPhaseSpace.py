@@ -49,13 +49,13 @@ class _EditPhaseSpace(_EditCommon):
         t   = np.array(t)
         # Convert in code units if needed
         if not in_code_units:
-            X  *= self._ds.read.metadata.unit["length"]["conv"]
-            Y  *= self._ds.read.metadata.unit["length"]["conv"]
-            Z  *= self._ds.read.metadata.unit["length"]["conv"]
-            Px *= self._ds.read.metadata.unit["momentum"]["conv"]
-            Py *= self._ds.read.metadata.unit["momentum"]["conv"]
-            Pz *= self._ds.read.metadata.unit["momentum"]["conv"]
-            t  *= self._ds.read.metadata.unit["time"]["conv"]
+            X  *= self._ds.metadata.unit["length"]["conv"]
+            Y  *= self._ds.metadata.unit["length"]["conv"]
+            Z  *= self._ds.metadata.unit["length"]["conv"]
+            Px *= self._ds.metadata.unit["momentum"]["conv"]
+            Py *= self._ds.metadata.unit["momentum"]["conv"]
+            Pz *= self._ds.metadata.unit["momentum"]["conv"]
+            t  *= self._ds.metadata.unit["time"]["conv"]
         # Save values
         self._ds.read._w  = W
         self._ds.read._x  = X
@@ -138,7 +138,7 @@ class _EditPhaseSpace(_EditCommon):
         g_t         = np.array([t() for _ in range(Nmp)])
 
         # Reconstruct momentum from energy and angle distributions
-        mass    = self._ds.read.metadata.specie["mass"] / self._ds.read.metadata.unit["energy"]["conv"]
+        mass    = self._ds.metadata.specie["mass"] / self._ds.metadata.unit["energy"]["conv"]
         g_p     = np.sqrt(g_ekin**2 + 2*g_ekin*mass)
         # g_px    = g_p * np.cos(g_theta)
         g_px    = g_p * g_costheta
@@ -202,7 +202,7 @@ class _EditPhaseSpace(_EditCommon):
         verbose : bool, optional
             Verbosity.
         """
-        if verbose: print("Translating phase space by (%.2E,%.2E,%.2E) %s"%(Tx,Ty,Tz,self._ds.read.metadata.unit["length"]["label"]))
+        if verbose: print("Translating phase space by (%.2E,%.2E,%.2E) %s"%(Tx,Ty,Tz,self._ds.metadata.unit["length"]["label"]))
 
         r = self._ds.read
         dataset_translated = [r.w, x + Tx, y + Ty, z + Tz, r.x, r.py, r.pz, r.t]

@@ -6,7 +6,7 @@ class _SavePhaseSpace(object):
     Export phase space into several file format.
     """
     def __init__(self,PhaseSpace):
-        self._ps=PhaseSpace
+        self._ds=PhaseSpace
 
     def txt(self,file_name,header=True,title="",sep=",",verbose=True):
         r"""
@@ -41,9 +41,9 @@ class _SavePhaseSpace(object):
 
         Some text can be written if the first character of the line is a '#'.
         """
-        if verbose: print("Exporting %s phase space in %s ..."%(self._ps.read.metadata.specie["name"],file_name))
+        if verbose: print("Exporting %s phase space in %s ..."%(self._ds.metadata.specie["name"],file_name))
 
-        d=self._ps.read
+        d=self._ds.read
 
         # Opening the output file
         with open(file_name,'w') as f:
@@ -94,9 +94,9 @@ class _SavePhaseSpace(object):
         verbose : bool, optional
             verbosity of the function. If True, a message is displayed when the data is exported
         """
-        if verbose: print("Exporting %s phase space in %s ..."%(self._ps.read.metadata.specie["name"],path+"prop_ph.t"))
+        if verbose: print("Exporting %s phase space in %s ..."%(self._ds.metadata.specie["name"],path+"prop_ph.t"))
 
-        d=self._ps.read
+        d=self._ds.read
 
         # Opening the output file
         with open(path+'prop_ph.t','w') as f:
