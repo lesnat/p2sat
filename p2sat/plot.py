@@ -13,7 +13,6 @@ rcParams : dict
 shortcut to matplotlib.rcParams dictionnary (change plot appearence)
 """
 
-from . import datasets as _datasets
 from . import hist as _hist
 
 import numpy as _np

@@ -4,8 +4,6 @@
 Get global statistics from datasets.
 """
 
-from . import datasets as _datasets
-
 import numpy as _np
 
 def expected_value(ds,qty,select=None):
@@ -25,7 +23,7 @@ def expected_value(ds,qty,select=None):
     -----
     expected_value is defined as sum(p*qty) with p=w/sum(w)
     """
-    if isinstance(ds, _datasets.PhaseSpace):
+    if isinstance(ds, datasets.PhaseSpace):
         r = ds.read
         qty = r.quantity(qty, select=select)
         w = r.quantity('w',select=select)
@@ -53,7 +51,7 @@ def variance(ds,qty,select=None):
     -----
     variance is defined as expected_value((qty - expected_value(qty))**2)
     """
-    if isinstance(ds, _datasets.PhaseSpace):
+    if isinstance(ds, datasets.PhaseSpace):
         r = ds.read
         qty = r.quantity(qty,select=select)
         w = r.quantity("w",select=select)
@@ -104,7 +102,7 @@ def covariance(ds,qty1,qty2,select=None):
     -----
     covariance is defined as expected_value((qty1-expected_value(qty1)) * (qty2-expected_value(qty2)))
     """
-    if isinstance(ds, _datasets.PhaseSpace):
+    if isinstance(ds, datasets.PhaseSpace):
         r = ds.read
         qty1 = r.quantity(qty1,select=select)
         qty2 = r.quantity(qty2,select=select)
@@ -159,7 +157,7 @@ def total_energy(ds,unit="J",select=None):
     --------
     data.select
     """
-    if isinstance(ds, _datasets.PhaseSpace):
+    if isinstance(ds, datasets.PhaseSpace):
         r = ds.read
         w = r.quantity('w',select=select)
         ekin = r.quantity('ekin',select=select)
