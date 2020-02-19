@@ -1,14 +1,15 @@
 #!/usr/bin/env python
 #coding:utf8
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 import p2sat
 
 setup(
     name='p2sat',
     version=p2sat.__version__,
-    packages=['p2sat'],
+    packages=find_packages(),
+    # package_data={'p2sat.datasets': ["p2sat/datasets/PhaseSpace.py"]},
     author="lesnat",
     description="Particle Phase Space Analysis Toolkit",
     long_description=open('README.md').read(),
