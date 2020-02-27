@@ -760,6 +760,86 @@ class _ReadPhaseSpace(object):
         return betaz
 
     @property
+    def v(self):
+        r"""
+        Particle normalized velocity.
+
+        Notes
+        -----
+        v is calculated as follow :
+
+        .. math::
+            v = \betama^2 c
+
+        References
+        ----------
+        https://en.wikipedia.org/wiki/Lorentz_factor
+        """
+        c = 299792458 # Already in code unit
+        v = self.beta * c / self._ds.metadata.unit["length/time"]["conv"] # Convert to user unit
+        return v
+
+    @property
+    def vx(self):
+        r"""
+        Particle normalized velocity along x axis.
+
+        Notes
+        -----
+        vx is calculated as follow :
+
+        .. math::
+            v_x = \beta_x^2 c
+
+        References
+        ----------
+        https://en.wikipedia.org/wiki/Lorentz_factor
+        """
+        c = 299792458 # Already in code unit
+        vx = self.betax * c / self._ds.metadata.unit["length/time"]["conv"] # Convert to user unit
+        return vx
+
+    @property
+    def vy(self):
+        r"""
+        Particle normalized velocity along y axis.
+
+        Notes
+        -----
+        vy is calculated as follow :
+
+        .. math::
+            v_y = \beta_y^2 c
+
+        References
+        ----------
+        https://en.wikipedia.org/wiki/Lorentz_factor
+        """
+        c = 299792458 # Already in code unit
+        vy = self.betay * c / self._ds.metadata.unit["length/time"]["conv"] # Convert to user unit
+        return vy
+
+    @property
+    def vz(self):
+        r"""
+        Particle normalized velocity along z axis.
+
+        Notes
+        -----
+        vz is calculated as follow :
+
+        .. math::
+            v_z = \beta_z^2 c
+
+        References
+        ----------
+        https://en.wikipedia.org/wiki/Lorentz_factor
+        """
+        c = 299792458 # Already in code unit
+        vz = self.betaz * c / self._ds.metadata.unit["length/time"]["conv"] # Convert to user unit
+        return vz
+
+    @property
     def ux(self):
         r"""
         Particle direction on x axis.
