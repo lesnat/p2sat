@@ -127,6 +127,25 @@ def set_title(title,number=None):
         figure(number,clear=False)
     _plt.title(title)
 
+def vline(x, text="", xfactor=1.01, yfactor=1.01, linestyle="dashed", color="k"):
+    r"""
+    """
+    ymin, ymax = _plt.gca().get_ybound()
+    _plt.vlines(x, ymin, ymax, linestyles=linestyle, colors=color)
+    _plt.text(xfactor * x, yfactor * ymax, text)
+    _plt.ylim(ymin, ymax)
+
+def hline(y, text="", xfactor=1.01, yfactor=1.01, linestyle="dashed", color="k"):
+    r"""
+    """
+    xmin, xmax = _plt.gca().get_xbound()
+    _plt.hlines(y, xmin, xmax, linestyles=linestyle, colors=color)
+    _plt.text(xfactor * xmax, yfactor * y, text)
+    _plt.xlim(xmin, xmax)
+
+def arrow():
+    pass
+
 def hist1d(ds, qty, where='post', legend="", log=False, polar=False, reverse=False, clear=False,**kargs):
     r"""
     Plot the 1d histogram of given qty.
@@ -164,7 +183,7 @@ def hist1d(ds, qty, where='post', legend="", log=False, polar=False, reverse=Fal
 
     b,h=_hist.hist1d(ds, qty, **kargs)
 
-    if polar: b = _np.radians(b) # Polar plot usefull ?????????
+    if polar: b = b * ds.metadata.unit["angle"]["conv"] # Polar plot usefull ?????????
 
     if where=='post':
         b=b[:-1]
@@ -240,8 +259,7 @@ def hist1d(ds, qty, where='post', legend="", log=False, polar=False, reverse=Fal
 #
 #     b,h=_hist.fit1d(qty,func_name,return_fit=True,**kargs)
 #
-#     if polar: b = _np.radians(b)
-#
+#     if polar: b = b * ds.metadata.unit["angle"]["conv"]#
 #     if reverse:
 #         # Reverse values
 #         tmp = [b,h]
@@ -362,12 +380,10 @@ def hist2d(ds, qty1, qty2, log=False, polar=False, clear=False, **kargs):
         from matplotlib.colors import LogNorm
         norm=LogNorm(vmax=h.max())
     else:
-        from matplotlib.colors import Normalize
-        norm=Normalize(vmax=_np.max(h))
         norm=None
 
     if polar:
-        a2=a.pcolormesh(_np.radians(g1),g2,h,norm=norm,cmap=cmap)
+        a2=a.pcolormesh(g1 * ds.metadata.unit["angle"]["conv"], g2, h, norm=norm, cmap=cmap)
         _plt.colorbar(a2,label=labels[2])
     else:
         a2=a.pcolormesh(g1,g2,h,norm=norm,cmap=cmap)
