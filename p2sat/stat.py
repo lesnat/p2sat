@@ -5,6 +5,7 @@ Get global statistics from datasets.
 """
 
 import numpy as _np
+from .datasets import PhaseSpace as _PhaseSpace
 
 def expected_value(ds,qty,select=None):
     r"""
@@ -23,7 +24,7 @@ def expected_value(ds,qty,select=None):
     -----
     expected_value is defined as sum(p*qty) with p=w/sum(w)
     """
-    if isinstance(ds, datasets.PhaseSpace):
+    if isinstance(ds, _PhaseSpace):
         r = ds.read
         qty = r.quantity(qty, select=select)
         w = r.quantity('w',select=select)
@@ -51,7 +52,7 @@ def variance(ds,qty,select=None):
     -----
     variance is defined as expected_value((qty - expected_value(qty))**2)
     """
-    if isinstance(ds, datasets.PhaseSpace):
+    if isinstance(ds, _PhaseSpace):
         r = ds.read
         qty = r.quantity(qty,select=select)
         w = r.quantity("w",select=select)
@@ -102,7 +103,7 @@ def covariance(ds,qty1,qty2,select=None):
     -----
     covariance is defined as expected_value((qty1-expected_value(qty1)) * (qty2-expected_value(qty2)))
     """
-    if isinstance(ds, datasets.PhaseSpace):
+    if isinstance(ds, _PhaseSpace):
         r = ds.read
         qty1 = r.quantity(qty1,select=select)
         qty2 = r.quantity(qty2,select=select)
@@ -140,7 +141,7 @@ def correlation_coefficient(ds,qty1,qty2,select=None):
 
     return cc
 
-def total_energy(ds,unit="J",select=None):
+def total_energy(ds, unit="J", select=None):
     r"""
     Return total energy contained in the dataset.
 
@@ -157,18 +158,48 @@ def total_energy(ds,unit="J",select=None):
     --------
     data.select
     """
-    if isinstance(ds, datasets.PhaseSpace):
+    if isinstance(ds, _PhaseSpace):
         r = ds.read
         w = r.quantity('w',select=select)
         ekin = r.quantity('ekin',select=select)
 
-        E_MeV = sum(w*ekin)
+        E_MeV = 1e6 * sum(w*ekin)/ds.metadata.unit["energy"]["conv"]
         E_J = E_MeV * 1e6 * 1.6e-19
 
         if unit == "MeV":
             return E_MeV
         elif unit =="J":
             return E_J
+        else:
+            raise NameError("Unknown unit name.")
+    else:
+        raise NotImplementedError()
+
+def total_charge(ds, unit="C", select=None):
+    r"""
+    Return total charge of the dataset.
+
+    Parameters
+    ----------
+    ds : {PhaseSpace}
+        Dataset to use.
+    unit : str, optional
+        unit of charge. Available are 'C' and 'nC', 'pC'. Default is 'nC'.
+    select : dict, optional
+        Filtering dictionary.
+
+    See Also
+    --------
+    data.select
+    """
+    if isinstance(ds, _PhaseSpace):
+        Q = ds.metadata.specie["charge"] * 1.6e-19 * sum(ds.read.w)
+        if unit == "C":
+            return Q
+        elif unit =="nC":
+            return 1e9 * Q
+        elif unit =="pC":
+            return 1e12 * Q
         else:
             raise NameError("Unknown unit name.")
     else:
