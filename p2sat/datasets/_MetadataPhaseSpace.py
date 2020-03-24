@@ -13,26 +13,27 @@ class _MetadataPhaseSpace:
         r"""
         """
         if specie in ("gamma","g"):
-            self.specie = dict(name = "gamma",  label = r"\gamma",  mass = 0.)
+            self.specie = dict(name = "gamma",  label = r"\gamma",  mass = 0.,      charge = 1)
         elif specie in ("positron","e+"):
-            self.specie = dict(name = "e+",     label = r"e^+",     mass = 511e3)
+            self.specie = dict(name = "e+",     label = r"e^+",     mass = 511e3,   charge = 1)
         elif specie in ("electron","e-"):
-            self.specie = dict(name = "e-",     label = r"e^-",     mass = 511e3)
+            self.specie = dict(name = "e-",     label = r"e^-",     mass = 511e3,   charge = -1)
         elif specie in ("muon+","mu+"):
-            self.specie = dict(name = "mu+",    label = r"\mu^+",   mass = 105.6e6)
+            self.specie = dict(name = "mu+",    label = r"\mu^+",   mass = 105.6e6, charge = 1)
         elif specie in ("muon-","mu-"):
-            self.specie = dict(name = "mu-",    label = r"\mu^-",   mass = 105.6e6)
+            self.specie = dict(name = "mu-",    label = r"\mu^-",   mass = 105.6e6, charge = -1)
         elif specie in ("proton","p","H+"):
-            self.specie = dict(name = "H+",     label = r"H^+",     mass = 938.3e6)
+            self.specie = dict(name = "H+",     label = r"H^+",     mass = 938.3e6, charge = 1)
         elif specie in ("neutron","n"):
-            self.specie = dict(name = "n",      label = r"n",       mass = 939.6e6)
+            self.specie = dict(name = "n",      label = r"n",       mass = 939.6e6, charge = 0)
         elif specie in ("photon","hv","omega"):
-            self.specie = dict(name = "photon", label = r"\omega",  mass = 0.)
+            self.specie = dict(name = "photon", label = r"\omega",  mass = 0.,      charge = 0)
         else:
-            self.specie = dict(name = "unknown",label = r"unknown", mass = 0.)
+            self.specie = dict(name = "unknown",label = r"unknown", mass = 0.,      charge = 0)
             print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
             print("!!!                  Unknown specie.                     !!!")
             print("!!!        Please define specie's mass (in eV)           !!!")
+            print("!!!               and its charge (in e)                  !!!")
             print("!!!        in dataset.metadata.specie['mass']            !!!")
             print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 
