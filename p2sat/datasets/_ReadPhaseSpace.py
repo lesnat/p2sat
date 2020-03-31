@@ -7,8 +7,6 @@ class _ReadPhaseSpace(object):
 
     Attributes
     ----------
-    metadata : dict
-        ...
     w : numpy.ndarray
         statistical weight
     x,y,z : numpy.ndarray
@@ -24,7 +22,7 @@ class _ReadPhaseSpace(object):
     -----
     To add a new quantity, please add a new function to this file with the name
     of the quantity, only the `self` parameter and with the decorator `@property`.
-    Please also add label and unit definition of this new quantity in `__init__`.
+    Please also add label and unit definition of this new quantity in `metadata`.
     """
     def __init__(self, PhaseSpace):
         self._ds      = PhaseSpace
@@ -762,14 +760,14 @@ class _ReadPhaseSpace(object):
     @property
     def v(self):
         r"""
-        Particle normalized velocity.
+        Particle velocity.
 
         Notes
         -----
         v is calculated as follow :
 
         .. math::
-            v = \betama^2 c
+            v = \beta c
 
         References
         ----------
@@ -782,14 +780,14 @@ class _ReadPhaseSpace(object):
     @property
     def vx(self):
         r"""
-        Particle normalized velocity along x axis.
+        Particle velocity along x axis.
 
         Notes
         -----
         vx is calculated as follow :
 
         .. math::
-            v_x = \beta_x^2 c
+            v_x = \beta_x c
 
         References
         ----------
@@ -802,14 +800,14 @@ class _ReadPhaseSpace(object):
     @property
     def vy(self):
         r"""
-        Particle normalized velocity along y axis.
+        Particle velocity along y axis.
 
         Notes
         -----
         vy is calculated as follow :
 
         .. math::
-            v_y = \beta_y^2 c
+            v_y = \beta_y c
 
         References
         ----------
@@ -822,14 +820,14 @@ class _ReadPhaseSpace(object):
     @property
     def vz(self):
         r"""
-        Particle normalized velocity along z axis.
+        Particle velocity along z axis.
 
         Notes
         -----
         vz is calculated as follow :
 
         .. math::
-            v_z = \beta_z^2 c
+            v_z = \beta_z c
 
         References
         ----------

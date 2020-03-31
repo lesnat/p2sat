@@ -12,56 +12,64 @@ PhaseSpace
    :undoc-members:
 
 ===============
-PhaseSpace.data
+PhaseSpace.read
 ===============
 
-.. autoclass:: p2sat._Data._Data
+.. autoclass:: p2sat.datasets._ReadPhaseSpace._ReadPhaseSpace
   :members:
 
 ===================
-PhaseSpace.data.raw
+PhaseSpace.data.edit
 ===================
 
-.. autoclass:: p2sat._Data._Raw
+.. autoclass:: p2sat.datasets._EditPhaseSpace._EditPhaseSpace
   :members:
 
 ===============
-PhaseSpace.hist
+PhaseSpace.load
 ===============
 
-.. autoclass:: p2sat._Hist._Hist
-  :members:
-  :undoc-members:
-
-===============
-PhaseSpace.plot
-===============
-
-.. autoclass:: p2sat._Plot._Plot
-  :members:
-  :undoc-members:
-
-==================
-PhaseSpace.extract
-==================
-
-.. autoclass:: p2sat._Extract._Extract
-  :members:
-  :undoc-members:
-
-
-=================
-PhaseSpace.export
-=================
-
-.. autoclass:: p2sat._Export._Export
+.. autoclass:: p2sat.datasets._LoadPhaseSpace._LoadPhaseSpace
   :members:
   :undoc-members:
 
 ===============
-PhaseSpace.stat
+PhaseSpace.save
 ===============
 
-.. autoclass:: p2sat._Stat._Stat
+.. autoclass:: p2sat.datasets._SavePhaseSpace._SavePhaseSpace
+  :members:
+  :undoc-members:
+
+===================
+PhaseSpace.metadata
+===================
+
+.. autoclass:: p2sat.datasets._MetadataPhaseSpace._MetadataPhaseSpace
+  :members:
+  :undoc-members:
+
+====
+hist
+====
+
+.. automodule:: p2sat.hist
+  :members:
+  :undoc-members:
+
+
+====
+plot
+====
+
+.. automodule:: p2sat.plot
+  :members:
+  :undoc-members:
+
+====
+stat
+====
+
+.. automodule:: p2sat.stat
   :members:
   :undoc-members:

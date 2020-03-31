@@ -5,22 +5,6 @@ from ._EditCommon import _EditCommon
 class _EditPhaseSpace(_EditCommon):
     r"""
     Edit the dataset.
-
-    Notes
-    -----
-    Units :
-
-    - lengths are defined in :math:`10^{-6}` meters (um)
-    - momentums are defined in :math:`10^{6}` electron-volt/speed of light (MeV/c)
-    - times are defined in :math:`10^{-15}` seconds (fs)
-    - energies are defined in :math:`10^{6}` electron-volt (MeV)
-    - angles are defined in degrees (deg)
-
-    As all the calculations are done with the previously defined units,
-    the input data might be firstly converted to those units.
-
-    All the attributes can not be overwritten as they are defined as properties.
-    Please call the `update` method to update particle phase-space data.
     """
     def __init__(self,PhaseSpace):
         self._ds= PhaseSpace
