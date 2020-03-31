@@ -177,7 +177,7 @@ class _LoadPhaseSpace(object):
         if verbose: print("Done !")
         self._ps.edit.update(w,x,y,z,px,py,pz,t,in_code_units=True,verbose=verbose)
 
-    def Smilei_TrackParticles(self,path,species,tscale=1.,verbose=True):
+    def Smilei_TrackParticles(self,path,species,dscale=1.,verbose=True):
         r"""
         Extract phase space from a TrackParticles Smilei diagnostic.
 
@@ -187,6 +187,8 @@ class _LoadPhaseSpace(object):
             path to the simulation folder
         species : str
             name of the specie in the Smilei namelist
+        dscale : float
+            Typical diameter to consider in the transverse direction if needed (in 1D or 2D). Should be given in meters.
         verbose : bool, optional
             verbosity
         """
@@ -213,11 +215,11 @@ class _LoadPhaseSpace(object):
         geom = nl.Main.geometry
         nc = m_e * epsilon_0 * (Wr/e)**2
         if geom == "1Dcartesian":
-            wnorm = nc * Lr * np.pi * tscale**2
+            wnorm = nc * Lr * np.pi * dscale**2
         elif geom == "2Dcartesian":
-            wnorm = nc * Lr**2 * tscale
-        elif geom == "AMCylindrical":
-            raise NotImplementedError("TODO ...")
+            wnorm = nc * Lr**2 * dscale
+        elif geom == "AMcylindrical":
+            wnorm = nc * Lr**3
         elif geom == "3Dcartesian":
             wnorm = nc * Lr**3
         else:
@@ -257,8 +259,9 @@ class _LoadPhaseSpace(object):
             elif geom == "2Dcartesian":
                 y += list(data["y"][id>0] * xnorm)
                 z += [0.] * len(id>0)
-            elif geom == "AMCylindrical":
-                raise NotImplementedError("TODO ...")
+            elif geom == "AMcylindrical":
+                y += list(data["y"][id>0] * xnorm)
+                z += list(data["z"][id>0] * xnorm)
             elif geom == "3Dcartesian":
                 y += list(data["y"][id>0] * xnorm)
                 z += list(data["z"][id>0] * xnorm)

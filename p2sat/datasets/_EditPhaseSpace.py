@@ -191,23 +191,23 @@ class _EditPhaseSpace(_EditCommon):
 
         self.update(*dataset_filtered,verbose=verbose)
 
-    def translate(self, Tx=0., Ty=0., Tz=0.,verbose=True):
+    def translate(self, Tx=0., Ty=0., Tz=0.,Tt=0., in_code_units=False, verbose=True):
         r"""
         Translate the particle phase space.
 
         Parameters
         ----------
-        Tx,Ty,Yz : float, optional
-            Translate (x,y,z) position of Tx,Ty,Tz. Default is (0,0,0).
+        Tx,Ty,Tz, Tt : float, optional
+            Translate (x,y,z,t) position of Tx,Ty,Tz,Tt. Default is (0,0,0,0).
+        in_code_units : bool, optional
+            Specify whether the Ti are in code or user units. Default is in user units.
         verbose : bool, optional
             Verbosity.
         """
-        if verbose: print("Translating phase space by (%.2E,%.2E,%.2E) %s"%(Tx,Ty,Tz,self._ds.metadata.unit["length"]["label"]))
-
         r = self._ds.read
-        dataset_translated = [r.w, x + Tx, y + Ty, z + Tz, r.x, r.py, r.pz, r.t]
+        dataset_translated = [r.w, x + Tx, y + Ty, z + Tz, r.x, r.py, r.pz, r.t + Tt]
 
-        self.update(*dataset_translated, in_code_units=False, verbose=verbose)
+        self.update(*dataset_translated, in_code_units=in_code_units, verbose=verbose)
 
     def rotate_x(self, angle, verbose=True):
         r"""

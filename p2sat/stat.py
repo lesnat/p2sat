@@ -193,7 +193,7 @@ def total_charge(ds, unit="C", select=None):
     data.select
     """
     if isinstance(ds, _PhaseSpace):
-        Q = ds.metadata.specie["charge"] * 1.6e-19 * sum(ds.read.w)
+        Q = ds.metadata.specie["charge"] * 1.6e-19 * sum(ds.read.quantity("w", select=select))
         if unit == "C":
             return Q
         elif unit =="nC":
