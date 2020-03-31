@@ -7,8 +7,6 @@ class _ReadPhaseSpace(object):
 
     Attributes
     ----------
-    metadata : dict
-        ...
     w : numpy.ndarray
         statistical weight
     x,y,z : numpy.ndarray
@@ -24,7 +22,7 @@ class _ReadPhaseSpace(object):
     -----
     To add a new quantity, please add a new function to this file with the name
     of the quantity, only the `self` parameter and with the decorator `@property`.
-    Please also add label and unit definition of this new quantity in `__init__`.
+    Please also add label and unit definition of this new quantity in `metadata`.
     """
     def __init__(self, PhaseSpace):
         self._ds      = PhaseSpace
@@ -758,6 +756,86 @@ class _ReadPhaseSpace(object):
         """
         betaz = np.sqrt(1.-1./self.gammaz**2) # Dimensionless
         return betaz
+
+    @property
+    def v(self):
+        r"""
+        Particle velocity.
+
+        Notes
+        -----
+        v is calculated as follow :
+
+        .. math::
+            v = \beta c
+
+        References
+        ----------
+        https://en.wikipedia.org/wiki/Lorentz_factor
+        """
+        c = 299792458 # Already in code unit
+        v = self.beta * c / self._ds.metadata.unit["length/time"]["conv"] # Convert to user unit
+        return v
+
+    @property
+    def vx(self):
+        r"""
+        Particle velocity along x axis.
+
+        Notes
+        -----
+        vx is calculated as follow :
+
+        .. math::
+            v_x = \beta_x c
+
+        References
+        ----------
+        https://en.wikipedia.org/wiki/Lorentz_factor
+        """
+        c = 299792458 # Already in code unit
+        vx = self.betax * c / self._ds.metadata.unit["length/time"]["conv"] # Convert to user unit
+        return vx
+
+    @property
+    def vy(self):
+        r"""
+        Particle velocity along y axis.
+
+        Notes
+        -----
+        vy is calculated as follow :
+
+        .. math::
+            v_y = \beta_y c
+
+        References
+        ----------
+        https://en.wikipedia.org/wiki/Lorentz_factor
+        """
+        c = 299792458 # Already in code unit
+        vy = self.betay * c / self._ds.metadata.unit["length/time"]["conv"] # Convert to user unit
+        return vy
+
+    @property
+    def vz(self):
+        r"""
+        Particle velocity along z axis.
+
+        Notes
+        -----
+        vz is calculated as follow :
+
+        .. math::
+            v_z = \beta_z c
+
+        References
+        ----------
+        https://en.wikipedia.org/wiki/Lorentz_factor
+        """
+        c = 299792458 # Already in code unit
+        vz = self.betaz * c / self._ds.metadata.unit["length/time"]["conv"] # Convert to user unit
+        return vz
 
     @property
     def ux(self):

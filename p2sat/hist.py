@@ -3,7 +3,6 @@
 Create histograms from raw data.
 """
 
-from . import datasets as _datasets
 import numpy as _np
 
 def histNd(ds, qty, weight="w", bwidth=None, brange=None, normed=True, select=None):
@@ -235,7 +234,7 @@ def hist3d(ds, qty1, qty2, qty3, weight="w", bwidth1=None, bwidth2=None, bwidth3
     b,h=histNd(ds,[qty1,qty2,qty3],weight="w",bwidth=[bwidth1,bwidth2,bwidth3],brange=[brange1,brange2,brange3],normed=normed,select=select)
 
     return b[0],b[1],b[2],h
-# 
+#
 # def fit1d(ds, qty, func_name, weight="w", return_fit=False, verbose=True, **kargs):
 #     r"""
 #     Fit a 1D histogram with given law.

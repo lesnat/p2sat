@@ -5,22 +5,6 @@ from ._EditCommon import _EditCommon
 class _EditPhaseSpace(_EditCommon):
     r"""
     Edit the dataset.
-
-    Notes
-    -----
-    Units :
-
-    - lengths are defined in :math:`10^{-6}` meters (um)
-    - momentums are defined in :math:`10^{6}` electron-volt/speed of light (MeV/c)
-    - times are defined in :math:`10^{-15}` seconds (fs)
-    - energies are defined in :math:`10^{6}` electron-volt (MeV)
-    - angles are defined in degrees (deg)
-
-    As all the calculations are done with the previously defined units,
-    the input data might be firstly converted to those units.
-
-    All the attributes can not be overwritten as they are defined as properties.
-    Please call the `update` method to update particle phase-space data.
     """
     def __init__(self,PhaseSpace):
         self._ds= PhaseSpace
@@ -191,23 +175,23 @@ class _EditPhaseSpace(_EditCommon):
 
         self.update(*dataset_filtered,verbose=verbose)
 
-    def translate(self, Tx=0., Ty=0., Tz=0.,verbose=True):
+    def translate(self, Tx=0., Ty=0., Tz=0., Tt=0., in_code_units=False, verbose=True):
         r"""
         Translate the particle phase space.
 
         Parameters
         ----------
-        Tx,Ty,Yz : float, optional
-            Translate (x,y,z) position of Tx,Ty,Tz. Default is (0,0,0).
+        Tx,Ty,Tz, Tt : float, optional
+            Translate (x,y,z,t) position of Tx,Ty,Tz,Tt. Default is (0,0,0,0).
+        in_code_units : bool, optional
+            Specify whether the Ti are in code or user units. Default is in user units.
         verbose : bool, optional
             Verbosity.
         """
-        if verbose: print("Translating phase space by (%.2E,%.2E,%.2E) %s"%(Tx,Ty,Tz,self._ds.metadata.unit["length"]["label"]))
-
         r = self._ds.read
-        dataset_translated = [r.w, x + Tx, y + Ty, z + Tz, r.x, r.py, r.pz, r.t]
+        dataset_translated = [r.w, x + Tx, y + Ty, z + Tz, r.x, r.py, r.pz, r.t + Tt]
 
-        self.update(*dataset_translated, in_code_units=False, verbose=verbose)
+        self.update(*dataset_translated, in_code_units=in_code_units, verbose=verbose)
 
     def rotate_x(self, angle, verbose=True):
         r"""
@@ -350,55 +334,77 @@ class _EditPhaseSpace(_EditCommon):
         # Update raw data
         self.update(W,X,Y,Z,Px,Py,Pz,T, in_code_units=False, verbose=verbose)
 
-    def propagate(self,x=None,t=None,update=True,verbose=True):
+    def propagate_x(self, x, verbose=True):
         r"""
-        Propagate the phase space to a given position or time.
+        Propagate the phase space to a given position x.
 
         Parameters
         ----------
-        x : float, optional
-            propagate the phase-space to position x. Default is None (no propagation)
-        t : float, optional
-            propagate the phase-space to time t. Default is None (no propagation)
+        x : float
+            Propagate the phase-space to position x (in user unit).
         verbose : bool, optional
-            verbosity
+            Verbosity.
 
-        Notes
-        -----
-        x and t can not be defined simultaneously.
         """
-        if t is None and x is None:
-            raise ValueError("You must define t or x.")
-        if t is not None and x is not None:
-            raise ValueError("t and x can not be defined simultaneously.")
+        r   = self._ds.read
 
-        r = self._ds.read
+        dt  = (x - r.x)/r.v
+        t   = r.t + dt
+        y   = r.y + (r.py/r.p) * r.v * dt
+        z   = r.z + (r.pz/r.p) * r.v * dt
 
-        W = r.w
-        Px = r.px
-        Py = r.py
-        Pz = r.pz
+        self.update(r.w, [x]*len(r.w) , y, z, r.px, r.py, r.pz, t, in_code_units=False, verbose=verbose)
 
-        if t is not None:
-            if verbose: print("Propagate %s phase-space to t = %.4E fs."%(self._ds.particle["name"],t))
-            T = np.array([t]*len(W))
-            DT = T - r.t
-            X = r.x + (r.px/r.p)*r.v*DT
-            Y = r.y + (r.py/r.p)*r.v*DT
-            Z = r.z + (r.pz/r.p)*r.v*DT
-
-        if x is not None:
-            if verbose: print("Propagate %s phase-space to x = %.4E um."%(self._ds.particle["name"],x))
-            X = np.array([x]*len(W))
-            DT = (X - r.x)/r.v
-            T = r.t + DT
-            Y = r.y + (r.py/r.p)*r.v*DT
-            Z = r.z + (r.pz/r.p)*r.v*DT
-
-        if update:
-            self.update(W,X,Y,Z,Px,Py,Pz,T,verbose=verbose)
-        else:
-            return W,X,Y,Z,Px,Py,Pz,T
+    #
+    # def propagate(self,x=None,t=None,update=True,verbose=True):
+    #     r"""
+    #     Propagate the phase space to a given position or time.
+    #
+    #     Parameters
+    #     ----------
+    #     x : float, optional
+    #         propagate the phase-space to position x. Default is None (no propagation)
+    #     t : float, optional
+    #         propagate the phase-space to time t. Default is None (no propagation)
+    #     verbose : bool, optional
+    #         verbosity
+    #
+    #     Notes
+    #     -----
+    #     x and t can not be defined simultaneously.
+    #     """
+    #     if t is None and x is None:
+    #         raise ValueError("You must define t or x.")
+    #     if t is not None and x is not None:
+    #         raise ValueError("t and x can not be defined simultaneously.")
+    #
+    #     r = self._ds.read
+    #
+    #     W = r.w
+    #     Px = r.px
+    #     Py = r.py
+    #     Pz = r.pz
+    #
+    #     if t is not None:
+    #         if verbose: print("Propagate %s phase-space to t = %.4E fs."%(self._ds.particle["name"],t))
+    #         T = np.array([t]*len(W))
+    #         DT = T - r.t
+    #         X = r.x + (r.px/r.p)*r.v*DT
+    #         Y = r.y + (r.py/r.p)*r.v*DT
+    #         Z = r.z + (r.pz/r.p)*r.v*DT
+    #
+    #     if x is not None:
+    #         if verbose: print("Propagate %s phase-space to x = %.4E um."%(self._ds.particle["name"],x))
+    #         X = np.array([x]*len(W))
+    #         DT = (X - r.x)/r.v
+    #         T = r.t + DT
+    #         Y = r.y + (r.py/r.p)*r.v*DT
+    #         Z = r.z + (r.pz/r.p)*r.v*DT
+    #
+    #     if update:
+    #         self.update(W,X,Y,Z,Px,Py,Pz,T,verbose=verbose)
+    #     else:
+    #         return W,X,Y,Z,Px,Py,Pz,T
 
     def sort(self, verbose=True):
         r"""
