@@ -227,8 +227,8 @@ class _LoadPhaseSpace(object):
         # tnorm = Tr/1e-15    # in fs
         # xnorm = Lr/1e-6     # in um
         # pnorm = Pr          # in MeV/c
-        tnorm = Tr          # in fs
-        xnorm = Lr          # in um
+        tnorm = Tr          # in s
+        xnorm = Lr          # in m
         pnorm = Pr*1e6      # in eV/c
 
         # Initialize ps list
