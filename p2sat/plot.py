@@ -32,16 +32,67 @@ rcParams['figure.subplot.bottom'] = 0.15
 _plt.style.use('bmh')
 _plt.ion()
 
+def _get_axis_labels(ds, qty):
+    r"""
+    Return the
+
+    Parameters
+    ----------
+    ds : PhaseSpace
+        Dataset to use.
+    qty : str
+        Name of the quantity
+    """
+    qty_label   = ds.metadata.quantity[qty]["label"]
+    qty_dim     = ds.metadata.quantity[qty]["dimension"]
+    qty_unit    = ds.metadata.unit[dim]["label"]
+    return qty_label, qty_unit
+
+def _get_title_labels(ds, qties, weight, normed):
+    r"""
+    Return the
+
+    Parameters
+    ----------
+    ds : PhaseSpace
+        Dataset to use.
+    qty : str
+        Name of the quantity
+    """
+    weight_label= ds.metadata.quantity[weight]["label"]
+    weight_dim  = ds.metadata.quantity[weight]["dimension"]
+    weight_unit = ds.metadata.unit[weight_dim]["label"]
+
+    if normed:
+        title_label = "d"+weight_label+"/"
+        title_unit  = ""
+
+        for qty in qties:
+            qty_label, qty_unit = _get_axis_labels(ds, qty)
+            title_label += "d"+qty_label+" "
+            title_unit  += qty_unit+" ~ "
+
+        # Delete useless characters at the end of the str
+        title_label = title_label[:-1]
+        title_unit  = title_unit[:-3]
+    else:
+        title_label = "d"+weight_label
+        title_unit = ""
+
+    return title_label, title_unit
+
 def get_labels(ds, qties, weight, normed):
     r"""
     Returns the labels of given qties.
 
     Parameters
     ----------
-    ds : {PhaseSpace, ScalarField, EventLocation}
+    ds : PhaseSpace
         Dataset to use.
     qties : list of str
         Names of the qties
+    weight : str
+        Weight.
     normed : list of bool or None
         Weight normalization. If None, the last labels element is "Number", otherwise it is "Number/unit1/unit2/..."
 
@@ -57,36 +108,25 @@ def get_labels(ds, qties, weight, normed):
     qties_labels   = []
     qties_units    = []
     for qty in qties:
-        qties_labels.append(ds.metadata.quantity[qty]["label"])
-        qty_dim = ds.metadata.quantity[qty]["dimension"]
-        qties_units.append(ds.metadata.unit[qty_dim]["label"])
+        qty_label, qty_unit = get_axis_labels(ds, qty)
+        qties_labels.append(qty_label)
+        qties_units.append(qty_unit)
 
-    # Construct axis labels
-    axis_labels = []
+    # Construct axes labels
     for qty_label, qty_unit in zip(qties_labels, qties_units):
         if qty_unit=="":
-            axis_labels.append("${label}$".format(label=qty_label))
+            labels.append("${label}$".format(label=qty_label))
         else:
-            axis_labels.append("${label}$ [${unit}$]".format(label=qty_label,unit=qty_unit))
+            labels.append("${label}$ [${unit}$]".format(label=qty_label,unit=qty_unit))
 
-    # Get weight label and unit
-    weight_label = ds.metadata.quantity[weight]["label"]
-    weight_dim   = ds.metadata.quantity[weight]["dimension"]
-    weight_unit  = ds.metadata.unit[weight_dim]["label"]
-
-    # Construct "title" label
-    title_unit  = " ~".join(qties_units)
-    if normed == False:
-        title_label = "${label}$".format(label=weight_label)
+    # Get title label and unit
+    title_label, title_unit = _get_title_labels(ds, qties, weight, normed)
+    if title_unit != "":
+        labels.append("$%s$ [$(%s)^{-1}$]"%(title_label, title_unit))
     else:
-        numerator_label = "d" + weight_label
-        denominator_label = "d" + " ~d".join(qties_labels)
-        if title_unit.strip() == "":
-            title_label = "$%s/%s$"%(numerator_label, denominator_label)
-        else:
-            title_label = "$%s/%s$ [$(%s)^{-1}$]"%(numerator_label, denominator_label, title_unit)
+        labels.append("$%s$"%title_label)
 
-    return [*axis_labels, title_label]
+    return labels
 
 def figure(number=None,clear=False):
     r"""
