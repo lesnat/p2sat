@@ -234,88 +234,45 @@ def hist3d(ds, qty1, qty2, qty3, weight="w", bwidth1=None, bwidth2=None, bwidth3
     b,h=histNd(ds,[qty1,qty2,qty3],weight="w",bwidth=[bwidth1,bwidth2,bwidth3],brange=[brange1,brange2,brange3],normed=normed,select=select)
 
     return b[0],b[1],b[2],h
-#
-# def fit1d(ds, qty, func_name, weight="w", return_fit=False, verbose=True, **kargs):
-#     r"""
-#     Fit a 1D histogram with given law.
-#
-#     Parameters
-#     ----------
-#     ds : {PhaseSpace, EventLocation}
-#         Dataset to use.
-#     qty : str or np.array
-#         qty to fit
-#     func_name : str
-#         name of the fit law. Available are `exp` for exponential law and `gauss` for gaussian law
-#     return_fit : bool, optional
-#         returns the spectrum instead of fited parameters
-#     verbose : bool, optional
-#         verbosity
-#     kargs : dict, optional
-#         dictionnary to pass to the hist.hist1d method
-#
-#     Returns
-#     -------
-#     x : np.array
-#         fit abscissa
-#     param1,param2 : float,optional
-#         fit parameters. Returned if `return_fit=False` (default)
-#     w : np.array, optional
-#         fit weight. Returned if `return_fit=True`
-#
-#     Notes
-#     -----
-#     The `exp` law is defined as
-#     :math:`\\frac{N}{T} \exp{(-x/T)}`
-#     and returns fit parameters N,T.
-#
-#     The `gauss` law is defined as
-#     :math:`\\frac{N}{ \sigma \sqrt{2 \pi}} \exp{(-\\frac{(x-\mu)^2}{2 \sigma^2})}`
-#     and returns fit parameters N,sigma,mu.
-#     """
-#     # Get the hist data
-#     if verbose:print("Processing 1D \"{}\" fit of \"{}\" ...".format(func_name,str(qty)))
-#     x,w = ds._ps.hist.hist1d(qty,**kargs)
-#
-#     bwidth = _np.array([x[i+1]-x[i] for i in range(len(w))])
-#     Ntot = sum(w*bwidth)
-#     # Define fit function and default values for fit parameters
-#     if func_name=="exp":
-#         f = lambda x,N,T: N*_np.exp(-x/T)/T
-#         p0 = [Ntot,1]
-#         param = ["N","T"]
-#     elif func_name=="gauss":
-#         f = lambda x,N,sigma,mu: N/(_np.sqrt(2*_np.pi) * sigma) * _np.exp(-(x-mu)**2/(2*sigma**2))
-#         p0 = [Ntot,x.std(),0]
-#         param = ["N","sigma","mu"]
-#     else:
-#         raise NameError("Unknown func_name.")
-#
-#     # Fit the curve
-#     from scipy.optimize import curve_fit
-#     popt,pcov = curve_fit(f,x[:-1],w,p0=p0)
-#     perr = _np.sqrt(_np.diag(pcov)) # Estimated error
-#     perr_pc = (1. - (popt - perr)/popt) * 100
-#
-#     # Print estimated errors
-#     if verbose:
-#         print('Fit parameters :')
-#         for i,p in enumerate(param):
-#             try:
-#                 if p=="N": raise TypeError
-#                 unit = ds._ps.data.raw.units[qty]
-#             except TypeError:
-#                 unit = ""
-#             print(u"    {} = {: .4E} ± {:.4E} {:s} ({:.2F} %)".format(p.ljust(7),popt[i],perr[i], unit.ljust(5), perr_pc[i]))
-#
-#     # Choice of the return values
-#     if return_fit:
-#         # Return qty and spectrum
-#         return x,f(x,*popt)
-#     else:
-#         # Format the result in a list
-#         res = [x]
-#         for e in popt:
-#             res.append(e)
-#         # Return qty and fit parameters
-#         return res
+
+def fit1d(ds, qty, f, weight="w", p0=None, verbose=True, **kargs):
+    r"""
+    Fit a 1D histogram with given function.
+
+    Parameters
+    ----------
+    ds : PhaseSpace
+        Dataset to use.
+    qty : str or np.array
+        Quantity to fit.
+    f : function
+        Fitting function.
+    verbose : bool, optional
+        Verbosity
+    kargs : dict, optional
+        Dictionnary to pass to the hist.hist1d method.
+
+    Returns
+    -------
+    popt : float
+        fit parameters
+
+    See Also
+    --------
+    scipy.optimize.curve_fit
+    """
+    if verbose:pass
+    # Get the hist data
+    x, w = hist1d(ds, qty, weight=weight, **kargs)
+
+    # Fit the curve
+    from scipy.optimize import curve_fit
+    popt, pcov  = curve_fit(f, x[:-1], w, p0=p0)
+    perr        = _np.sqrt(_np.diag(pcov)) # Estimated error
+    perr_pc     = (1. - (popt - perr)/popt) * 100
+
+    # Print estimated errors
+    if verbose:
+        pass
+
+    return popt

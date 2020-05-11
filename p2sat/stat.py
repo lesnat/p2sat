@@ -141,6 +141,26 @@ def correlation_coefficient(ds,qty1,qty2,select=None):
 
     return cc
 
+def total_number(ds, select=None):
+    r"""
+    Return total number of particles contained in the PhaseSpace.
+
+    Parameters
+    ----------
+    ds : PhaseSpace
+        Dataset to use.
+    select : dict, optional
+        Filtering dictionary.
+
+    See Also
+    --------
+    data.select
+    """
+    if isinstance(ds, _PhaseSpace):
+        return sum(ds.read.quantity("w", select=select))
+    else:
+        raise NotImplementedError()
+
 def total_energy(ds, unit="J", select=None):
     r"""
     Return total energy contained in the dataset.
@@ -177,11 +197,11 @@ def total_energy(ds, unit="J", select=None):
 
 def total_charge(ds, unit="C", select=None):
     r"""
-    Return total charge of the dataset.
+    Return total charge of the PhaseSpace.
 
     Parameters
     ----------
-    ds : {PhaseSpace}
+    ds : PhaseSpace
         Dataset to use.
     unit : str, optional
         unit of charge. Available are 'C' and 'nC', 'pC'. Default is 'nC'.

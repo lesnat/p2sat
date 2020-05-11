@@ -304,9 +304,9 @@ class _LoadPhaseSpace(object):
         # Get gp3m2 particle name from p2sat particle name
         part = self._ps.metadata.specie["name"]
         if part=="e-":
-            part_name = "e-"
+            part_name = "electron"
         elif part=="e+":
-            part_name = "e+"
+            part_name = "positron"
         elif part=="gamma":
             part_name = "gamma"
         elif part=="photon":

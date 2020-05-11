@@ -32,16 +32,67 @@ rcParams['figure.subplot.bottom'] = 0.15
 _plt.style.use('bmh')
 _plt.ion()
 
+def _get_axis_labels(ds, qty):
+    r"""
+    Return the
+
+    Parameters
+    ----------
+    ds : PhaseSpace
+        Dataset to use.
+    qty : str
+        Name of the quantity
+    """
+    qty_label   = ds.metadata.quantity[qty]["label"]
+    qty_dim     = ds.metadata.quantity[qty]["dimension"]
+    qty_unit    = ds.metadata.unit[qty_dim]["label"]
+    return qty_label, qty_unit
+
+def _get_title_labels(ds, qties, weight, normed):
+    r"""
+    Return the
+
+    Parameters
+    ----------
+    ds : PhaseSpace
+        Dataset to use.
+    qty : str
+        Name of the quantity
+    """
+    weight_label= ds.metadata.quantity[weight]["label"]
+    weight_dim  = ds.metadata.quantity[weight]["dimension"]
+    weight_unit = ds.metadata.unit[weight_dim]["label"]
+
+    if normed:
+        title_label = "d"+weight_label+"/"
+        title_unit  = ""
+
+        for qty in qties:
+            qty_label, qty_unit = _get_axis_labels(ds, qty)
+            title_label += "d"+qty_label+" "
+            title_unit  += qty_unit+" ~ "
+
+        # Delete useless characters at the end of the str
+        title_label = title_label[:-1]
+        title_unit  = title_unit[:-3]
+    else:
+        title_label = "d"+weight_label
+        title_unit = ""
+
+    return title_label, title_unit
+
 def get_labels(ds, qties, weight, normed):
     r"""
     Returns the labels of given qties.
 
     Parameters
     ----------
-    ds : {PhaseSpace, ScalarField, EventLocation}
+    ds : PhaseSpace
         Dataset to use.
     qties : list of str
         Names of the qties
+    weight : str
+        Weight.
     normed : list of bool or None
         Weight normalization. If None, the last labels element is "Number", otherwise it is "Number/unit1/unit2/..."
 
@@ -57,36 +108,25 @@ def get_labels(ds, qties, weight, normed):
     qties_labels   = []
     qties_units    = []
     for qty in qties:
-        qties_labels.append(ds.metadata.quantity[qty]["label"])
-        qty_dim = ds.metadata.quantity[qty]["dimension"]
-        qties_units.append(ds.metadata.unit[qty_dim]["label"])
+        qty_label, qty_unit = _get_axis_labels(ds, qty)
+        qties_labels.append(qty_label)
+        qties_units.append(qty_unit)
 
-    # Construct axis labels
-    axis_labels = []
+    # Construct axes labels
     for qty_label, qty_unit in zip(qties_labels, qties_units):
         if qty_unit=="":
-            axis_labels.append("${label}$".format(label=qty_label))
+            labels.append("${label}$".format(label=qty_label))
         else:
-            axis_labels.append("${label}$ [${unit}$]".format(label=qty_label,unit=qty_unit))
+            labels.append("${label}$ [${unit}$]".format(label=qty_label,unit=qty_unit))
 
-    # Get weight label and unit
-    weight_label = ds.metadata.quantity[weight]["label"]
-    weight_dim   = ds.metadata.quantity[weight]["dimension"]
-    weight_unit  = ds.metadata.unit[weight_dim]["label"]
-
-    # Construct "title" label
-    title_unit  = " ~".join(qties_units)
-    if normed == False:
-        title_label = "${label}$".format(label=weight_label)
+    # Get title label and unit
+    title_label, title_unit = _get_title_labels(ds, qties, weight, normed)
+    if title_unit != "":
+        labels.append("$%s$ [$(%s)^{-1}$]"%(title_label, title_unit))
     else:
-        numerator_label = "d" + weight_label
-        denominator_label = "d" + " ~d".join(qties_labels)
-        if title_unit.strip() == "":
-            title_label = "$%s/%s$"%(numerator_label, denominator_label)
-        else:
-            title_label = "$%s/%s$ [$(%s)^{-1}$]"%(numerator_label, denominator_label, title_unit)
+        labels.append("$%s$"%title_label)
 
-    return [*axis_labels, title_label]
+    return labels
 
 def figure(number=None,clear=False):
     r"""
@@ -143,10 +183,7 @@ def hline(y, text="", xfactor=1.01, yfactor=1.01, linestyle="dashed", color="k")
     _plt.text(xfactor * xmax, yfactor * y, text)
     _plt.xlim(xmin, xmax)
 
-def arrow():
-    pass
-
-def hist1d(ds, qty, where='post', legend="", log=False, polar=False, reverse=False, clear=False,**kargs):
+def hist1d(ds, qty, where='post', legend="", log=False, clear=False,**kargs):
     r"""
     Plot the 1d histogram of given qty.
 
@@ -157,7 +194,7 @@ def hist1d(ds, qty, where='post', legend="", log=False, polar=False, reverse=Fal
     qty : str
         Name of the qty to plot
     where : str, optional
-        ...
+        Available are 'post', 'pre' or 'mid'.
     log : bool, optional
         True to set log scale on y qty
     polar : bool, optional
@@ -174,16 +211,12 @@ def hist1d(ds, qty, where='post', legend="", log=False, polar=False, reverse=Fal
     hist.hist1d
     """
     if autoclear or clear: clear_figure()
-    if polar:
-        a=_plt.gca(polar=True)
-    else:
-        a=_plt.gca()
+
+    a=_plt.gca()
 
     labels=get_labels(ds,[qty],kargs.get('weight','w'),kargs.get('normed',True))
 
     b,h=_hist.hist1d(ds, qty, **kargs)
-
-    if polar: b = b * ds.metadata.unit["angle"]["conv"] # Polar plot usefull ?????????
 
     if where=='post':
         b=b[:-1]
@@ -193,28 +226,16 @@ def hist1d(ds, qty, where='post', legend="", log=False, polar=False, reverse=Fal
         bsize = b[1:]-b[:-1]
         b = b[:-1] + bsize/2.
 
-    if reverse:
-        # Reverse values
-        tmp = [b,h]
-        h,b = tmp
-        # Reverse labels
-        tmp=list(labels)
-        labels[0]=tmp[1]
-        labels[1]=tmp[0]
-
     if legend != "":
         a.step(b,h,'.-',where=where, label=legend)
         _plt.legend()
     else:
         a.step(b,h,'.-',where=where)
 
-    if polar:
-        if log:a.set_rscale('log')
-    else:
-        a.set_xlim(xmin=min(b),xmax=max(b))
-        a.set_xlabel(labels[0])
-        a.set_ylabel(labels[1])
-        if log:a.set_yscale('log')
+    a.set_xlim(xmin=min(b),xmax=max(b))
+    a.set_xlabel(labels[0])
+    a.set_ylabel(labels[1])
+    if log:a.set_yscale('log')
 
     a.grid(True)
 
@@ -222,68 +243,49 @@ def hist1d(ds, qty, where='post', legend="", log=False, polar=False, reverse=Fal
 
     return a
 
-# def fit1d(ds, qty, func_name, log=False, polar=False, reverse=False, clear=False,**kargs):
-#     r"""
-#     Plot the 1d fit of given qty.
-#
-#     Parameters
-#     ----------
-#     ds : {PhaseSpace, ScalarField, EventLocation}
-#         Dataset to use.
-#     qty : str
-#         Name of the qty to plot
-#     func_name : str
-#         name of the fit function
-#     log : bool, optional
-#         True to set log scale on y qty
-#     polar : bool, optional
-#         True to use a polar plot. qty must be an angle
-#     reverse : bool, optional
-#         True to plot qty against number instead of number against qty
-#     clear: bool, optional
-#         Clear or not the figure before plotting
-#     kargs : dict, optional
-#         Dictionnary to pass to the hist.hist1d method
-#
-#     See Also
-#     --------
-#     hist.fit1d
-#     """
-#     if autoclear or clear: clear_figure()
-#     if polar:
-#         a=_plt.gca(polar=True)
-#     else:
-#         a=_plt.gca()
-#
-#     labels=get_labels(ds, [qty],kargs.get('weight','w'),kargs.get('normed',True))
-#
-#     b,h=_hist.fit1d(qty,func_name,return_fit=True,**kargs)
-#
-#     if polar: b = b * ds.metadata.unit["angle"]["conv"]#
-#     if reverse:
-#         # Reverse values
-#         tmp = [b,h]
-#         h,b = tmp
-#         # Reverse labels
-#         tmp=list(labels)
-#         labels[0]=tmp[1]
-#         labels[1]=tmp[0]
-#
-#     a.plot(b,h,'-',label="%s fit"%func_name)
-#     a.legend()
-#     if polar:
-#         if log:a.set_rscale('log')
-#     else:
-#         #a.set_xlim(xmin=min(b),xmax=max(b))
-#         a.set_xlabel(labels[0])
-#         a.set_ylabel(labels[1])
-#         if log:a.set_yscale('log')
-#
-#     a.grid(True)
-#
-#     _plt.show()
-#
-#     return a
+def fit1d(ds, qty, f, log=False, clear=False,**kargs):
+    r"""
+    Plot the 1d fit of given quantity.
+
+    Parameters
+    ----------
+    ds : PhaseSpace
+        Dataset to use.
+    qty : str
+        Name of the quantity to plot
+    f : function
+        Fit function
+    log : bool, optional
+        True to set log scale on y qty
+    clear: bool, optional
+        Clear or not the figure before plotting
+    kargs : dict, optional
+        Dictionnary to pass to the hist.fit1d method
+
+    See Also
+    --------
+    hist.fit1d
+    """
+    if autoclear or clear: clear_figure()
+
+    a=_plt.gca()
+
+    labels=get_labels(ds, [qty], kargs.get('weight','w'), kargs.get('normed',True))
+
+    b,h=_hist.fit1d(qty, f=f, **kargs)
+
+    a.plot(b,h,'-',label="fit")
+    a.legend()
+    #a.set_xlim(xmin=min(b),xmax=max(b))
+    a.set_xlabel(labels[0])
+    a.set_ylabel(labels[1])
+    if log:a.set_yscale('log')
+
+    a.grid(True)
+
+    _plt.show()
+
+    return a
 
 # def animate1d(ds, qty, t=None, pause=.5, where='post', log=False, polar=False, reverse=False,**kargs):
 #     r"""

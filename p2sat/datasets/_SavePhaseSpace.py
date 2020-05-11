@@ -52,7 +52,10 @@ class _SavePhaseSpace(object):
                 f.write("# Title : %s\n"%title)
                 # Write legend
                 f.write("# ")
-                for legend in ('weight','x (um)','y (um)','z (um)','px (MeV/c)','py (MeV/c)','pz (MeV/c)','t (fs)'):
+                runit = "["+self._ds.metadata.unit["length"]["label"]+"]"
+                punit = "["+self._ds.metadata.unit["momentum"]["label"]+"]"
+                tunit = "["+self._ds.metadata.unit["time"]["label"]+"]"
+                for legend in ('weight','x '+runit,'y '+runit,'z '+runit,'px '+punit,'py '+punit,'pz '+punit,'t '+tunit):
                     f.write("%-16s"%legend) # the chain is placed under 16 characters
                 f.write("\n")
 
